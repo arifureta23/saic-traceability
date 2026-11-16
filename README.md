@@ -80,3 +80,23 @@ Cash box management for the **Caisse Achat Cacao** (COC) and the **Caisse Admini
 3. The DAF opens `/tresorerie` → **Team** and sets everyone else's role. New people are first added in Authentication → Users.
 
 Ceilings and opening balances are in the `cash_boxes` table (cocoa ceiling 20,000,000 F, admin 500,000 F).
+
+---
+
+# WHP — PDG dashboard (`/pdg`)
+
+Group dashboard for the PDG of Wenkam Holding Plus: group overview, department health, read-only views of the SAIC treasury and traceability registry, and the approvals inbox.
+
+- **Roles** (table `exec_members`): `pdg`; `dg_whp`, `daf_whp`, `dg_saic` submit requests to the PDG and follow their own.
+- **Workflow enforced by the database:** the PDG approves, rejects (reason required) or asks for information (question required); the submitter answers and the request comes back as pending; submitted requests can't be edited; every step is kept in the request's history.
+- The PDG reads the registry and the treasury but does not approve inside them (those steps stay with the DG SAIC, the DAF and the Traceability Lead).
+- Attachments are stored in the private `pdg-files` bucket.
+
+## Setup
+1. Supabase → SQL Editor → paste all of `supabase/pdg.sql` → Run (after `schema.sql` and `treasury.sql`). It also adds three example requests marked "Example".
+2. Give each person their role:
+   ```sql
+   insert into public.exec_members (user_id, role)
+   select id, 'pdg' from auth.users where email = 'pdg@example.com'
+   on conflict (user_id) do update set role = excluded.role;
+   ```

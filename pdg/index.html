@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tableau de bord PDG</title>
+<meta name="theme-color" content="#1f4aa8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* Layout: same shell as the SAIC farmer registry — left rail + work area; cash box page = tiles, balance chart | categories, table. */
+:root{
+  --paper:#f3f5f2; --surface:#ffffff; --ink:#1b2420; --muted:#5d6a63; --line:#d9dfd9;
+  --accent:#1f5c47; --accent-soft:#e2eee8; --pod:#a8641a; --pod-soft:#f6ead9;
+  --ok:#237a4b; --ok-bg:#e1f2e7; --warn:#9a6400; --warn-bg:#fbf0d9; --bad:#b3362c; --bad-bg:#fbe4e1;
+  --font-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --radius:8px; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121614; --surface:#1a201d; --ink:#e6ebe7; --muted:#9aa79f; --line:#2c3531;
+    --accent:#6cc39c; --accent-soft:#1e3229; --pod:#e0a35a; --pod-soft:#33270f;
+    --ok:#6fd39a; --ok-bg:#16301f; --warn:#e6b45a; --warn-bg:#33270f; --bad:#f08a7f; --bad-bg:#3a1c19;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121614; --surface:#1a201d; --ink:#e6ebe7; --muted:#9aa79f; --line:#2c3531;
+  --accent:#6cc39c; --accent-soft:#1e3229; --pod:#e0a35a; --pod-soft:#33270f;
+  --ok:#6fd39a; --ok-bg:#16301f; --warn:#e6b45a; --warn-bg:#33270f; --bad:#f08a7f; --bad-bg:#3a1c19;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--font-body)}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:24px;font-weight:700} h2{font-size:18px;font-weight:600}
+h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0}
+.mono{font-family:var(--font-mono);font-size:.9em} .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:var(--muted)} .small{font-size:13px}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100%}
+.rail{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;height:100vh}
+.brand{display:flex;flex-direction:column;gap:6px;padding:0 6px;text-decoration:none;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.logo{display:block;width:180px;max-width:100%;height:auto}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;text-decoration:none;color:var(--ink);font-weight:500}
+.nav a:hover{background:var(--paper)} .nav a.on{background:var(--accent-soft);color:var(--accent)}
+.nav .badge{background:var(--warn-bg);color:var(--warn);border-radius:999px;font-size:11px;padding:0 7px;font-weight:600}
+.rail-foot{margin-top:auto;font-size:12px;color:var(--muted);padding:0 6px;display:flex;flex-direction:column;gap:8px}
+.rail-foot select{font-size:13px;padding:5px 8px}
+.main{padding:24px 28px 60px;min-width:0;display:flex;flex-direction:column;gap:20px}
+.topline{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.topline p{margin-top:4px;color:var(--muted)}
+.notice{padding:10px 14px;border-radius:var(--radius);background:var(--accent-soft);color:var(--accent);font-size:14px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:6px;cursor:pointer;font-weight:500;text-decoration:none;color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn.danger{color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.tile .v{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:13px;font-weight:500;color:var(--muted)}
+.tile .l{font-size:13px;color:var(--muted)} .tile .s{font-size:12px;color:var(--muted)}
+.v.ok{color:var(--ok)} .v.bad{color:var(--bad)} .v.warn{color:var(--warn)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.grid-wide{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+
+/* cash box summary cards */
+.box{display:flex;flex-direction:column;gap:12px}
+.box-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.box-head .code{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.bal{font-size:32px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.bal small{font-size:15px;color:var(--muted);font-weight:500}
+.gauge{position:relative;height:10px;border-radius:5px;background:var(--paper);overflow:visible}
+.gauge span{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--accent)}
+.gauge span.over{background:var(--bad)} .gauge span.low{background:var(--warn)}
+.gauge i{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.gauge-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.kv3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;font-size:13px}
+.kv3 b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.neutral{background:var(--accent-soft);color:var(--muted)}
+
+.issues{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.issues li{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:7px 10px;border-radius:6px;border-left:3px solid}
+.issues li.bad{background:var(--bad-bg);border-color:var(--bad)} .issues li.warn{background:var(--warn-bg);border-color:var(--warn)} .issues li.ok{background:var(--ok-bg);border-color:var(--ok)}
+.issues li .who{font-size:12px;color:var(--muted);display:block}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:grid;grid-template-columns:minmax(110px,38%) 1fr auto;gap:10px;align-items:center;font-size:13px}
+.bar-row .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:12px;background:var(--paper);border-radius:0 4px 4px 0;position:relative}
+.bar-fill{height:100%;background:var(--accent);border-radius:0 4px 4px 0;min-width:2px}
+.bar-fill.pod{background:var(--pod)}
+.bar-row .val{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar-row .val small{color:var(--muted);margin-left:6px}
+.bar-row:hover .bar-fill{filter:brightness(1.12)}
+
+/* chart */
+.chart-wrap{position:relative}
+svg.chart{width:100%;display:block}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{fill:var(--muted);font-size:13px;font-family:var(--font-body)}
+.chart .line{fill:none;stroke:var(--accent);stroke-width:2}
+.chart .area{fill:var(--accent);fill-opacity:.08}
+.chart .ceil{stroke:var(--bad);stroke-width:1.5;stroke-dasharray:5 4}
+.chart .ceil-l{fill:var(--bad);font-size:13px;font-weight:600}
+.chart .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.chart .xh{stroke:var(--muted);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:6px 9px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-110%);z-index:5}
+
+/* table */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar input[type=search]{flex:1 1 220px;min-width:0}
+input[type=text],input[type=search],input[type=date],input[type=number],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:100%}
+.toolbar select{width:auto}
+textarea{min-height:70px;resize:vertical}
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.r,th.r{text-align:right}
+td.mono{white-space:nowrap;font-size:12px}
+td.in{color:var(--ok)}
+tr.flag-bad td:first-child{box-shadow:inset 3px 0 0 var(--bad)} tr.flag-warn td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+.flagtxt{font-size:12px;display:block;margin-top:2px} .flagtxt.bad{color:var(--bad)} .flagtxt.warn{color:var(--warn)}
+tfoot td{font-weight:600;border-top:1px solid var(--line)}
+
+/* requests */
+.req{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px}
+.req .amt{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.steps{display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1}
+.step{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+.step.done{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.step.now{background:var(--warn-bg);color:var(--warn);border-color:transparent;font-weight:600}
+.step.no{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.req .acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:600;background:var(--pod-soft);color:var(--pod);text-transform:uppercase;letter-spacing:.04em}
+.recon{display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:14px;align-items:center}
+.recon .num{text-align:right}
+.recon input{width:160px;text-align:right}
+
+.scrim{position:fixed;inset:0;background:rgba(10,15,12,.45);display:flex;justify-content:flex-end;z-index:20}
+.drawer{background:var(--surface);width:min(620px,100%);height:100%;overflow:auto;display:flex;flex-direction:column}
+.drawer form{display:flex;flex-direction:column;min-height:100%}
+.drawer header{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:2}
+.drawer header p{margin-top:2px;color:var(--muted);font-size:13px}
+.drawer .body{padding:18px 22px;display:flex;flex-direction:column;gap:16px;flex:1}
+.drawer footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 22px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0} .f.full{grid-column:1/-1}
+.f label{font-size:13px;font-weight:500}
+.hint{font-size:12px;color:var(--muted)}
+.err{color:var(--bad);font-size:13px}
+.att-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.att-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:6px}
+.att-links{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;margin-top:3px}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.suggest{background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:10px 12px;font-size:13px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;font-size:14px;z-index:40}
+
+@media (max-width:1050px){ .grid2,.grid-wide{grid-template-columns:1fr} }
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px 16px;gap:12px;border-right:none;border-bottom:1px solid var(--line)}
+  .logo{width:120px} .brand span{display:none}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .rail-foot{margin-top:0;flex-direction:row;flex-wrap:wrap;align-items:center}
+  .main{padding:18px 16px 50px}
+  .fgrid{grid-template-columns:1fr}
+  .kv3{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* WHP palette: blue (primary) and red (secondary). Status colours stay separate: green ok, amber watch, crimson critical. */
+:root{ --paper:#f3f5f9; --surface:#ffffff; --ink:#17203a; --muted:#5b6478; --line:#d8dde8;
+  --accent:#1f4aa8; --accent-soft:#e3eafa; --pod:#c8102e; --pod-soft:#fce6e9; --bad:#a3192b; --bad-bg:#f9e1e4; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --paper:#10141f; --surface:#171d2b; --ink:#e6eaf3; --muted:#9aa3b8; --line:#2a3245;
+  --accent:#7fa3f5; --accent-soft:#1c2a4a; --pod:#ff6b7f; --pod-soft:#3a1820; --bad:#ff8a8a; --bad-bg:#3a1a1e; } }
+:root[data-theme="dark"]{ --paper:#10141f; --surface:#171d2b; --ink:#e6eaf3; --muted:#9aa3b8; --line:#2a3245;
+  --accent:#7fa3f5; --accent-soft:#1c2a4a; --pod:#ff6b7f; --pod-soft:#3a1820; --bad:#ff8a8a; --bad-bg:#3a1a1e; }
+.rail{border-top:4px solid var(--pod)}
+.brand b{color:var(--accent)!important}
+/* PDG dashboard additions — same shell as the SAIC apps; overview = KPI row, department cards grid, approvals | attention. */
+.dept-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.dept-grid{grid-template-columns:1fr}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.b-ok{background:var(--ok)} .b-pend{background:var(--muted);opacity:.45} .b-bad{background:var(--bad)}
+.dept{display:flex;flex-direction:column;gap:12px}
+.dept .ent{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dept .big{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.dept .big small{font-size:14px;color:var(--muted);font-weight:500}
+.dept .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.who-row{display:grid;grid-template-columns:1fr auto auto;gap:6px 12px;font-size:14px;align-items:center}
+.who-row .n{font-variant-numeric:tabular-nums;text-align:right}
+.ent-chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px;letter-spacing:.04em}
+.ent-chip.WHP{background:var(--accent-soft);color:var(--accent)} .ent-chip.SAIC{background:var(--pod-soft);color:var(--pod)}
+.prio{font-size:11px;font-weight:700;color:var(--bad);text-transform:uppercase;letter-spacing:.05em}
+.apps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.app-tile{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;background:var(--surface)}
+.app-tile:hover{border-color:var(--accent)}
+.app-tile b{font-size:16px} .app-tile span{font-size:13px;color:var(--muted)}
+.app-tile.soon{border-style:dashed;color:var(--muted)}
+.thread{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.thread li{border-left:2px solid var(--line);padding-left:10px}
+.thread .when{color:var(--muted)}
+.statusbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--paper)}
+.statusbar span{display:block;height:100%}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <a class="brand" href="#overview" aria-label="Wenkam Holding Plus"><b style="font-size:22px;letter-spacing:.04em;color:var(--ink);text-transform:none">WHP</b><span id="brandSub"></span></a>
+    <nav class="nav" id="nav"></nav>
+    <div class="rail-foot" id="railFoot"></div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+<div id="modal"></div>
+<div id="toastHost"></div>
+
+<script type="module">
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../js/config.js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm";
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+let CASH = { cacao: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] }, admin: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] } };
+let FARMERS = [];
+const APP_BASE = "..";
+const CEILINGS = { cacao: 20000000, admin: 500000 };
+
+const SUBMITTERS = { dg_whp: { ent: "WHP" }, daf_whp: { ent: "WHP" }, dg_saic: { ent: "SAIC" } };
+const TYPES = ["depense", "budget", "contrat", "investissement", "recrutement", "autre"];
+
+const STR = {
+  fr: {
+    sub: "Groupe Wenkam Holding Plus", nav_overview: "Vue du groupe", nav_approvals: "Approbations", nav_treasury: "SAIC · Trésorerie", nav_trace: "SAIC · Traçabilité", nav_apps: "Applications",
+    signin: "Connexion", signin_sub: "Tableau de bord du groupe WHP", email: "E-mail", password: "Mot de passe", signin_btn: "Se connecter", bad_login: "E-mail ou mot de passe incorrect.", signout: "Se déconnecter",
+    forgot: "Mot de passe oublié ?", reset_sent: "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.", enter_email: "Saisissez d'abord votre e-mail.",
+    no_access: "Ce tableau de bord est réservé au PDG et aux directions de WHP et de la SAIC. Demandez l'accès à l'administrateur.", loading: "Chargement…", load_err: "Chargement impossible : {m}", save_err: "Enregistrement impossible : {m}", r_none: "",
+    viewing_as: "Rôle (démo)", lang: "English", draft: "Brouillon : chiffres de trésorerie importés de vos fichiers Excel ; la traçabilité montre les producteurs d'exemple. Les demandes au PDG sont enregistrées et partagées.",
+    r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
+    rl_dg_whp: "Directeur Général, WHP", rl_daf_whp: "Directeur Administratif et Financier, WHP", rl_dg_saic: "Directeur Général, SAIC",
+    ov_title: "Tableau de bord du groupe", ov_sub: "La situation de chaque département de Wenkam Holding Plus et de la SAIC, et ce qui attend votre décision.",
+    k_pending: "À approuver", k_urgent: "dont {n} urgente(s)", k_cash: "Trésorerie SAIC disponible", k_cash_sub: "Caisse cacao + caisse administration", k_cocoa: "Achats de cacao", k_cocoa_sub: "{p}", k_farmers: "Producteurs vérifiés", k_farmers_sub: "{v} sur {n} enregistrés", k_alerts: "Points d'attention", k_alerts_sub: "Trésorerie et traçabilité",
+    depts: "Départements", open_app: "Ouvrir l'application", open_detail: "Voir le détail",
+    d_cacao: "Caisse Achat Cacao", d_admin: "Caisse Administration", d_trace: "Traçabilité cacao", d_requests: "Demandes des directions",
+    closing: "Solde", of_ceiling: "du plafond", ceiling: "Plafond", inflows: "Entrées", outflows: "Sorties", period: "Période", balance: "Solde", bal_chart: "Évolution du solde",
+    st_ok: "Bonne santé", st_watch: "À surveiller", st_bad: "Action requise",
+    purchases: "Achats de cacao", opex: "Frais opérationnels", top_cats: "Principales dépenses", by_cat: "Dépenses par catégorie", by_buyer: "Achats par acheteur",
+    farmers: "producteurs", plots: "parcelles", ha: "ha déclarés", verified: "Vérifiés", pending: "À vérifier", hold: "En attente", geo: "{p} % des parcelles géolocalisées",
+    req_pending: "en attente", req_info: "info demandée", req_approved: "approuvées", req_rejected: "rejetées",
+    attention: "Points d'attention", approvals_preview: "En attente de votre décision", see_all: "Tout voir", none_pending: "Rien n'attend votre décision.",
+    a_title: "Approbations", a_sub: "Demandes soumises au PDG par le DG WHP, le DAF WHP et le DG SAIC.", a_sub_mine: "Vos demandes au PDG et leur suivi.",
+    new_req: "Nouvelle demande au PDG", f_all: "Toutes", f_pending: "En attente", f_info: "Info demandée", f_approved: "Approuvées", f_rejected: "Rejetées", f_from: "Toutes les directions", f_ent: "Toutes les sociétés",
+    s_pending: "En attente", s_info: "Info demandée", s_approved: "Approuvée", s_rejected: "Rejetée",
+    t_depense: "Dépense", t_budget: "Budget", t_contrat: "Contrat", t_investissement: "Investissement", t_recrutement: "Recrutement", t_autre: "Autre",
+    urgent: "Urgent", due: "Échéance {d}", amount: "Montant", no_amount: "Sans montant",
+    approve: "Approuver", reject: "Rejeter", ask_info: "Demander des informations", reply: "Répondre", comment: "Commentaire (facultatif)", reason: "Motif du rejet", question: "Votre question", answer: "Votre réponse", confirm: "Confirmer", cancel: "Annuler", close: "Fermer",
+    h_submitted: "Soumise", h_approved: "Approuvée", h_rejected: "Rejetée", h_info: "Information demandée", h_reply: "Réponse",
+    f_title: "Objet", f_ent2: "Société", f_type: "Type", f_amount: "Montant (FCFA)", f_urgency: "Urgence", f_normal: "Normale", f_urgent: "Urgente", f_due: "Décision souhaitée avant le", f_details: "Détails et justification", submit: "Soumettre au PDG",
+    need_fields: "Saisissez l'objet et les détails.", submitted: "Demande {id} soumise au PDG", saved: "Enregistré", only_submitters: "Seuls le DG WHP, le DAF WHP et le DG SAIC soumettent des demandes au PDG.",
+    no_req: "Aucune demande.", mine_only: "Le PDG voit toutes les demandes ; chaque direction voit les siennes.",
+    att: "Pièces jointes", att_add: "Joindre des fichiers", att_hint: "Photos ou PDF, 20 Mo max. par fichier.", att_off: "L'ajout de fichiers n'est pas disponible dans cet affichage.", att_remove: "Retirer", att_type: "Photos (JPG, PNG) et PDF uniquement.", att_fail: "« {n} » n'a pas pu être envoyé : {m}", uploading: "Envoi…",
+    tr_title: "SAIC · Trésorerie", tr_sub: "Vue en lecture seule des deux caisses de la SAIC. Les approbations de la trésorerie restent au DG SAIC et à la DAF.",
+    tc_title: "SAIC · Traçabilité cacao", tc_sub: "Registre des producteurs et des parcelles (formulaires F01), en lecture seule.",
+    apps_title: "Applications", apps_sub: "Les outils déjà en ligne, et ceux à venir. Chaque tableau de bord ajouté apparaîtra ici et dans la vue du groupe.",
+    app_trace: "Registre des producteurs", app_trace_d: "Producteurs, parcelles, cartographie, F01", app_treso: "Trésorerie SAIC", app_treso_d: "Caisses, dépenses, demandes de fonds", soon: "À venir", app_soon_d: "Prochain tableau de bord",
+    al_over: "{c} : solde au-dessus du plafond le {d} ({v}).", al_low: "{c} : solde de {v}, réapprovisionnement à prévoir.", al_dup: "Doublon possible : {a} payé par les deux caisses (roll-up, flyers, polos).", al_hold: "{n} producteur(s) en attente : leur cacao ne peut pas être libéré.", al_noref: "{n} paiement(s) de la caisse cacao sans numéro de fiche.", al_big: "{n} dépense(s) de plus de 150 000 F à la caisse administration (approbation DG SAIC requise).",
+    example: "Exemple", cover: "≈ {n} jours de couverture", ops: "{n} opérations"
+  },
+  en: {
+    sub: "Wenkam Holding Plus group", nav_overview: "Group overview", nav_approvals: "Approvals", nav_treasury: "SAIC · Treasury", nav_trace: "SAIC · Traceability", nav_apps: "Applications",
+    signin: "Sign in", signin_sub: "WHP group dashboard", email: "Email", password: "Password", signin_btn: "Sign in", bad_login: "Email or password is incorrect.", signout: "Sign out",
+    forgot: "Forgot password?", reset_sent: "If this email has an account, a reset link has been sent.", enter_email: "Enter your email first.",
+    no_access: "This dashboard is for the PDG and the WHP and SAIC management. Ask the administrator for access.", loading: "Loading…", load_err: "Couldn't load: {m}", save_err: "Couldn't save: {m}", r_none: "",
+    viewing_as: "Role (demo)", lang: "Français", draft: "Draft: treasury figures imported from your Excel files; traceability shows the example farmers. Requests to the PDG are saved and shared.",
+    r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
+    rl_dg_whp: "Managing Director, WHP", rl_daf_whp: "Finance Director, WHP", rl_dg_saic: "Managing Director, SAIC",
+    ov_title: "Group dashboard", ov_sub: "How each department of Wenkam Holding Plus and SAIC is doing, and what is waiting for your decision.",
+    k_pending: "To approve", k_urgent: "{n} urgent", k_cash: "SAIC cash available", k_cash_sub: "Cocoa + administration cash boxes", k_cocoa: "Cocoa purchases", k_cocoa_sub: "{p}", k_farmers: "Verified farmers", k_farmers_sub: "{v} of {n} registered", k_alerts: "Points to watch", k_alerts_sub: "Treasury and traceability",
+    depts: "Departments", open_app: "Open the app", open_detail: "See details",
+    d_cacao: "Cocoa purchase cash box", d_admin: "Administration cash box", d_trace: "Cocoa traceability", d_requests: "Requests from management",
+    closing: "Balance", of_ceiling: "of ceiling", ceiling: "Ceiling", inflows: "Cash in", outflows: "Cash out", period: "Period", balance: "Balance", bal_chart: "Balance over time",
+    st_ok: "Healthy", st_watch: "Watch", st_bad: "Action needed",
+    purchases: "Cocoa purchases", opex: "Operating costs", top_cats: "Top spending", by_cat: "Spending by category", by_buyer: "Purchases by buyer",
+    farmers: "farmers", plots: "plots", ha: "ha declared", verified: "Verified", pending: "Pending review", hold: "On hold", geo: "{p} % of plots geolocated",
+    req_pending: "pending", req_info: "info requested", req_approved: "approved", req_rejected: "rejected",
+    attention: "Points to watch", approvals_preview: "Waiting for your decision", see_all: "See all", none_pending: "Nothing is waiting for your decision.",
+    a_title: "Approvals", a_sub: "Requests submitted to the PDG by the DG WHP, the DAF WHP and the DG SAIC.", a_sub_mine: "Your requests to the PDG and where they stand.",
+    new_req: "New request to the PDG", f_all: "All", f_pending: "Pending", f_info: "Info requested", f_approved: "Approved", f_rejected: "Rejected", f_from: "All departments", f_ent: "All companies",
+    s_pending: "Pending", s_info: "Info requested", s_approved: "Approved", s_rejected: "Rejected",
+    t_depense: "Expense", t_budget: "Budget", t_contrat: "Contract", t_investissement: "Investment", t_recrutement: "Hiring", t_autre: "Other",
+    urgent: "Urgent", due: "Due {d}", amount: "Amount", no_amount: "No amount",
+    approve: "Approve", reject: "Reject", ask_info: "Ask for information", reply: "Reply", comment: "Comment (optional)", reason: "Reason for rejection", question: "Your question", answer: "Your answer", confirm: "Confirm", cancel: "Cancel", close: "Close",
+    h_submitted: "Submitted", h_approved: "Approved", h_rejected: "Rejected", h_info: "Information requested", h_reply: "Reply",
+    f_title: "Subject", f_ent2: "Company", f_type: "Type", f_amount: "Amount (FCFA)", f_urgency: "Urgency", f_normal: "Normal", f_urgent: "Urgent", f_due: "Decision needed by", f_details: "Details and justification", submit: "Submit to the PDG",
+    need_fields: "Enter a subject and details.", submitted: "Request {id} sent to the PDG", saved: "Saved", only_submitters: "Only the DG WHP, the DAF WHP and the DG SAIC submit requests to the PDG.",
+    no_req: "No requests.", mine_only: "The PDG sees every request; each department sees its own.",
+    att: "Attachments", att_add: "Attach files", att_hint: "Photos or PDFs, 20 MB max per file.", att_off: "Attaching files isn't available in this view.", att_remove: "Remove", att_type: "Photos (JPG, PNG) and PDFs only.", att_fail: "Couldn't upload “{n}”: {m}", uploading: "Uploading…",
+    tr_title: "SAIC · Treasury", tr_sub: "Read-only view of SAIC's two cash boxes. Treasury approvals stay with the DG SAIC and the DAF.",
+    tc_title: "SAIC · Cocoa traceability", tc_sub: "Farmer and plot registry (F01 forms), read only.",
+    apps_title: "Applications", apps_sub: "The tools already online, and those to come. Every new dashboard will appear here and in the group overview.",
+    app_trace: "Farmer registry", app_trace_d: "Farmers, plots, mapping, F01", app_treso: "SAIC treasury", app_treso_d: "Cash boxes, expenses, fund requests", soon: "Coming", app_soon_d: "Next dashboard",
+    al_over: "{c}: balance above the ceiling on {d} ({v}).", al_low: "{c}: balance {v}, plan a top-up.", al_dup: "Possible double payment: {a} paid from both cash boxes (roll-up, flyers, polos).", al_hold: "{n} farmer(s) on hold: their cocoa can't be released.", al_noref: "{n} cocoa cash box payment(s) without a form number.", al_big: "{n} admin expense(s) above 150,000 F (needs DG SAIC approval).",
+    example: "Example", cover: "≈ {n} days of cover", ops: "{n} transactions"
+  }
+};
+
+const S = { lang: (() => { try { const l = localStorage.getItem("saic-lang"); if (l === "en" || l === "fr") return l; } catch (e) {} return (navigator.language || "fr").slice(0, 2) === "en" ? "en" : "fr"; })(), role: null, me: null, ready: false, loadError: "", requests: [], db: null, assets: null, flt: { st: "pending", from: "", ent: "" } };
+const t = (k, p = {}) => String((STR[S.lang][k] ?? STR.fr[k] ?? k)).replace(/\{(\w+)\}/g, (_, x) => p[x] ?? "");
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const loc = () => S.lang === "fr" ? "fr-FR" : "en-GB";
+const fc = n => Math.round(n).toLocaleString(loc()).replace(/ /g, " ") + " F";
+const fcs = n => { const a = Math.abs(n); return a >= 1e6 ? (n / 1e6).toLocaleString(loc(), { maximumFractionDigits: 1 }) + " M" : a >= 1e3 ? Math.round(n / 1e3).toLocaleString(loc()) + " k" : Math.round(n).toLocaleString(loc()); };
+const dfmt = iso => new Date(iso.slice(0, 10) + "T12:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short" });
+const dfull = iso => new Date(iso.slice(0, 10) + "T12:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" });
+const dtime = iso => new Date(iso).toLocaleString(loc(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+function toast(m) { $("#toastHost").innerHTML = `<div class="toast" role="status">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => $("#toastHost").innerHTML = "", 3000); }
+const statusPill = s => `<span class="pill ${s === "ok" ? "ok" : s === "watch" ? "warn" : "bad"}">${esc(t("st_" + s))}</span>`;
+
+/* ---------- treasury summary (same rules as the SAIC treasury app) ---------- */
+function cashBox(key) {
+  const d = CASH[key], ceiling = CEILINGS[key];
+  let bal = d.opening; const days = [];
+  for (const r of d.rows) { bal += r.in - r.out; if (days.length && days[days.length - 1].date === r.date) days[days.length - 1].bal = bal; else days.push({ date: r.date, bal }); }
+  const totIn = d.rows.reduce((a, r) => a + r.in, 0), totOut = d.rows.reduce((a, r) => a + r.out, 0), closing = d.opening + totIn - totOut;
+  const cats = {}; for (const r of d.rows) if (r.out) { const c = r.cat.trim().replace(/\s+/g, " "); cats[c] = (cats[c] || 0) + r.out; }
+  const over = days.filter(x => x.bal > ceiling), maxDay = days.reduce((m, x) => x.bal > m.bal ? x : m, { bal: d.opening, date: d.from });
+  const span = Math.max(1, (new Date(d.to) - new Date(d.from)) / 864e5 + 1), burn = totOut / span;
+  const status = closing > ceiling ? "bad" : closing < ceiling * 0.1 ? "bad" : over.length ? "watch" : "ok";
+  return { key, d, c: { ceiling }, days, totIn, totOut, closing, cats: Object.entries(cats).sort((a, b) => b[1] - a[1]), over, maxDay, burn, status };
+}
+let CB = {};
+const normName = n => String(n || "").toUpperCase().split(/[\s-]+/).filter(Boolean).sort().join(" ");
+let cocoa; const computeCocoa = () => {
+  const pur = CASH.cacao.rows.filter(r => r.out && /achat de cacao/i.test(r.cat));
+  const total = pur.reduce((a, r) => a + r.out, 0), opex = CASH.cacao.rows.filter(r => r.out && !/achat de cacao/i.test(r.cat)).reduce((a, r) => a + r.out, 0);
+  const by = {}, names = {}; for (const r of pur) { const k = normName(r.party); names[k] ||= r.party; by[k] = (by[k] || 0) + r.out; }
+  return { total, opex, n: pur.length, byBuyer: Object.entries(by).sort((a, b) => b[1] - a[1]).map(([k, v]) => [names[k], v]) };
+};
+
+/* ---------- traceability summary ---------- */
+let trace; const computeTrace = () => {
+  const st = f => f.decision === "Approved" ? "verified" : (!f.idNumber || f.plots.some(p => !p.defoDate || !p.defoEvidence)) ? "hold" : "pending";
+  const list = FARMERS.map(f => ({ f, s: st(f) }));
+  const plots = FARMERS.flatMap(f => f.plots);
+  const geo = plots.filter(p => (p.lat && p.lon) || (p.polygon && p.polygon.length > 2)).length;
+  const ha = plots.reduce((a, p) => a + (Number(p.area) || 0), 0);
+  const c = s => list.filter(x => x.s === s).length;
+  return { list, n: FARMERS.length, verified: c("verified"), pending: c("pending"), hold: c("hold"), plots: plots.length, geo, ha };
+};
+function recompute() { CB = { cacao: cashBox("cacao"), admin: cashBox("admin") }; cocoa = computeCocoa(); trace = computeTrace(); }
+
+/* ---------- alerts ---------- */
+function alerts() {
+  const out = [];
+  for (const k of ["cacao", "admin"]) { const a = CB[k], nm = t("d_" + k);
+    if (a.over.length) out.push({ lv: "warn", m: t("al_over", { c: nm, d: dfull(a.maxDay.date), v: fc(a.maxDay.bal) }), href: "#treasury" });
+    if (a.closing < a.c.ceiling * 0.1) out.push({ lv: "bad", m: t("al_low", { c: nm, v: fc(a.closing) }), href: "#treasury" }); }
+  const dup = CASH.cacao.rows.filter(r => r.out >= 50000 && CASH.admin.rows.some(o => o.out === r.out));
+  for (const r of dup) out.push({ lv: "warn", m: t("al_dup", { a: fc(r.out) }), href: "#treasury" });
+  const noref = CASH.cacao.rows.filter(r => r.out && !r.ref).length; if (noref) out.push({ lv: "warn", m: t("al_noref", { n: noref }), href: "#treasury" });
+  const big = CASH.admin.rows.filter(r => r.out > 150000).length; if (big) out.push({ lv: "warn", m: t("al_big", { n: big }), href: "#treasury" });
+  if (trace.hold) out.push({ lv: "bad", m: t("al_hold", { n: trace.hold }), href: "#trace" });
+  return out.sort((a, b) => a.lv === b.lv ? 0 : a.lv === "bad" ? -1 : 1);
+}
+
+/* ---------- charts ---------- */
+function balanceChart(a) {
+  const W = 760, H = 280, L = 64, R = 16, T = 18, B = 30;
+  const pts = [{ date: a.d.from, bal: a.d.opening }, ...a.days];
+  const t0 = new Date(a.d.from).getTime(), t1 = new Date(a.d.to).getTime();
+  const X = iso => L + (new Date(iso).getTime() - t0) / Math.max(1, t1 - t0) * (W - L - R);
+  const maxV = Math.max(a.c.ceiling, ...pts.map(p => p.bal)) * 1.08;
+  const Y = v => T + (1 - v / maxV) * (H - T - B);
+  const ticks = []; const stepRaw = maxV / 4, mag = Math.pow(10, Math.floor(Math.log10(stepRaw))); const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= stepRaw);
+  for (let v = 0; v <= maxV; v += step) ticks.push(v);
+  let path = "", px = null;
+  for (const p of pts) { const x = X(p.date), y = Y(p.bal); path += px === null ? `M${x},${y}` : `H${x}V${y}`; px = x; }
+  path += `H${X(a.d.to)}`;
+  const area = path + `V${Y(0)}H${L}Z`;
+  const xt = []; const d0 = new Date(a.d.from), d1 = new Date(a.d.to); const nd = Math.round((d1 - d0) / 864e5); const every = nd > 20 ? 7 : nd > 10 ? 3 : 1;
+  for (let i = 0; i <= nd; i += every) { const dd = new Date(d0.getTime() + i * 864e5).toISOString().slice(0, 10); xt.push(dd); }
+  const last = pts[pts.length - 1];
+  return `<div class="chart-wrap" data-chart="${a.key}"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t("bal_chart"))}">
+    ${ticks.map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${fcs(v)}</text>`).join("")}
+    ${xt.map(dd => `<text class="axis" x="${X(dd)}" y="${H - 8}" text-anchor="middle">${dfmt(dd)}</text>`).join("")}
+    <path class="area" d="${area}"/><path class="line" d="${path}"/>
+    <line class="ceil" x1="${L}" x2="${W - R}" y1="${Y(a.c.ceiling)}" y2="${Y(a.c.ceiling)}"/>
+    <text class="ceil-l" x="${W - R}" y="${Y(a.c.ceiling) - 6}" text-anchor="end">${esc(t("ceiling"))} ${fcs(a.c.ceiling)}</text>
+    <circle class="dot" cx="${X(a.d.to)}" cy="${Y(last.bal)}" r="5"/>
+    <line class="xh" id="xh-${a.key}" y1="${T}" y2="${H - B}" x1="-10" x2="-10"/>
+    <rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" data-hit="${a.key}"/>
+  </svg><div class="tip" id="tip-${a.key}" hidden></div></div>`;
+}
+function bindChart(a) {
+  const wrap = document.querySelector(`[data-chart="${a.key}"]`); if (!wrap) return;
+  const svg = wrap.querySelector("svg"), hit = wrap.querySelector("[data-hit]"), tip = wrap.querySelector(".tip"), xh = wrap.querySelector(".xh");
+  const W = 760, L = 64, R = 16, t0 = new Date(a.d.from).getTime(), t1 = new Date(a.d.to).getTime();
+  const pts = [{ date: a.d.from, bal: a.d.opening }, ...a.days];
+  const move = e => {
+    const r = svg.getBoundingClientRect(), vx = (e.clientX - r.left) / r.width * W;
+    const tt = t0 + (vx - L) / (W - L - R) * (t1 - t0);
+    let p = pts[0]; for (const q of pts) if (new Date(q.date).getTime() <= tt + 432e5) p = q;
+    const day = new Date(Math.min(Math.max(tt, t0), t1)).toISOString().slice(0, 10);
+    xh.setAttribute("x1", vx); xh.setAttribute("x2", vx);
+    tip.hidden = false; tip.style.left = (e.clientX - wrap.getBoundingClientRect().left) + "px"; tip.style.top = (e.clientY - wrap.getBoundingClientRect().top) + "px";
+    tip.textContent = `${dfull(day)} · ${t("balance")} ${fc(p.bal)}`;
+  };
+  hit.addEventListener("pointermove", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; xh.setAttribute("x1", -10); xh.setAttribute("x2", -10); });
+}
+function bars(list, total, opt = {}) {
+  const max = Math.max(...list.map(x => x[1]), 1);
+  return `<div class="bars">${list.map(([k, v]) => `<div class="bar-row" title="${esc(opt.label ? opt.label(k) : k)} : ${fc(v)}"><span class="lab">${esc(opt.label ? opt.label(k) : k)}</span><span class="bar-track"><span class="bar-fill ${opt.cls || ""}" style="width:${v / max * 100}%"></span></span><span class="val">${fcs(v)}<small>${Math.round(v / total * 100)} %</small></span></div>`).join("")}</div>`;
+}
+
+
+
+/* ---------- shell ---------- */
+const route = () => location.hash.replace(/^#/, "") || "overview";
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+const visibleReqs = () => S.role === "pdg" ? S.requests : S.requests.filter(r => r.from === S.role);
+const pendingForPdg = () => S.requests.filter(r => r.status === "pending");
+function shell() {
+  document.documentElement.lang = S.lang;
+  $("#brandSub").textContent = t("sub");
+  const r = route(), n = S.role === "pdg" ? pendingForPdg().length : visibleReqs().filter(x => x.status === "info").length;
+  const items = !S.role ? [] : S.role === "pdg"
+    ? [["overview", t("nav_overview")], ["approvals", t("nav_approvals"), n], ["treasury", t("nav_treasury")], ["trace", t("nav_trace")], ["apps", t("nav_apps")]]
+    : [["approvals", t("nav_approvals"), n], ["apps", t("nav_apps")]];
+  $("#nav").innerHTML = items.map(([k, l, c]) => `<a href="#${k}" class="${r === k ? "on" : ""}">${esc(l)}${c ? `<span class="badge">${c}</span>` : ""}</a>`).join("");
+  $("#railFoot").innerHTML = `${S.me ? `<span>${esc(S.me.name)}${S.role ? `<br>${esc(t("r_" + S.role))}` : ""}</span>` : ""}
+    <div class="row"><button class="btn small" id="langBtn">${esc(t("lang"))}</button>${S.me ? `<button class="btn small" id="outBtn">${esc(t("signout"))}</button>` : ""}</div>`;
+  const ob = $("#outBtn"); if (ob) ob.onclick = async () => { await sb.auth.signOut(); S.me = null; S.role = null; render(); };
+  try { localStorage.setItem("saic-lang", S.lang); } catch (e) {}
+  $("#langBtn").onclick = () => { S.lang = S.lang === "fr" ? "en" : "fr"; render(); };
+}
+function render() {
+  shell();
+  const r = route(), m = $("#main");
+  if (!S.ready) { m.innerHTML = `<div class="card">${esc(t("loading"))}</div>`; return; }
+  if (!S.me) { m.innerHTML = viewLogin(); bindLogin(); return; }
+  if (!S.role) { m.innerHTML = `<div class="notice">${esc(t("no_access"))}</div>`; return; }
+  if (S.loadError) { m.innerHTML = `<div class="notice" style="background:var(--bad-bg);color:var(--bad)">${esc(t("load_err", { m: S.loadError }))}</div>`; return; }
+  const note = "";
+  if (S.role !== "pdg" && !["approvals", "apps"].includes(r)) { location.hash = "approvals"; return; }
+  if (r === "approvals") { m.innerHTML = note + viewApprovals(); bindApprovals(); return; }
+  if (r === "treasury") { m.innerHTML = note + viewTreasury(); bindChart(CB.cacao); bindChart(CB.admin); return; }
+  if (r === "trace") { m.innerHTML = note + viewTrace(); return; }
+  if (r === "apps") { m.innerHTML = note + viewApps(); return; }
+  m.innerHTML = note + viewOverview(); bindChart(CB.cacao); bindChart(CB.admin);
+}
+
+/* ---------- overview ---------- */
+function reqCounts(who) { const l = S.requests.filter(r => r.from === who); return { pending: l.filter(r => r.status === "pending").length, info: l.filter(r => r.status === "info").length, approved: l.filter(r => r.status === "approved").length, rejected: l.filter(r => r.status === "rejected").length }; }
+function deptCash(k) {
+  const a = CB[k], pct = a.closing / a.c.ceiling;
+  return `<div class="card dept">
+    <div class="box-head"><div><div class="ent">SAIC</div><h2>${esc(t("d_" + k))}</h2></div>${statusPill(a.status)}</div>
+    <div><div class="big">${fc(a.closing)}</div><div class="small muted">${Math.round(pct * 100)} % ${esc(t("of_ceiling"))} (${fcs(a.c.ceiling)}) · ${esc(t("cover", { n: Math.max(0, Math.round(a.closing / Math.max(a.burn, 1))) }))}</div></div>
+    <div class="gauge"><span class="${a.status === "bad" ? "over" : a.status === "watch" ? "low" : ""}" style="width:${Math.min(pct, 1.25) / 1.25 * 100}%"></span><i style="left:80%"></i></div>
+    <div class="kv3"><div><span class="muted">${esc(t("inflows"))}</span><b>${fcs(a.totIn)}</b></div><div><span class="muted">${esc(t("outflows"))}</span><b>${fcs(a.totOut)}</b></div><div><span class="muted">${esc(t("period"))}</span><b>${dfmt(a.d.from)} – ${dfmt(a.d.to)}</b></div></div>
+    ${bars(a.cats.slice(0, 3), a.totOut)}
+    <div class="foot"><a href="#treasury">${esc(t("open_detail"))}</a><a class="btn small" href="${APP_BASE}/tresorerie/">${esc(t("open_app"))}</a></div></div>`;
+}
+function deptTrace() {
+  const s = trace, st = s.hold ? (s.hold / s.n > 0.2 ? "bad" : "watch") : "ok", w = x => x / Math.max(s.n, 1) * 100;
+  return `<div class="card dept">
+    <div class="box-head"><div><div class="ent">SAIC</div><h2>${esc(t("d_trace"))}</h2></div>${statusPill(st)}</div>
+    <div><div class="big">${s.n} <small>${esc(t("farmers"))}</small></div><div class="small muted">${s.plots} ${esc(t("plots"))} · ${s.ha.toLocaleString(loc(), { maximumFractionDigits: 1 })} ${esc(t("ha"))} · ${esc(t("geo", { p: Math.round(s.geo / Math.max(s.plots, 1) * 100) }))}</div></div>
+    <div class="statusbar" role="img" aria-label="${s.verified} / ${s.pending} / ${s.hold}"><span style="width:${w(s.verified)}%;background:var(--ok)"></span><span style="width:${w(s.pending)}%;background:var(--muted);opacity:.45"></span><span style="width:${w(s.hold)}%;background:var(--bad)"></span></div>
+    <div class="legend"><span><i class="b-ok"></i>${esc(t("verified"))} ${s.verified}</span><span><i class="b-pend"></i>${esc(t("pending"))} ${s.pending}</span><span><i class="b-bad"></i>${esc(t("hold"))} ${s.hold}</span></div>
+    <div class="foot"><a href="#trace">${esc(t("open_detail"))}</a><a class="btn small" href="${APP_BASE}/">${esc(t("open_app"))}</a></div></div>`;
+}
+function deptRequests() {
+  return `<div class="card dept">
+    <div class="box-head"><div><div class="ent">WHP · SAIC</div><h2>${esc(t("d_requests"))}</h2></div>${statusPill(pendingForPdg().some(r => r.urgency === "urgent") ? "bad" : pendingForPdg().length ? "watch" : "ok")}</div>
+    <div class="who-row">${Object.keys(SUBMITTERS).map(k => { const c = reqCounts(k); return `<span><span class="ent-chip ${SUBMITTERS[k].ent}">${SUBMITTERS[k].ent}</span> ${esc(t("r_" + k))}</span><span class="n"><b>${c.pending}</b> ${esc(t("req_pending"))}</span><span class="n muted">${c.approved} ${esc(t("req_approved"))}</span>`; }).join("")}</div>
+    <div class="foot"><a href="#approvals">${esc(t("see_all"))}</a></div></div>`;
+}
+function viewOverview() {
+  const pend = pendingForPdg(), urg = pend.filter(r => r.urgency === "urgent").length, al = alerts();
+  return `<div class="topline"><div><h1>${esc(t("ov_title"))}</h1><p>${esc(t("ov_sub"))}</p></div><span class="muted">${new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
+  <div class="tiles">
+    <a class="tile" href="#approvals" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_pending"))}</span><span class="v ${pend.length ? "warn" : "ok"}">${pend.length}</span><span class="s">${esc(t("k_urgent", { n: urg }))}</span></a>
+    <div class="tile"><span class="l">${esc(t("k_cash"))}</span><span class="v">${fcs(CB.cacao.closing + CB.admin.closing)}</span><span class="s">${esc(t("k_cash_sub"))}</span></div>
+    <div class="tile"><span class="l">${esc(t("k_cocoa"))}</span><span class="v">${fcs(cocoa.total)}</span><span class="s">${dfmt(CASH.cacao.from)} – ${dfull(CASH.cacao.to)} · ${esc(t("ops", { n: cocoa.n }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("k_farmers"))}</span><span class="v">${trace.verified}</span><span class="s">${esc(t("k_farmers_sub", { v: trace.verified, n: trace.n }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("k_alerts"))}</span><span class="v ${al.some(a => a.lv === "bad") ? "bad" : "warn"}">${al.length}</span><span class="s">${esc(t("k_alerts_sub"))}</span></div>
+  </div>
+  <div class="grid-wide">
+    <div class="card stack"><div class="topline"><h3>${esc(t("approvals_preview"))}</h3><a href="#approvals">${esc(t("see_all"))}</a></div>
+      ${pend.length ? pend.slice(0, 4).map(r => reqCard(r, true)).join("") : `<p class="muted">${esc(t("none_pending"))}</p>`}</div>
+    <div class="card stack"><h3>${esc(t("attention"))}</h3><ul class="issues">${al.map(a => `<li class="${a.lv}"><a href="${a.href}" style="color:inherit;text-decoration:none">${esc(a.m)}</a></li>`).join("")}</ul></div>
+  </div>
+  <h2>${esc(t("depts"))}</h2>
+  <div class="dept-grid">${deptCash("cacao")}${deptCash("admin")}${deptTrace()}${deptRequests()}</div>`;
+}
+
+/* ---------- approvals ---------- */
+function reqCard(r, compact) {
+  const stCls = r.status === "approved" ? "ok" : r.status === "rejected" ? "bad" : "warn";
+  const canDecide = S.role === "pdg" && r.status === "pending";
+  const canReply = S.role === r.from && r.status === "info";
+  const last = (r.history || [])[r.history.length - 1];
+  return `<div class="req">
+    <div><div class="row"><span class="ent-chip ${r.ent}">${r.ent}</span><b>${esc(r.title)}</b>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}<span class="pill ${stCls}">${esc(t("s_" + r.status))}</span>${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
+      <div class="small muted" style="margin-top:4px">${esc(t("rl_" + r.from))} · ${esc(t("t_" + r.type))} · ${dfull(r.created)}${r.due ? " · " + esc(t("due", { d: dfull(r.due) })) : ""}</div>
+      ${compact ? "" : `<p style="margin-top:8px;white-space:pre-wrap">${esc(r.details)}</p>${fileLinks(r.files)}
+      <ul class="thread" style="margin-top:10px">${(r.history || []).map(h => `<li><span class="when">${dtime(h.at)} · ${esc(t("r_" + h.role))}</span> — ${esc(t("h_" + h.action))}${h.note ? ` : ${esc(h.note)}` : ""}</li>`).join("")}</ul>`}
+      ${compact && last && last.note ? `<div class="small" style="margin-top:4px">${esc(last.note)}</div>` : ""}</div>
+    <div class="amt">${r.amount ? fc(r.amount) : `<span class="small muted">${esc(t("no_amount"))}</span>`}</div>
+    ${canDecide || canReply ? `<div class="acts">${canDecide ? `<button class="btn primary small" data-act="approve" data-id="${esc(r.id)}">${esc(t("approve"))}</button><button class="btn small" data-act="info" data-id="${esc(r.id)}">${esc(t("ask_info"))}</button><button class="btn small danger" data-act="reject" data-id="${esc(r.id)}">${esc(t("reject"))}</button>` : `<button class="btn primary small" data-act="reply" data-id="${esc(r.id)}">${esc(t("reply"))}</button>`}${compact ? ` <a href="#approvals" class="small">${esc(t("open_detail"))}</a>` : ""}</div>` : compact ? `<div class="acts"><a href="#approvals" class="small">${esc(t("open_detail"))}</a></div>` : ""}
+  </div>`;
+}
+function viewApprovals() {
+  const f = S.flt, isPdg = S.role === "pdg";
+  const list = visibleReqs().filter(r => (!f.st || r.status === f.st) && (!f.from || r.from === f.from) && (!f.ent || r.ent === f.ent)).sort((a, b) => (b.urgency === "urgent") - (a.urgency === "urgent") || b.created.localeCompare(a.created));
+  const counts = s => visibleReqs().filter(r => r.status === s).length;
+  return `<div class="topline"><div><h1>${esc(t("a_title"))}</h1><p>${esc(isPdg ? t("a_sub") : t("a_sub_mine"))}</p></div>${!isPdg ? `<button class="btn primary" data-act="new">${esc(t("new_req"))}</button>` : ""}</div>
+  <div class="toolbar">
+    ${[["pending", t("f_pending")], ["info", t("f_info")], ["approved", t("f_approved")], ["rejected", t("f_rejected")], ["", t("f_all")]].map(([k, l]) => `<button class="btn small ${f.st === k ? "primary" : ""}" data-st="${k}">${esc(l)}${k ? ` (${counts(k)})` : ""}</button>`).join("")}
+    ${isPdg ? `<select id="fFrom" aria-label="${esc(t("f_from"))}"><option value="">${esc(t("f_from"))}</option>${Object.keys(SUBMITTERS).map(k => `<option value="${k}" ${f.from === k ? "selected" : ""}>${esc(t("r_" + k))}</option>`).join("")}</select>
+    <select id="fEnt" aria-label="${esc(t("f_ent"))}"><option value="">${esc(t("f_ent"))}</option>${["WHP", "SAIC"].map(k => `<option ${f.ent === k ? "selected" : ""}>${k}</option>`).join("")}</select>` : ""}
+  </div>
+  <div class="stack">${list.length ? list.map(r => reqCard(r, false)).join("") : `<div class="card muted">${esc(t("no_req"))}</div>`}</div>
+  <p class="small muted">${esc(t("mine_only"))}</p>`;
+}
+function bindApprovals() {
+  document.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { S.flt.st = b.dataset.st; render(); });
+  const ff = $("#fFrom"); if (ff) ff.onchange = e => { S.flt.from = e.target.value; render(); };
+  const fe = $("#fEnt"); if (fe) fe.onchange = e => { S.flt.ent = e.target.value; render(); };
+}
+
+/* ---------- treasury (read-only) ---------- */
+function viewTreasury() {
+  const box = a => `<div class="card stack">
+    <div class="box-head"><div><h2>${esc(t("d_" + a.key))}</h2><span class="code">${a.key === "cacao" ? "COC" : "CAD"} · ${esc(t("period"))} ${dfmt(a.d.from)} – ${dfull(a.d.to)}</span></div>${statusPill(a.status)}</div>
+    <div class="kv3"><div><span class="muted">${esc(t("closing"))}</span><b>${fc(a.closing)}</b></div><div><span class="muted">${esc(t("inflows"))}</span><b>${fcs(a.totIn)}</b></div><div><span class="muted">${esc(t("outflows"))}</span><b>${fcs(a.totOut)}</b></div></div>
+    <h3>${esc(t("bal_chart"))}</h3>${balanceChart(a)}
+    <h3>${esc(t("by_cat"))}</h3>${bars(a.cats, a.totOut)}</div>`;
+  return `<div class="topline"><div><h1>${esc(t("tr_title"))}</h1><p>${esc(t("tr_sub"))}</p></div><a class="btn" href="${APP_BASE}/tresorerie/">${esc(t("open_app"))}</a></div>
+  <div class="tiles">
+    <div class="tile"><span class="l">${esc(t("purchases"))}</span><span class="v">${fcs(cocoa.total)}</span><span class="s">${esc(t("ops", { n: cocoa.n }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("opex"))}</span><span class="v">${fcs(cocoa.opex)}</span><span class="s">${(cocoa.opex / cocoa.total * 100).toLocaleString(loc(), { maximumFractionDigits: 1 })} %</span></div>
+    <div class="tile"><span class="l">${esc(t("k_cash"))}</span><span class="v">${fcs(CB.cacao.closing + CB.admin.closing)}</span><span class="s">${esc(t("k_cash_sub"))}</span></div>
+  </div>
+  <div class="grid2">${box(CB.cacao)}${box(CB.admin)}</div>
+  <div class="grid2"><div class="card stack"><h3>${esc(t("by_buyer"))}</h3>${bars(cocoa.byBuyer, cocoa.total, { cls: "pod" })}</div>
+    <div class="card stack"><h3>${esc(t("attention"))}</h3><ul class="issues">${alerts().filter(a => a.href === "#treasury").map(a => `<li class="${a.lv}">${esc(a.m)}</li>`).join("")}</ul></div></div>`;
+}
+
+/* ---------- traceability (read-only) ---------- */
+function viewTrace() {
+  const s = trace;
+  return `<div class="topline"><div><h1>${esc(t("tc_title"))}</h1><p>${esc(t("tc_sub"))}</p></div><a class="btn" href="${APP_BASE}/">${esc(t("open_app"))}</a></div>
+  <div class="tiles">
+    <div class="tile"><span class="l">${esc(t("farmers"))}</span><span class="v">${s.n}</span></div>
+    <div class="tile"><span class="l">${esc(t("verified"))}</span><span class="v ok">${s.verified}</span></div>
+    <div class="tile"><span class="l">${esc(t("pending"))}</span><span class="v">${s.pending}</span></div>
+    <div class="tile"><span class="l">${esc(t("hold"))}</span><span class="v bad">${s.hold}</span></div>
+    <div class="tile"><span class="l">${esc(t("plots"))}</span><span class="v">${s.plots}</span><span class="s">${esc(t("geo", { p: Math.round(s.geo / Math.max(s.plots, 1) * 100) }))}</span></div>
+  </div>
+  <div class="table-wrap"><table><thead><tr><th>ID</th><th>${esc(t("farmers"))}</th><th>Village</th><th class="r">${esc(t("plots"))}</th><th class="r">ha</th><th></th></tr></thead><tbody>
+  ${s.list.map(({ f, s: st }) => `<tr><td class="mono">${esc(f.id)}</td><td>${esc(f.name)}</td><td>${esc(f.village)}</td><td class="r num">${f.plots.length}</td><td class="r num">${f.plots.reduce((a, p) => a + (Number(p.area) || 0), 0).toLocaleString(loc(), { maximumFractionDigits: 2 })}</td>
+    <td><span class="pill ${st === "verified" ? "ok" : st === "hold" ? "bad" : "neutral"}">${esc(t(st))}</span></td></tr>`).join("")}</tbody></table></div>`;
+}
+
+/* ---------- applications ---------- */
+function viewApps() {
+  return `<div class="topline"><div><h1>${esc(t("apps_title"))}</h1><p>${esc(t("apps_sub"))}</p></div></div>
+  <div class="apps">
+    <a class="app-tile" href="${APP_BASE}/"><span class="ent-chip SAIC" style="align-self:flex-start">SAIC</span><b>${esc(t("app_trace"))}</b><span>${esc(t("app_trace_d"))}</span></a>
+    <a class="app-tile" href="${APP_BASE}/tresorerie/"><span class="ent-chip SAIC" style="align-self:flex-start">SAIC</span><b>${esc(t("app_treso"))}</b><span>${esc(t("app_treso_d"))}</span></a>
+    <div class="app-tile soon"><b>${esc(t("soon"))}</b><span>${esc(t("app_soon_d"))}</span></div>
+    <div class="app-tile soon"><b>${esc(t("soon"))}</b><span>${esc(t("app_soon_d"))}</span></div>
+  </div>`;
+}
+
+/* ---------- attachments ---------- */
+let attKeep = [], attNew = [];
+const fileLinks = files => (files || []).length ? `<span class="att-links">${files.map(f => `<a href="#" data-file="${esc(f.path)}">${esc(f.name)}</a>`).join("")}</span>` : "";
+document.addEventListener("click", async e => {
+  const a = e.target.closest("[data-file]"); if (!a) return; e.preventDefault();
+  const w = window.open("", "_blank");
+  const { data, error } = await sb.storage.from("pdg-files").createSignedUrl(a.dataset.file, 300);
+  if (error || !data) { if (w) w.close(); toast(t("save_err", { m: error ? error.message : "?" })); return; }
+  if (w) w.location = data.signedUrl; else location.href = data.signedUrl;
+});
+function attachField() {
+  attKeep = []; attNew = [];
+  return `<div class="f full"><span style="font-size:13px;font-weight:500">${esc(t("att"))}</span>
+    ${S.role && S.role !== "pdg" ? `<label class="btn small" style="align-self:flex-start"><input type="file" id="attIn" class="vh" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf">${esc(t("att_add"))}</label><span class="hint">${esc(t("att_hint"))}</span>` : `<span class="hint">${esc(t("att_off"))}</span>`}
+    <ul class="att-list" id="attList"></ul></div>`;
+}
+function bindAttach() {
+  const draw = () => { const l = $("#attList"); if (!l) return; l.innerHTML = attNew.map((f, i) => `<li><span>${esc(f.name)}</span><button type="button" class="btn small" data-attn="${i}">${esc(t("att_remove"))}</button></li>`).join("");
+    l.querySelectorAll("[data-attn]").forEach(b => b.onclick = () => { attNew.splice(+b.dataset.attn, 1); draw(); }); };
+  const inp = $("#attIn"); if (inp) inp.onchange = () => { for (const f of inp.files) attNew.push(f); inp.value = ""; draw(); };
+}
+function toJpeg(file, max = 2000, q = 0.85) {
+  return new Promise((res, rej) => { const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => { const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob(b => b ? res(b) : rej(new Error("image")), "image/jpeg", q); };
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error(t("att_type"))); }; img.src = u; });
+}
+async function uploadAttachments(errEl) {
+  const out = [];
+  for (const f of attNew) {
+    try {
+      let blob = f, type = f.type, name = f.name;
+      if (/^image\//.test(f.type) || /\.(heic|heif)$/i.test(f.name)) { if (f.size > 1.5e6 || !/^image\/(jpeg|png|webp)$/.test(f.type)) { blob = await toJpeg(f); type = "image/jpeg"; name = name.replace(/\.\w+$/, "") + ".jpg"; } }
+      else if (f.type !== "application/pdf") throw new Error(t("att_type"));
+      errEl.textContent = t("uploading");
+      const path = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}-${name.replace(/[^\w.\-]+/g, "_")}`;
+      const { error } = await sb.storage.from("pdg-files").upload(path, blob, { contentType: type, upsert: false });
+      if (error) throw new Error(error.message);
+      out.push({ path, name, type, size: blob.size });
+    } catch (e) { throw new Error(t("att_fail", { n: f.name, m: e.message || e.code })); }
+  }
+  errEl.textContent = "";
+  return out;
+}
+
+/* ---------- forms ---------- */
+function closeModal() { $("#modal").innerHTML = ""; }
+function modal(html) {
+  $("#modal").innerHTML = `<div class="scrim"><div class="drawer" role="dialog" aria-modal="true">${html}</div></div>`;
+  $("#modal .scrim").onclick = e => { if (e.target.classList.contains("scrim")) closeModal(); };
+  $("#modal").querySelectorAll("[data-close]").forEach(b => b.onclick = closeModal);
+}
+async function insertReq(r) {
+  const { error } = await sb.from("pdg_requests").insert({ id: r.id, from_role: S.role, ent: r.ent, type: r.type, title: r.title, amount: r.amount, urgency: r.urgency, due: r.due || null, details: r.details, files: r.files });
+  if (error) throw new Error(error.message);
+  await loadData();
+}
+async function stepReq(id, status, note) {
+  const { error } = await sb.from("pdg_requests").update({ status, last_note: note || null }).eq("id", id);
+  if (error) throw new Error(error.message);
+  await loadData();
+}
+function openNew() {
+  const ent = SUBMITTERS[S.role].ent;
+  modal(`<form id="nf" novalidate>
+    <header><div><h2>${esc(t("new_req"))}</h2><p>${esc(t("rl_" + S.role))}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body"><div class="fgrid">
+      <div class="f full"><label for="nt">${esc(t("f_title"))}</label><input id="nt" type="text" placeholder="Ex. : Achat d'un véhicule de collecte pour Mfou"></div>
+      <div class="f"><label for="ne">${esc(t("f_ent2"))}</label><select id="ne">${["WHP", "SAIC"].map(k => `<option ${k === ent ? "selected" : ""}>${k}</option>`).join("")}</select></div>
+      <div class="f"><label for="ny">${esc(t("f_type"))}</label><select id="ny">${TYPES.map(k => `<option value="${k}">${esc(t("t_" + k))}</option>`).join("")}</select></div>
+      <div class="f"><label for="na">${esc(t("f_amount"))}</label><input id="na" type="number" min="0" step="1000" inputmode="numeric"></div>
+      <div class="f"><label for="nu">${esc(t("f_urgency"))}</label><select id="nu"><option value="normal">${esc(t("f_normal"))}</option><option value="urgent">${esc(t("f_urgent"))}</option></select></div>
+      <div class="f"><label for="nd">${esc(t("f_due"))}</label><input id="nd" type="date"></div>
+      <div class="f full"><label for="nx">${esc(t("f_details"))}</label><textarea id="nx" style="min-height:120px"></textarea></div>
+      ${attachField()}
+    </div></div>
+    <footer><span class="err" id="nfErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("submit"))}</button></div></footer></form>`);
+  bindAttach();
+  $("#nf").onsubmit = async e => {
+    e.preventDefault();
+    const title = $("#nt").value.trim(), details = $("#nx").value.trim();
+    if (!title || !details) { $("#nfErr").textContent = t("need_fields"); return; }
+    const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+    let files; try { files = attNew.length ? await uploadAttachments($("#nfErr")) : []; } catch (x) { $("#nfErr").textContent = x.message; btn.disabled = false; return; }
+    const now = new Date().toISOString(), id = `PDG-${now.slice(0, 4)}-${String(Date.now()).slice(-5)}`;
+    try { await insertReq({ id, ent: $("#ne").value, type: $("#ny").value, title, amount: Number($("#na").value) || 0, urgency: $("#nu").value, due: $("#nd").value, details, files }); }
+    catch (x) { $("#nfErr").textContent = t("save_err", { m: x.message }); btn.disabled = false; return; }
+    closeModal(); toast(t("submitted", { id }));
+  };
+}
+function act(id, action) {
+  const r = JSON.parse(JSON.stringify(S.requests.find(x => x.id === id)));
+  const cfg = { approve: [t("approve"), t("comment"), false, "approved", "approved"], reject: [t("reject"), t("reason"), true, "rejected", "rejected"], info: [t("ask_info"), t("question"), true, "info", "info"], reply: [t("reply"), t("answer"), true, "pending", "reply"] }[action];
+  modal(`<form id="af"><header><div><h2>${esc(cfg[0])}</h2><p>${esc(r.title)}${r.amount ? " · " + fc(r.amount) : ""}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body"><div class="f"><label for="ax">${esc(cfg[1])}</label><textarea id="ax"></textarea></div></div>
+    <footer><span class="err" id="afErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("confirm"))}</button></div></footer></form>`);
+  $("#ax").focus();
+  $("#af").onsubmit = async e => { e.preventDefault(); const note = $("#ax").value.trim(); if (cfg[2] && !note) { $("#afErr").textContent = cfg[1]; return; }
+    try { await stepReq(r.id, cfg[3], note); closeModal(); toast(t("saved")); } catch (x) { $("#afErr").textContent = t("save_err", { m: x.message }); } };
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  if (b.dataset.act === "new") { if (S.role === "pdg") { toast(t("only_submitters")); return; } openNew(); }
+  else act(b.dataset.id, b.dataset.act);
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+/* ---------- login ---------- */
+function viewLogin() {
+  return `<div class="card stack" style="max-width:400px;margin:8vh auto 0;width:100%">
+    <div><b style="font-size:28px;color:var(--accent);letter-spacing:.04em">WHP</b><h1 style="margin-top:8px">${esc(t("signin"))}</h1><p class="muted">${esc(t("signin_sub"))}</p></div>
+    <form id="lf" class="stack" novalidate>
+      <div class="f"><label for="lem">${esc(t("email"))}</label><input id="lem" type="email" autocomplete="username" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
+      <div class="f"><label for="lpw">${esc(t("password"))}</label><input id="lpw" type="password" autocomplete="current-password" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
+      <span class="err" id="lErr"></span><button class="btn primary" type="submit" id="lBtn">${esc(t("signin_btn"))}</button><a href="#" id="lForgot">${esc(t("forgot"))}</a></form></div>`;
+}
+function bindLogin() {
+  $("#lf").onsubmit = async e => { e.preventDefault(); $("#lBtn").disabled = true; $("#lErr").textContent = "";
+    const { error } = await sb.auth.signInWithPassword({ email: $("#lem").value.trim(), password: $("#lpw").value });
+    if (error) { $("#lErr").textContent = /invalid/i.test(error.message) ? t("bad_login") : error.message; $("#lBtn").disabled = false; return; }
+    await boot(); };
+  $("#lForgot").onclick = async e => { e.preventDefault(); const em = $("#lem").value.trim(); if (!em) { $("#lErr").textContent = t("enter_email"); return; }
+    await sb.auth.resetPasswordForEmail(em, { redirectTo: location.origin + "/" }); $("#lErr").textContent = t("reset_sent"); };
+}
+
+/* ---------- data from Supabase ---------- */
+async function loadData() {
+  try {
+    const must = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
+    const reqs = await sb.from("pdg_requests").select("*").order("created_at", { ascending: false }).then(must);
+    S.requests = reqs.map(r => ({ id: r.id, from: r.from_role, ent: r.ent, type: r.type, title: r.title, amount: Number(r.amount), urgency: r.urgency, due: r.due || "", details: r.details,
+      files: r.files || [], status: r.status, example: r.example, created: r.created_at, history: r.history || [] }));
+    if (S.role === "pdg") {
+      const [boxes, tx, farmers] = await Promise.all([
+        sb.from("cash_boxes").select("*").then(must),
+        sb.from("cash_transactions").select("caisse, kind, date, ref, party, cat, amount, seq").eq("voided", false).order("date").order("seq").limit(20000).then(must),
+        sb.from("farmers").select("id, name, village, decision, id_number, archived, plots(area, lat, lon, polygon, defo_date, defo_evidence)").eq("archived", false).limit(10000).then(must)
+      ]);
+      const nd = {};
+      for (const b of boxes) {
+        CEILINGS[b.id] = Number(b.ceiling);
+        const rows = tx.filter(r => r.caisse === b.id).map(r => ({ date: r.date, ref: r.ref || "", party: r.party || "", cat: r.cat, out: r.kind === "out" ? Number(r.amount) : 0, in: r.kind === "in" ? Number(r.amount) : 0 }));
+        nd[b.id] = { opening: Number(b.opening), from: b.start_date, to: rows.reduce((m, r) => r.date > m ? r.date : m, b.start_date), rows };
+      }
+      CASH = { ...CASH, ...nd };
+      FARMERS = farmers.map(f => ({ id: f.id, name: f.name, village: f.village || "", decision: f.decision || "", idNumber: f.id_number || "",
+        plots: (f.plots || []).map(p => ({ area: p.area, lat: p.lat, lon: p.lon, polygon: p.polygon, defoDate: p.defo_date, defoEvidence: p.defo_evidence })) }));
+    }
+    S.loadError = "";
+  } catch (e) { S.loadError = e.message; }
+  recompute(); render();
+}
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { S.me = null; S.ready = true; render(); return; }
+  const user = session.user;
+  const [{ data: prof }, { data: mem }] = await Promise.all([
+    sb.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+    sb.from("exec_members").select("role").eq("user_id", user.id).maybeSingle()]);
+  S.me = { id: user.id, name: (prof && prof.full_name) || user.email };
+  S.role = mem ? mem.role : null;
+  S.ready = true;
+  if (S.role && S.role !== "pdg" && !["approvals", "apps"].includes(route())) location.hash = "approvals";
+  if (S.role) await loadData(); else render();
+}
+recompute(); render(); boot();
+</script>
+</body>
+</html>
