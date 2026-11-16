@@ -275,6 +275,8 @@ const STR = {
     no_access: "Ce tableau de bord est réservé au PDG et aux directions de WHP et de la SAIC. Demandez l'accès à l'administrateur.", loading: "Chargement…", load_err: "Chargement impossible : {m}", save_err: "Enregistrement impossible : {m}", r_none: "",
     d_from: "Soumise par", d_ent: "Société", d_type: "Type", d_amount: "Montant", d_urgency: "Urgence", d_due: "Décision souhaitée avant le", d_created: "Soumise le", d_ref: "Référence", d_details: "Détails et justification", d_files: "Pièces jointes", d_history: "Historique", d_nofiles: "Aucune pièce jointe.", d_open: "Ouvrir", d_none: "—", view: "Voir le détail", f_normal2: "Normale",
     d_recep: "Réception cacao", rc_bought: "achetés", rc_avg: "prix moyen", rc_traced: "tracés jusqu'au producteur", rc_stock: "stock", app_recep: "Réception cacao", app_recep_d: "Réceptions, prix, zones, livraisons par producteur",
+    nav_recep: "SAIC · Réception cacao", k_rq: "Cacao acheté", k_rq_sub: "{n} réceptions · {z} zones", k_rp: "Prix moyen d'achat", k_rp_sub: "min. {a} · max. {b} F/kg",
+    rp_title: "SAIC · Réception cacao", rp_sub: "Vue en lecture seule des réceptions de cacao au magasin : quantités, prix, zones d'origine et traçabilité.", rp_value: "Valeur des achats", rp_traced: "Tracé jusqu'au producteur", rp_stock: "Stock en magasin", rp_trend: "Prix moyen par semaine (F/kg)", rp_zones: "Quantités par zone", rp_buyers: "Quantités par acheteur", rp_months: "Par mois", rp_month: "Mois", rp_kg: "kg achetés", rp_avg: "prix moyen", rp_n: "réceptions",
     viewing_as: "Rôle (démo)", lang: "English", draft: "Brouillon : chiffres de trésorerie importés de vos fichiers Excel ; la traçabilité montre les producteurs d'exemple. Les demandes au PDG sont enregistrées et partagées.",
     r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
     rl_dg_whp: "Directeur Général, WHP", rl_daf_whp: "Directeur Administratif et Financier, WHP", rl_dg_saic: "Directeur Général, SAIC",
@@ -313,6 +315,8 @@ const STR = {
     no_access: "This dashboard is for the PDG and the WHP and SAIC management. Ask the administrator for access.", loading: "Loading…", load_err: "Couldn't load: {m}", save_err: "Couldn't save: {m}", r_none: "",
     d_from: "Submitted by", d_ent: "Company", d_type: "Type", d_amount: "Amount", d_urgency: "Urgency", d_due: "Decision needed by", d_created: "Submitted on", d_ref: "Reference", d_details: "Details and justification", d_files: "Attachments", d_history: "History", d_nofiles: "No attachments.", d_open: "Open", d_none: "—", view: "See details", f_normal2: "Normal",
     d_recep: "Cocoa reception", rc_bought: "bought", rc_avg: "average price", rc_traced: "traced to the farmer", rc_stock: "stock", app_recep: "Cocoa reception", app_recep_d: "Receptions, prices, zones, deliveries by farmer",
+    nav_recep: "SAIC · Cocoa reception", k_rq: "Cocoa bought", k_rq_sub: "{n} receptions · {z} zones", k_rp: "Average purchase price", k_rp_sub: "min {a} · max {b} F/kg",
+    rp_title: "SAIC · Cocoa reception", rp_sub: "Read-only view of cocoa received at the warehouse: quantities, prices, zones of origin and traceability.", rp_value: "Purchase value", rp_traced: "Traced to the farmer", rp_stock: "Warehouse stock", rp_trend: "Average price per week (F/kg)", rp_zones: "Quantities by zone", rp_buyers: "Quantities by buyer", rp_months: "By month", rp_month: "Month", rp_kg: "kg bought", rp_avg: "average price", rp_n: "receptions",
     viewing_as: "Role (demo)", lang: "Français", draft: "Draft: treasury figures imported from your Excel files; traceability shows the example farmers. Requests to the PDG are saved and shared.",
     r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
     rl_dg_whp: "Managing Director, WHP", rl_daf_whp: "Finance Director, WHP", rl_dg_saic: "Managing Director, SAIC",
@@ -468,7 +472,7 @@ function shell() {
   $("#brandSub").textContent = t("sub");
   const r = route(), n = S.role === "pdg" ? pendingForPdg().length : visibleReqs().filter(x => x.status === "info").length;
   const items = !S.role ? [] : S.role === "pdg"
-    ? [["overview", t("nav_overview")], ["approvals", t("nav_approvals"), n], ["treasury", t("nav_treasury")], ["trace", t("nav_trace")], ["apps", t("nav_apps")]]
+    ? [["overview", t("nav_overview")], ["approvals", t("nav_approvals"), n], ["recep", t("nav_recep")], ["treasury", t("nav_treasury")], ["trace", t("nav_trace")], ["apps", t("nav_apps")]]
     : [["approvals", t("nav_approvals"), n], ["apps", t("nav_apps")]];
   $("#nav").innerHTML = items.map(([k, l, c]) => `<a href="#${k}" class="${r === k ? "on" : ""}">${esc(l)}${c ? `<span class="badge">${c}</span>` : ""}</a>`).join("");
   $("#railFoot").innerHTML = `${S.me ? `<span>${esc(S.me.name)}${S.role ? `<br>${esc(t("r_" + S.role))}` : ""}</span>` : ""}
@@ -488,6 +492,7 @@ function render() {
   if (S.role !== "pdg" && !["approvals", "apps"].includes(r)) { location.hash = "approvals"; return; }
   if (r === "approvals") { m.innerHTML = note + viewApprovals(); bindApprovals(); return; }
   if (r === "treasury") { m.innerHTML = note + viewTreasury(); bindChart(CB.cacao); bindChart(CB.admin); return; }
+  if (r === "recep") { m.innerHTML = note + viewRecep(); return; }
   if (r === "trace") { m.innerHTML = note + viewTrace(); return; }
   if (r === "apps") { m.innerHTML = note + viewApps(); return; }
   m.innerHTML = note + viewOverview(); bindChart(CB.cacao); bindChart(CB.admin);
@@ -533,12 +538,13 @@ function deptRequests() {
     <div class="foot"><a href="#approvals">${esc(t("see_all"))}</a></div></div>`;
 }
 function viewOverview() {
-  const pend = pendingForPdg(), urg = pend.filter(r => r.urgency === "urgent").length, al = alerts();
+  const pend = pendingForPdg(), urg = pend.filter(r => r.urgency === "urgent").length, al = alerts(), rs = recStats();
   return `<div class="topline"><div><h1>${esc(t("ov_title"))}</h1><p>${esc(t("ov_sub"))}</p></div><span class="muted">${new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
   <div class="tiles">
     <a class="tile" href="#approvals" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_pending"))}</span><span class="v ${pend.length ? "warn" : "ok"}">${pend.length}</span><span class="s">${esc(t("k_urgent", { n: urg }))}</span></a>
     <div class="tile"><span class="l">${esc(t("k_cash"))}</span><span class="v">${fcs(CB.cacao.closing + CB.admin.closing)}</span><span class="s">${esc(t("k_cash_sub"))}</span></div>
-    <div class="tile"><span class="l">${esc(t("k_cocoa"))}</span><span class="v">${fcs(cocoa.total)}</span><span class="s">${dfmt(CASH.cacao.from)} – ${dfull(CASH.cacao.to)} · ${esc(t("ops", { n: cocoa.n }))}</span></div>
+    <a class="tile" href="#recep" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_rq"))}</span><span class="v">${(rs.qty / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} <small>t</small></span><span class="s">${esc(t("k_rq_sub", { n: rs.n, z: rs.zones.length }))}</span></a>
+    <a class="tile" href="#recep" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_rp"))}</span><span class="v">${fn(rs.avg)} <small>F/kg</small></span><span class="s">${esc(t("k_rp_sub", { a: fn(rs.min), b: fn(rs.max) }))}</span></a>
     <div class="tile"><span class="l">${esc(t("k_farmers"))}</span><span class="v">${trace.verified}</span><span class="s">${esc(t("k_farmers_sub", { v: trace.verified, n: trace.n }))}</span></div>
     <div class="tile"><span class="l">${esc(t("k_alerts"))}</span><span class="v ${al.some(a => a.lv === "bad") ? "bad" : "warn"}">${al.length}</span><span class="s">${esc(t("k_alerts_sub"))}</span></div>
   </div>
@@ -659,6 +665,55 @@ function viewTrace() {
   <div class="table-wrap"><table><thead><tr><th>ID</th><th>${esc(t("farmers"))}</th><th>Village</th><th class="r">${esc(t("plots"))}</th><th class="r">ha</th><th></th></tr></thead><tbody>
   ${s.list.map(({ f, s: st }) => `<tr><td class="mono">${esc(f.id)}</td><td>${esc(f.name)}</td><td>${esc(f.village)}</td><td class="r num">${f.plots.length}</td><td class="r num">${f.plots.reduce((a, p) => a + (Number(p.area) || 0), 0).toLocaleString(loc(), { maximumFractionDigits: 2 })}</td>
     <td><span class="pill ${st === "verified" ? "ok" : st === "hold" ? "bad" : "neutral"}">${esc(t(st))}</span></td></tr>`).join("")}</tbody></table></div>`;
+}
+
+/* ---------- cocoa reception (read only) ---------- */
+const fn = (n, d = 0) => Number(n).toLocaleString(loc(), { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\u202f/g, "\u00a0");
+const fkg = n => fn(n) + "\u00a0kg";
+const weekKey = iso => { const d = new Date(iso + "T12:00:00"); const day = (d.getDay() + 6) % 7; d.setDate(d.getDate() - day); return d.toISOString().slice(0, 10); };
+function recStats() {
+  const r = RECEP.recs, qty = r.reduce((a, x) => a + x.qty, 0), amount = r.reduce((a, x) => a + x.amount, 0);
+  const traced = r.reduce((a, x) => a + (x.lines || []).reduce((s, l) => s + (Number(l.kg) || 0), 0), 0);
+  const prices = r.map(x => x.qty ? x.amount / x.qty : 0).filter(Boolean);
+  const group = key => { const g = {}; for (const x of r) { const k = key(x); (g[k] ||= { kg: 0, amount: 0, n: 0 }); g[k].kg += x.qty; g[k].amount += x.amount; g[k].n++; } return Object.entries(g).sort((a, b) => b[1].kg - a[1].kg); };
+  const weeks = group(x => weekKey(x.date)).sort((a, b) => a[0].localeCompare(b[0])).map(([w, v]) => ({ w, avg: v.amount / v.kg, kg: v.kg }));
+  return { n: r.length, qty, amount, avg: qty ? amount / qty : 0, min: prices.length ? Math.min(...prices) : 0, max: prices.length ? Math.max(...prices) : 0, traced, stock: qty - RECEP.sold,
+    zones: group(x => x.zone), buyers: group(x => x.buyer || "—"), months: group(x => x.date.slice(0, 7)).sort((a, b) => a[0].localeCompare(b[0])), weeks };
+}
+const tBars = (list, total, cls = "") => { const max = Math.max(...list.map(x => x[1].kg), 1); return `<div class="bars">${list.map(([k, v]) => `<div class="bar-row" title="${esc(k)} : ${fkg(v.kg)}"><span class="lab">${esc(k)}</span><span class="bar-track"><span class="bar-fill ${cls}" style="width:${v.kg / max * 100}%"></span></span><span class="val">${(v.kg / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} t<small>${Math.round(v.kg / (total || 1) * 100)} %</small></span></div>`).join("")}</div>`; };
+function priceChart(weeks, avg) {
+  const W = 760, H = 260, L = 56, R = 16, T = 16, B = 30;
+  if (!weeks.length) return "";
+  const vals = weeks.map(w => w.avg), lo = Math.floor((Math.min(...vals, avg) - 60) / 100) * 100, hi = Math.ceil((Math.max(...vals, avg) + 60) / 100) * 100;
+  const X = i => L + (weeks.length === 1 ? (W - L - R) / 2 : i / (weeks.length - 1) * (W - L - R)), Y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const ticks = []; for (let v = lo; v <= hi; v += 100) ticks.push(v);
+  const path = weeks.map((w, i) => `${i ? "L" : "M"}${X(i)},${Y(w.avg)}`).join("");
+  const every = Math.max(1, Math.ceil(weeks.length / 8));
+  return `<div class="chart-wrap"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t("price_trend"))}">
+    ${ticks.map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${fn(v)}</text>`).join("")}
+    ${weeks.map((w, i) => i % every === 0 ? `<text class="axis" x="${X(i)}" y="${H - 8}" text-anchor="${i === weeks.length - 1 ? "end" : i === 0 ? "start" : "middle"}">${dfmt(w.w)}</text>` : "").join("")}
+    <line class="ceil" style="stroke:var(--pod)" x1="${L}" x2="${W - R}" y1="${Y(avg)}" y2="${Y(avg)}"/><text class="ceil-l" style="fill:var(--pod)" x="${W - R}" y="${Y(avg) - 6}" text-anchor="end">${esc(S.lang === "fr" ? "moyenne" : "average")} ${fn(avg)}</text>
+    <path class="line" d="${path}"/>
+    ${weeks.map((w, i) => `<circle class="dot" cx="${X(i)}" cy="${Y(w.avg)}" r="4"><title>${dfull(w.w)} : ${fn(w.avg)} F/kg · ${fkg(w.kg)}</title></circle>`).join("")}
+  </svg></div>`;
+}
+
+
+function viewRecep() {
+  const s = recStats();
+  return `<div class="topline"><div><h1>${esc(t("rp_title"))}</h1><p>${esc(t("rp_sub"))}</p></div><a class="btn" href="${APP_BASE}/reception/">${esc(t("open_app"))}</a></div>
+  <div class="tiles">
+    <div class="tile"><span class="l">${esc(t("k_rq"))}</span><span class="v">${(s.qty / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} <small>t</small></span><span class="s">${esc(t("k_rq_sub", { n: s.n, z: s.zones.length }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("k_rp"))}</span><span class="v">${fn(s.avg)} <small>F/kg</small></span><span class="s">${esc(t("k_rp_sub", { a: fn(s.min), b: fn(s.max) }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("rp_value"))}</span><span class="v">${fcs(s.amount)}</span><span class="s">${fc(s.amount)}</span></div>
+    <div class="tile"><span class="l">${esc(t("rp_traced"))}</span><span class="v ${s.traced / (s.qty || 1) < 0.5 ? "bad" : "ok"}">${Math.round(s.traced / (s.qty || 1) * 100)} %</span><span class="s">${fkg(s.traced)}</span></div>
+    <div class="tile"><span class="l">${esc(t("rp_stock"))}</span><span class="v">${fkg(s.stock)}</span><span class="s">${fcs(s.stock * s.avg)}</span></div>
+  </div>
+  <div class="grid-wide"><div class="card stack"><h3>${esc(t("rp_trend"))}</h3>${priceChart(s.weeks, s.avg)}</div>
+    <div class="card stack"><h3>${esc(t("rp_zones"))}</h3>${tBars(s.zones.slice(0, 10), s.qty)}</div></div>
+  <div class="grid2"><div class="card stack"><h3>${esc(t("rp_buyers"))}</h3>${tBars(s.buyers.slice(0, 8), s.qty, "pod")}</div>
+    <div class="card stack"><h3>${esc(t("rp_months"))}</h3><div class="table-wrap"><table><thead><tr><th>${esc(t("rp_month"))}</th><th class="r">${esc(t("rp_kg"))}</th><th class="r">${esc(t("rp_avg"))}</th><th class="r">${esc(t("rp_n"))}</th></tr></thead>
+      <tbody>${s.months.map(([m, v]) => `<tr><td>${new Date(m + "-15").toLocaleDateString(loc(), { month: "long", year: "numeric" })}</td><td class="r num">${fn(v.kg)}</td><td class="r num">${fn(v.amount / v.kg)} F</td><td class="r num">${v.n}</td></tr>`).join("")}</tbody></table></div></div></div>`;
 }
 
 /* ---------- applications ---------- */
@@ -812,7 +867,7 @@ async function loadData() {
         sb.from("farmers").select("id, name, village, decision, id_number, archived, plots(area, lat, lon, polygon, defo_date, defo_evidence)").eq("archived", false).limit(10000).then(must)
       ]);
       const [recs, sales] = await Promise.all([
-        sb.from("cocoa_receptions").select("date, zone, qty, amount, lines").limit(20000).then(r => r.error ? [] : r.data),
+        sb.from("cocoa_receptions").select("date, zone, buyer, qty, amount, lines").limit(20000).then(r => r.error ? [] : r.data),
         sb.from("cocoa_sales").select("qty").then(r => r.error ? [] : r.data)]);
       RECEP = { recs: recs.map(x => ({ ...x, qty: Number(x.qty), amount: Number(x.amount) })), sold: sales.reduce((a, x) => a + Number(x.qty), 0) };
       const nd = {};
