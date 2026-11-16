@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tableau de bord PDG</title>
-<meta name="theme-color" content="#1f4aa8">
+<meta name="theme-color" content="#1a5fd6">
+<link rel="icon" href="../icons/whp-logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -195,13 +196,14 @@ label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 
 /* WHP palette: blue (primary) and red (secondary). Status colours stay separate: green ok, amber watch, crimson critical. */
 :root{ --paper:#f3f5f9; --surface:#ffffff; --ink:#17203a; --muted:#5b6478; --line:#d8dde8;
-  --accent:#1f4aa8; --accent-soft:#e3eafa; --pod:#c8102e; --pod-soft:#fce6e9; --bad:#a3192b; --bad-bg:#f9e1e4; }
+  --accent:#1a5fd6; --accent-soft:#e2ecfd; --pod:#e00010; --pod-soft:#fde4e5; --bad:#a3192b; --bad-bg:#f9e1e4; }
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --paper:#10141f; --surface:#171d2b; --ink:#e6eaf3; --muted:#9aa3b8; --line:#2a3245;
-  --accent:#7fa3f5; --accent-soft:#1c2a4a; --pod:#ff6b7f; --pod-soft:#3a1820; --bad:#ff8a8a; --bad-bg:#3a1a1e; } }
+  --accent:#6fa3ff; --accent-soft:#1a2b4d; --pod:#ff5a63; --pod-soft:#3d171b; --bad:#ff8a8a; --bad-bg:#3a1a1e; } }
 :root[data-theme="dark"]{ --paper:#10141f; --surface:#171d2b; --ink:#e6eaf3; --muted:#9aa3b8; --line:#2a3245;
-  --accent:#7fa3f5; --accent-soft:#1c2a4a; --pod:#ff6b7f; --pod-soft:#3a1820; --bad:#ff8a8a; --bad-bg:#3a1a1e; }
+  --accent:#6fa3ff; --accent-soft:#1a2b4d; --pod:#ff5a63; --pod-soft:#3d171b; --bad:#ff8a8a; --bad-bg:#3a1a1e; }
 .rail{border-top:4px solid var(--pod)}
-.brand b{color:var(--accent)!important}
+.whp-logo{width:150px;max-width:100%;height:auto;margin:0 auto}
+@media (max-width:760px){.whp-logo{width:64px}}
 /* PDG dashboard additions — same shell as the SAIC apps; overview = KPI row, department cards grid, approvals | attention. */
 .dept-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 @media (max-width:900px){.dept-grid{grid-template-columns:1fr}}
@@ -243,7 +245,7 @@ label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 <body>
 <div class="app">
   <aside class="rail">
-    <a class="brand" href="#overview" aria-label="Wenkam Holding Plus"><b style="font-size:22px;letter-spacing:.04em;color:var(--ink);text-transform:none">WHP</b><span id="brandSub"></span></a>
+    <a class="brand" href="#overview" aria-label="Wenkam Holdings Plus"><img class="logo whp-logo" src="../icons/whp-logo.png" alt="Wenkam Holdings Plus"><span id="brandSub" hidden></span></a>
     <nav class="nav" id="nav"></nav>
     <div class="rail-foot" id="railFoot"></div>
   </aside>
@@ -266,7 +268,7 @@ const TYPES = ["depense", "budget", "contrat", "investissement", "recrutement", 
 
 const STR = {
   fr: {
-    sub: "Groupe Wenkam Holding Plus", nav_overview: "Vue du groupe", nav_approvals: "Approbations", nav_treasury: "SAIC · Trésorerie", nav_trace: "SAIC · Traçabilité", nav_apps: "Applications",
+    sub: "Groupe Wenkam Holdings Plus", nav_overview: "Vue du groupe", nav_approvals: "Approbations", nav_treasury: "SAIC · Trésorerie", nav_trace: "SAIC · Traçabilité", nav_apps: "Applications",
     signin: "Connexion", signin_sub: "Tableau de bord du groupe WHP", email: "E-mail", password: "Mot de passe", signin_btn: "Se connecter", bad_login: "E-mail ou mot de passe incorrect.", signout: "Se déconnecter",
     forgot: "Mot de passe oublié ?", reset_sent: "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.", enter_email: "Saisissez d'abord votre e-mail.",
     no_access: "Ce tableau de bord est réservé au PDG et aux directions de WHP et de la SAIC. Demandez l'accès à l'administrateur.", loading: "Chargement…", load_err: "Chargement impossible : {m}", save_err: "Enregistrement impossible : {m}", r_none: "",
@@ -274,7 +276,7 @@ const STR = {
     viewing_as: "Rôle (démo)", lang: "English", draft: "Brouillon : chiffres de trésorerie importés de vos fichiers Excel ; la traçabilité montre les producteurs d'exemple. Les demandes au PDG sont enregistrées et partagées.",
     r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
     rl_dg_whp: "Directeur Général, WHP", rl_daf_whp: "Directeur Administratif et Financier, WHP", rl_dg_saic: "Directeur Général, SAIC",
-    ov_title: "Tableau de bord du groupe", ov_sub: "La situation de chaque département de Wenkam Holding Plus et de la SAIC, et ce qui attend votre décision.",
+    ov_title: "Tableau de bord du groupe", ov_sub: "La situation de chaque département de Wenkam Holdings Plus et de la SAIC, et ce qui attend votre décision.",
     k_pending: "À approuver", k_urgent: "dont {n} urgente(s)", k_cash: "Trésorerie SAIC disponible", k_cash_sub: "Caisse cacao + caisse administration", k_cocoa: "Achats de cacao", k_cocoa_sub: "{p}", k_farmers: "Producteurs vérifiés", k_farmers_sub: "{v} sur {n} enregistrés", k_alerts: "Points d'attention", k_alerts_sub: "Trésorerie et traçabilité",
     depts: "Départements", open_app: "Ouvrir l'application", open_detail: "Voir le détail",
     d_cacao: "Caisse Achat Cacao", d_admin: "Caisse Administration", d_trace: "Traçabilité cacao", d_requests: "Demandes des directions",
@@ -303,7 +305,7 @@ const STR = {
     example: "Exemple", cover: "≈ {n} jours de couverture", ops: "{n} opérations"
   },
   en: {
-    sub: "Wenkam Holding Plus group", nav_overview: "Group overview", nav_approvals: "Approvals", nav_treasury: "SAIC · Treasury", nav_trace: "SAIC · Traceability", nav_apps: "Applications",
+    sub: "Wenkam Holdings Plus group", nav_overview: "Group overview", nav_approvals: "Approvals", nav_treasury: "SAIC · Treasury", nav_trace: "SAIC · Traceability", nav_apps: "Applications",
     signin: "Sign in", signin_sub: "WHP group dashboard", email: "Email", password: "Password", signin_btn: "Sign in", bad_login: "Email or password is incorrect.", signout: "Sign out",
     forgot: "Forgot password?", reset_sent: "If this email has an account, a reset link has been sent.", enter_email: "Enter your email first.",
     no_access: "This dashboard is for the PDG and the WHP and SAIC management. Ask the administrator for access.", loading: "Loading…", load_err: "Couldn't load: {m}", save_err: "Couldn't save: {m}", r_none: "",
@@ -311,7 +313,7 @@ const STR = {
     viewing_as: "Role (demo)", lang: "Français", draft: "Draft: treasury figures imported from your Excel files; traceability shows the example farmers. Requests to the PDG are saved and shared.",
     r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
     rl_dg_whp: "Managing Director, WHP", rl_daf_whp: "Finance Director, WHP", rl_dg_saic: "Managing Director, SAIC",
-    ov_title: "Group dashboard", ov_sub: "How each department of Wenkam Holding Plus and SAIC is doing, and what is waiting for your decision.",
+    ov_title: "Group dashboard", ov_sub: "How each department of Wenkam Holdings Plus and SAIC is doing, and what is waiting for your decision.",
     k_pending: "To approve", k_urgent: "{n} urgent", k_cash: "SAIC cash available", k_cash_sub: "Cocoa + administration cash boxes", k_cocoa: "Cocoa purchases", k_cocoa_sub: "{p}", k_farmers: "Verified farmers", k_farmers_sub: "{v} of {n} registered", k_alerts: "Points to watch", k_alerts_sub: "Treasury and traceability",
     depts: "Departments", open_app: "Open the app", open_detail: "See details",
     d_cacao: "Cocoa purchase cash box", d_admin: "Administration cash box", d_trace: "Cocoa traceability", d_requests: "Requests from management",
@@ -582,7 +584,7 @@ function openDetail(id) {
       <dl class="dkv">
         <div><dt>${esc(t("d_from"))}</dt><dd>${esc(t("rl_" + r.from))}</dd></div>
         <div><dt>${esc(t("d_amount"))}</dt><dd style="font-size:20px">${r.amount ? fc(r.amount) : esc(t("no_amount"))}</dd></div>
-        <div><dt>${esc(t("d_ent"))}</dt><dd>${r.ent === "WHP" ? "Wenkam Holding Plus" : "SAIC"}</dd></div>
+        <div><dt>${esc(t("d_ent"))}</dt><dd>${r.ent === "WHP" ? "Wenkam Holdings Plus" : "SAIC"}</dd></div>
         <div><dt>${esc(t("d_type"))}</dt><dd>${esc(t("t_" + r.type))}</dd></div>
         <div><dt>${esc(t("d_urgency"))}</dt><dd>${esc(r.urgency === "urgent" ? t("urgent") : t("f_normal2"))}</dd></div>
         <div><dt>${esc(t("d_due"))}</dt><dd>${r.due ? dfull(r.due) : esc(t("d_none"))}</dd></div>
@@ -766,7 +768,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal()
 /* ---------- login ---------- */
 function viewLogin() {
   return `<div class="card stack" style="max-width:400px;margin:8vh auto 0;width:100%">
-    <div><b style="font-size:28px;color:var(--accent);letter-spacing:.04em">WHP</b><h1 style="margin-top:8px">${esc(t("signin"))}</h1><p class="muted">${esc(t("signin_sub"))}</p></div>
+    <div><img src="../icons/whp-logo.png" alt="Wenkam Holdings Plus" style="width:150px;display:block;margin:0 auto 10px"><h1 style="margin-top:8px">${esc(t("signin"))}</h1><p class="muted">${esc(t("signin_sub"))}</p></div>
     <form id="lf" class="stack" novalidate>
       <div class="f"><label for="lem">${esc(t("email"))}</label><input id="lem" type="email" autocomplete="username" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
       <div class="f"><label for="lpw">${esc(t("password"))}</label><input id="lpw" type="password" autocomplete="current-password" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
