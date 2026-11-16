@@ -1,0 +1,225 @@
+// Clearly marked example farmers used only in demo mode.
+export const DEMO_FARMERS = [
+ {
+  "id": "EX01",
+  "example": true,
+  "name": "Marie-Claire Ngono (example)",
+  "type": "Farmer",
+  "gender": "Female",
+  "village": "Nkolmelen",
+  "address": "Obala, Lekié",
+  "phone": "+237 670 000 001",
+  "idType": "CNI (national ID card)",
+  "idNumber": "EX-000000001",
+  "idValidity": "2030-05-12",
+  "idViewedOn": "2026-11-05",
+  "idCheckedBy": "J. Mballa (Purchasing)",
+  "idVerifRef": "VER-EX-001",
+  "confirmDate": "2026-11-05",
+  "officer": "J. Mballa",
+  "recordRef": "F01A-EX-001",
+  "chkIdentity": true,
+  "chkRep": true,
+  "chkPlots": true,
+  "reviewer": "Traceability Lead",
+  "decision": "Approved",
+  "decisionDate": "2026-11-08",
+  "plots": [
+   {
+    "pid": "P01",
+    "producer": "Marie-Claire Ngono",
+    "country": "Cameroon",
+    "region": "Centre",
+    "department": "Lekié",
+    "arrondissement": "Obala",
+    "village": "Nkolmelen",
+    "area": "2.3",
+    "harvest": "Main crop Sep 2026 – Jan 2027",
+    "expectedKg": "1100",
+    "estBasis": "Previous two seasons' sales records",
+    "lat": "4.168342",
+    "lon": "11.532871",
+    "polygon": null,
+    "fileName": "EX01_P01_point.geojson",
+    "fileVersion": "1",
+    "mapDate": "2026-10-28",
+    "provider": "SAIC field team (GPS)",
+    "rightEvidence": "Customary land attestation, chef de village, ref EX-AT-01",
+    "linkEvidence": "Field visit with farmer 28 Oct 2026",
+    "overlapRef": "OVL-EX-01",
+    "defoEvidence": "Satellite review 2020–2026, no tree-cover loss",
+    "defoDate": "2026-11-02",
+    "legalEvidence": "Land attestation and farmer declaration",
+    "legalDate": "2026-11-02",
+    "chkFormat": true,
+    "chkLink": true,
+    "chkRisk": true,
+    "reviewer": "Traceability Lead",
+    "decision": "Approved",
+    "decisionDate": "2026-11-08",
+    "nextCheck": "Annual remap or change of plot",
+    "id": "demo-EX01-P01"
+   },
+   {
+    "pid": "P02",
+    "producer": "Marie-Claire Ngono",
+    "country": "Cameroon",
+    "region": "Centre",
+    "department": "Lekié",
+    "arrondissement": "Obala",
+    "village": "Nkolmelen",
+    "area": "5.1",
+    "harvest": "Main crop Sep 2026 – Jan 2027",
+    "expectedKg": "2400",
+    "estBasis": "Field count of productive trees",
+    "lat": "",
+    "lon": "",
+    "polygon": [
+     [
+      11.5395,
+      4.17
+     ],
+     [
+      11.54176,
+      4.17
+     ],
+     [
+      11.54176,
+      4.17204
+     ],
+     [
+      11.5395,
+      4.17204
+     ]
+    ],
+    "fileName": "EX01_P02_polygon.geojson",
+    "fileVersion": "2",
+    "mapDate": "2026-10-28",
+    "provider": "SAIC field team (GPS walk)",
+    "rightEvidence": "Customary land attestation ref EX-AT-02",
+    "linkEvidence": "Field visit with farmer 28 Oct 2026",
+    "overlapRef": "OVL-EX-01",
+    "defoEvidence": "Satellite review 2020–2026, no tree-cover loss",
+    "defoDate": "2026-11-02",
+    "legalEvidence": "Land attestation and farmer declaration",
+    "legalDate": "2026-11-02",
+    "chkFormat": true,
+    "chkLink": true,
+    "chkRisk": true,
+    "reviewer": "Traceability Lead",
+    "decision": "Approved",
+    "decisionDate": "2026-11-08",
+    "nextCheck": "Annual remap",
+    "id": "demo-EX01-P02"
+   }
+  ],
+  "createdAt": "2026-11-16T10:00:00.000Z",
+  "photoPath": ""
+ },
+ {
+  "id": "EX02",
+  "example": true,
+  "name": "Joseph Atangana (example)",
+  "type": "Farmer",
+  "gender": "Male",
+  "village": "Ekali",
+  "address": "Mbalmayo",
+  "phone": "+237 670 000 002",
+  "idType": "",
+  "idNumber": "",
+  "plots": [
+   {
+    "pid": "P01",
+    "producer": "Joseph Atangana",
+    "country": "Cameroon",
+    "region": "Centre",
+    "department": "Nyong-et-So'o",
+    "arrondissement": "Mbalmayo",
+    "village": "Ekali",
+    "area": "3",
+    "harvest": "Main crop Sep 2026 – Jan 2027",
+    "expectedKg": "1200",
+    "lat": "3.5164",
+    "lon": "11.4981",
+    "polygon": null,
+    "mapDate": "2026-10-30",
+    "provider": "Collector's phone GPS",
+    "rightEvidence": "",
+    "linkEvidence": "",
+    "defoEvidence": "",
+    "defoDate": "",
+    "id": "demo-EX02-P01"
+   }
+  ],
+  "createdAt": "2026-11-16T10:00:00.000Z",
+  "photoPath": ""
+ },
+ {
+  "id": "EX03",
+  "example": true,
+  "name": "Paul Essomba (example)",
+  "type": "Farmer",
+  "gender": "Male",
+  "village": "Kedia",
+  "address": "Bokito",
+  "phone": "+237 670 000 003",
+  "idType": "CNI (national ID card)",
+  "idNumber": "EX-000000003",
+  "idValidity": "2029-01-20",
+  "idViewedOn": "2026-11-10",
+  "idCheckedBy": "A. Ndzana (Purchasing)",
+  "confirmDate": "2026-11-10",
+  "officer": "A. Ndzana",
+  "chkIdentity": true,
+  "chkRep": true,
+  "plots": [
+   {
+    "pid": "P01",
+    "producer": "Paul Essomba",
+    "country": "Cameroon",
+    "region": "Centre",
+    "department": "Mbam-et-Inoubou",
+    "arrondissement": "Bokito",
+    "village": "Kedia",
+    "area": "1.8",
+    "harvest": "Main crop Sep 2026 – Jan 2027",
+    "expectedKg": "800",
+    "estBasis": "Farmer estimate",
+    "lat": "4.552310",
+    "lon": "11.101284",
+    "polygon": [
+     [
+      11.10065,
+      4.55163
+     ],
+     [
+      11.10199,
+      4.55163
+     ],
+     [
+      11.10199,
+      4.552840000000001
+     ],
+     [
+      11.10065,
+      4.552840000000001
+     ]
+    ],
+    "fileName": "EX03_P01.kml",
+    "fileVersion": "1",
+    "mapDate": "2026-11-09",
+    "provider": "SAIC field team (GPS walk)",
+    "rightEvidence": "Land title copy ref EX-LT-03",
+    "linkEvidence": "Field visit 9 Nov 2026",
+    "overlapRef": "OVL-EX-02",
+    "defoEvidence": "Satellite review requested",
+    "defoDate": "2026-11-12",
+    "legalEvidence": "",
+    "chkFormat": true,
+    "id": "demo-EX03-P01"
+   }
+  ],
+  "createdAt": "2026-11-16T10:00:00.000Z",
+  "photoPath": ""
+ }
+];
