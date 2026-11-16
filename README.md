@@ -58,3 +58,25 @@ While `js/config.js` is empty, the app runs in demo mode with three example farm
 - **Backups:** the manual asks for daily backups and a monthly test restore. Supabase's free plan has limited backups; use a paid plan with daily backups for production, and record the monthly restore test.
 - **Retention:** keep records at least five years after the related delivery. Farmers are archived, never deleted, and the change log cannot be edited from the app.
 - **Access:** limit accounts to people who need them; identity and farm data is personal data.
+
+---
+
+# SAIC Trésorerie (`/tresorerie`)
+
+Cash box management for the **Caisse Achat Cacao** (COC) and the **Caisse Administration** (CAD), following the *Manuel des procédures de trésorerie 2026/2027*.
+
+- **Roles** (table `treasury_members`, separate from the registry roles): Accountant (`comptable`) enters transactions and submits fund requests; `daf` approves top-ups and manages roles; `dg` approves exceptional top-ups; `tresorier` records the Afriland transfer; `viewer` reads.
+- **Rules enforced by the database:** imported Excel lines can't be changed; transactions are cancelled with a reason, never deleted; a request follows DAF (regular) or DAF then DG (exceptional), then the Treasurer; nobody acts on their own request; a funded request adds the top-up to the cash box; every change is written to `treasury_log`.
+- **Supporting documents** are stored in the private `treasury-files` bucket.
+
+## Setup
+1. Supabase → SQL Editor → paste all of `supabase/treasury.sql` → Run. It creates the tables and imports the October cocoa and November admin cash books once.
+2. Give the first DAF their role (replace the email):
+   ```sql
+   insert into public.treasury_members (user_id, role)
+   select id, 'daf' from auth.users where email = 'daf@example.com'
+   on conflict (user_id) do update set role = excluded.role;
+   ```
+3. The DAF opens `/tresorerie` → **Team** and sets everyone else's role. New people are first added in Authentication → Users.
+
+Ceilings and opening balances are in the `cash_boxes` table (cocoa ceiling 20,000,000 F, admin 500,000 F).

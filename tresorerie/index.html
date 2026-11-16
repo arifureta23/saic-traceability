@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAIC Trésorerie</title>
+<meta name="theme-color" content="#1f5c47">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: same shell as the SAIC farmer registry — left rail + work area; cash box page = tiles, balance chart | categories, table. */
+:root{
+  --paper:#f3f5f2; --surface:#ffffff; --ink:#1b2420; --muted:#5d6a63; --line:#d9dfd9;
+  --accent:#1f5c47; --accent-soft:#e2eee8; --pod:#a8641a; --pod-soft:#f6ead9;
+  --ok:#237a4b; --ok-bg:#e1f2e7; --warn:#9a6400; --warn-bg:#fbf0d9; --bad:#b3362c; --bad-bg:#fbe4e1;
+  --font-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --radius:8px; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121614; --surface:#1a201d; --ink:#e6ebe7; --muted:#9aa79f; --line:#2c3531;
+    --accent:#6cc39c; --accent-soft:#1e3229; --pod:#e0a35a; --pod-soft:#33270f;
+    --ok:#6fd39a; --ok-bg:#16301f; --warn:#e6b45a; --warn-bg:#33270f; --bad:#f08a7f; --bad-bg:#3a1c19;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121614; --surface:#1a201d; --ink:#e6ebe7; --muted:#9aa79f; --line:#2c3531;
+  --accent:#6cc39c; --accent-soft:#1e3229; --pod:#e0a35a; --pod-soft:#33270f;
+  --ok:#6fd39a; --ok-bg:#16301f; --warn:#e6b45a; --warn-bg:#33270f; --bad:#f08a7f; --bad-bg:#3a1c19;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--font-body)}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:24px;font-weight:700} h2{font-size:18px;font-weight:600}
+h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0}
+.mono{font-family:var(--font-mono);font-size:.9em} .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:var(--muted)} .small{font-size:13px}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100%}
+.rail{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;height:100vh}
+.brand{display:flex;flex-direction:column;gap:6px;padding:0 6px;text-decoration:none;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.logo{display:block;width:180px;max-width:100%;height:auto}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;text-decoration:none;color:var(--ink);font-weight:500}
+.nav a:hover{background:var(--paper)} .nav a.on{background:var(--accent-soft);color:var(--accent)}
+.nav .badge{background:var(--warn-bg);color:var(--warn);border-radius:999px;font-size:11px;padding:0 7px;font-weight:600}
+.rail-foot{margin-top:auto;font-size:12px;color:var(--muted);padding:0 6px;display:flex;flex-direction:column;gap:8px}
+.rail-foot select{font-size:13px;padding:5px 8px}
+.main{padding:24px 28px 60px;min-width:0;display:flex;flex-direction:column;gap:20px}
+.topline{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.topline p{margin-top:4px;color:var(--muted)}
+.notice{padding:10px 14px;border-radius:var(--radius);background:var(--accent-soft);color:var(--accent);font-size:14px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:6px;cursor:pointer;font-weight:500;text-decoration:none;color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn.danger{color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.tile .v{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:13px;font-weight:500;color:var(--muted)}
+.tile .l{font-size:13px;color:var(--muted)} .tile .s{font-size:12px;color:var(--muted)}
+.v.ok{color:var(--ok)} .v.bad{color:var(--bad)} .v.warn{color:var(--warn)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.grid-wide{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+
+/* cash box summary cards */
+.box{display:flex;flex-direction:column;gap:12px}
+.box-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.box-head .code{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.bal{font-size:32px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.bal small{font-size:15px;color:var(--muted);font-weight:500}
+.gauge{position:relative;height:10px;border-radius:5px;background:var(--paper);overflow:visible}
+.gauge span{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--accent)}
+.gauge span.over{background:var(--bad)} .gauge span.low{background:var(--warn)}
+.gauge i{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.gauge-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.kv3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;font-size:13px}
+.kv3 b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.neutral{background:var(--accent-soft);color:var(--muted)}
+
+.issues{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.issues li{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:7px 10px;border-radius:6px;border-left:3px solid}
+.issues li.bad{background:var(--bad-bg);border-color:var(--bad)} .issues li.warn{background:var(--warn-bg);border-color:var(--warn)} .issues li.ok{background:var(--ok-bg);border-color:var(--ok)}
+.issues li .who{font-size:12px;color:var(--muted);display:block}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:grid;grid-template-columns:minmax(110px,38%) 1fr auto;gap:10px;align-items:center;font-size:13px}
+.bar-row .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:12px;background:var(--paper);border-radius:0 4px 4px 0;position:relative}
+.bar-fill{height:100%;background:var(--accent);border-radius:0 4px 4px 0;min-width:2px}
+.bar-fill.pod{background:var(--pod)}
+.bar-row .val{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar-row .val small{color:var(--muted);margin-left:6px}
+.bar-row:hover .bar-fill{filter:brightness(1.12)}
+
+/* chart */
+.chart-wrap{position:relative}
+svg.chart{width:100%;display:block}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{fill:var(--muted);font-size:13px;font-family:var(--font-body)}
+.chart .line{fill:none;stroke:var(--accent);stroke-width:2}
+.chart .area{fill:var(--accent);fill-opacity:.08}
+.chart .ceil{stroke:var(--bad);stroke-width:1.5;stroke-dasharray:5 4}
+.chart .ceil-l{fill:var(--bad);font-size:13px;font-weight:600}
+.chart .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.chart .xh{stroke:var(--muted);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:6px 9px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-110%);z-index:5}
+
+/* table */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar input[type=search]{flex:1 1 220px;min-width:0}
+input[type=text],input[type=search],input[type=date],input[type=number],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:100%}
+.toolbar select{width:auto}
+textarea{min-height:70px;resize:vertical}
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.r,th.r{text-align:right}
+td.mono{white-space:nowrap;font-size:12px}
+td.in{color:var(--ok)}
+tr.flag-bad td:first-child{box-shadow:inset 3px 0 0 var(--bad)} tr.flag-warn td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+.flagtxt{font-size:12px;display:block;margin-top:2px} .flagtxt.bad{color:var(--bad)} .flagtxt.warn{color:var(--warn)}
+tfoot td{font-weight:600;border-top:1px solid var(--line)}
+
+/* requests */
+.req{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px}
+.req .amt{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.steps{display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1}
+.step{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+.step.done{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.step.now{background:var(--warn-bg);color:var(--warn);border-color:transparent;font-weight:600}
+.step.no{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.req .acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:600;background:var(--pod-soft);color:var(--pod);text-transform:uppercase;letter-spacing:.04em}
+.recon{display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:14px;align-items:center}
+.recon .num{text-align:right}
+.recon input{width:160px;text-align:right}
+
+.scrim{position:fixed;inset:0;background:rgba(10,15,12,.45);display:flex;justify-content:flex-end;z-index:20}
+.drawer{background:var(--surface);width:min(620px,100%);height:100%;overflow:auto;display:flex;flex-direction:column}
+.drawer form{display:flex;flex-direction:column;min-height:100%}
+.drawer header{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:2}
+.drawer header p{margin-top:2px;color:var(--muted);font-size:13px}
+.drawer .body{padding:18px 22px;display:flex;flex-direction:column;gap:16px;flex:1}
+.drawer footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 22px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0} .f.full{grid-column:1/-1}
+.f label{font-size:13px;font-weight:500}
+.hint{font-size:12px;color:var(--muted)}
+.err{color:var(--bad);font-size:13px}
+.att-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.att-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:6px}
+.att-links{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;margin-top:3px}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.suggest{background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:10px 12px;font-size:13px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;font-size:14px;z-index:40}
+
+@media (max-width:1050px){ .grid2,.grid-wide{grid-template-columns:1fr} }
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px 16px;gap:12px;border-right:none;border-bottom:1px solid var(--line)}
+  .logo{width:120px} .brand span{display:none}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .rail-foot{margin-top:0;flex-direction:row;flex-wrap:wrap;align-items:center}
+  .main{padding:18px 16px 50px}
+  .fgrid{grid-template-columns:1fr}
+  .kv3{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <a class="brand" href="#overview"><img class="logo" id="brandLogo" alt="SAIC"><span id="brandSub"></span></a>
+    <nav class="nav" id="nav"></nav>
+    <div class="rail-foot" id="railFoot"></div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+<div id="modal"></div>
+<div id="toastHost"></div>
+
+<script type="module">
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../js/config.js";
+import { LOGO } from "../js/logo.js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm";
+document.getElementById("brandLogo").src = LOGO;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+let DATA = { cacao: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] }, admin: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] } };
+
+/* ---------- rules from the treasury manual (Manuel des procédures de trésorerie 2026/2027) ---------- */
+const CAISSES = {
+  cacao: { code: "COC", ceiling: 20000000, target: 20000000, name: { fr: "Caisse Achat Cacao", en: "Cocoa purchase cash box" },
+    scope: ["Achat de cacao", "Manutention", "Usinage", "Frais de transport et ration", "Carburant", "Frais de mission", "Prestations MOON Ltd", "mains levées", "Approvisionnement DAF", "Retour en caisse"] },
+  admin: { code: "CAD", ceiling: 500000, target: 500000, name: { fr: "Caisse Administration", en: "Administration cash box" }, scope: null }
+};
+const DG_THRESHOLD = 150000;          // §8.2: above this, an admin expense needs DG approval
+const DUP_MIN = 50000;                // same amount in both cash boxes within 30 days → possible double payment
+const LOW_SHARE = 0.10;               // closing balance below 10 % of target → replenish
+const NATURES = {
+  cacao: [["COC-001","Achat de cacao","Achat cacao magasin"],["COC-002","Achat de cacao","Achat cacao ramassage"],["COC-003","Achat de cacao","Achat exceptionnel de cacao"],
+    ["COC-004","Avance fonds collecteurs","Avance fonds collecteurs"],["COC-005","Manutention","Manutention cacao"],["COC-006","Manutention","Chargement et déchargement"],
+    ["COC-007","Prestations MOON Ltd","Transport cacao"],["COC-008","Location véhicule collecte","Location véhicule collecte"],["COC-009","Carburant","Carburant opérations cacao"],
+    ["COC-010","Frais de transport et ration","Restauration équipes terrain"],["COC-011","Frais de mission","Hébergement / mission équipes terrain"],["COC-013","Frais de magasinage","Frais de magasinage"],
+    ["COC-014","Usinage","Usinage / conditionnement"],["","mains levées","Main levée"]],
+  admin: [["CAD-001","Fourniture et matériel","Fournitures de bureau"],["CAD-002","Fourniture et matériel","Consommables informatiques"],["CAD-003","Entretien magasin","Entretien locaux / magasin"],
+    ["CAD-004","Entretien et réparation véhicule","Réparation véhicules et équipements"],["CAD-006","Eau et électricité","Eau"],["CAD-007","Eau et électricité","Électricité"],
+    ["CAD-008","Internet et téléphone","Internet"],["CAD-009","Internet et téléphone","Téléphone / recharge"],["CAD-012","Frais de transport et ration","Déplacements administratifs, ration"],
+    ["CAD-013","Frais de mission","Frais de mission"],["CAD-014","Honoraires prestataires","Honoraires prestataires"],["CAD-016","Sécurité et gardiennage","Sécurité et gardiennage"],
+    ["CAD-019","Document administratif","Frais bancaires, timbres, documents"],["","Carburant","Carburant administratif"],["","Salaire","Salaires"],["","Commission","Commission"],
+    ["","Main levée","Main levée"],["","Autre dépense","Autre dépense"]]
+};
+/* Approval matrix (manual §8 and annex A). Editable by the DAF and the DG; saved with the app. */
+const APPROVERS = ["comptable", "daf", "dg"];
+const OPS = ["expense", "asset", "topup_regular", "topup_exceptional"];
+const DEFAULT_MATRIX = [
+  { box: "cacao", op: "expense", min: 0, max: null, approvers: ["comptable", "dg"] },
+  { box: "admin", op: "expense", min: 0, max: 150000, approvers: ["comptable"] },
+  { box: "admin", op: "expense", min: 150001, max: null, approvers: ["comptable", "dg"] },
+  { box: "admin", op: "asset", min: 0, max: 150000, approvers: ["comptable"] },
+  { box: "admin", op: "asset", min: 150001, max: 299999, approvers: ["comptable", "dg"] },
+  { box: "admin", op: "asset", min: 300000, max: 1000000, approvers: ["comptable", "daf", "dg"] },
+  { box: "admin", op: "asset", min: 1000001, max: null, approvers: ["comptable", "daf", "dg"] },
+  { box: "any", op: "topup_regular", min: 0, max: null, approvers: ["daf"] },
+  { box: "any", op: "topup_exceptional", min: 0, max: null, approvers: ["daf", "dg"] }
+];
+function required(box, op, amount) {
+  const m = S.matrix.find(r => (r.box === box || r.box === "any") && r.op === op && amount >= (r.min || 0) && (r.max === null || r.max === "" || amount <= r.max));
+  return m ? APPROVERS.filter(a => m.approvers.includes(a)) : ["dg"];
+}
+const roleList = arr => arr.map(a => t("role_" + a)).join(" → ");
+const INFLOWS = { cacao: ["Approvisionnement DAF", "Retour en caisse"], admin: ["Approvisionnement", "Retour en caisse"] };
+const PROOFS = ["facture", "bulletin", "bon", "ordre", "recu", "none"];
+const PURCHASE_TYPES = { "COC-001": "magasin", "COC-002": "ramassage", "COC-003": "exceptionnel" };
+
+/* ---------- strings ---------- */
+const STR = {
+  fr: {
+    sub: "Trésorerie", nav_overview: "Vue d'ensemble", nav_cacao: "Caisse Achat Cacao", nav_admin: "Caisse Administration", nav_requests: "Demandes de fonds",
+    nav_expenses: "Dépenses", new_entry: "Nouvelle opération", edit_entry: "Modifier l'opération", entry_sub: "Saisie par la comptabilité, avec la pièce justificative.",
+    e_kind: "Type d'opération", e_out: "Dépense (sortie)", e_in: "Entrée de fonds", e_nature: "Nature / catégorie", e_date: "Date", e_amount: "Montant (FCFA)", e_party: "Payé à / reçu de",
+    e_details: "Libellé", e_ref: "Référence", e_ref_hint: "Générée selon le format du manuel ; modifiable.", e_market: "N° marché", e_proof: "Pièce justificative", e_approved: "Approuvé par",
+    p_facture: "Facture / pro forma", p_bulletin: "Bulletin de pesée", p_bon: "Bon de livraison / commande", p_ordre: "Ordre de mission", p_recu: "Reçu de caisse", p_none: "Aucune pour l'instant",
+    a_comptable: "Comptable (≤ 150 000)", a_dg: "Direction Générale", a_daf: "DAF",
+    need_entry: "Saisissez une date, un montant supérieur à zéro et un libellé.", entry_saved: "Opération {r} enregistrée", entry_deleted: "Opération supprimée", del: "Supprimer", edit: "Modifier", save: "Enregistrer",
+    only_accountant: "Seule la comptabilité saisit les opérations et les demandes de fonds.",
+    exp_title: "Dépenses", exp_sub: "Toutes les opérations des deux caisses, par catégorie. La comptabilité saisit chaque dépense avec sa pièce justificative.",
+    all_boxes: "Les deux caisses", all_months: "Tous les mois", by_cat_box: "Dépenses par catégorie et par caisse", c_box: "Caisse", added: "Saisie app", both: "Total",
+    f_noproof: "Pas de pièce justificative jointe.", f_needdg: "{a} > 150 000 FCFA approuvé par le Comptable seul : approbation DG requise (§8.2).", f_cacao_dg: "Achat cacao sans validation de la Direction Générale (§8.1).",
+    funded_entry: "Approvisionnement {id} ajouté à la {c}.",
+    nav_matrix: "Matrice d'approbation", mx_title: "Matrice d'approbation", mx_sub: "Qui approuve quoi, par caisse, type d'opération et montant. Modifiable par la DAF et la Direction Générale ; utilisée pour chaque opération et chaque demande de fonds.",
+    mx_box: "Caisse", mx_op: "Opération", mx_min: "De (FCFA)", mx_max: "À (FCFA)", mx_appr: "Approbations requises, dans l'ordre", mx_any: "Toutes les caisses", mx_nolimit: "sans limite",
+    op_expense: "Dépense", op_asset: "Immobilisation (acquisition d'un bien)", op_topup_regular: "Approvisionnement courant", op_topup_exceptional: "Approvisionnement exceptionnel",
+    mx_add: "Ajouter une règle", mx_save: "Enregistrer la matrice", mx_reset: "Revenir aux règles du manuel", mx_saved: "Matrice enregistrée", mx_readonly: "Seules la DAF et la Direction Générale peuvent modifier la matrice.",
+    mx_updated: "Dernière modification : {r}, {d}", mx_none: "Cochez au moins une approbation pour chaque règle.", mx_test: "Tester la matrice", mx_result: "Approbations requises : {r}",
+    e_asset: "Acquisition d'immobilisation", e_approvals: "Approbations obtenues (fiche signée)", e_required: "Requis selon le manuel : {r}",
+    f_missing: "Approbation manquante selon le manuel : {r}.", f_check_appr: "Selon le manuel, {r} doivent approuver ({a}). Vérifier la fiche signée.",
+    signin: "Connexion", signin_sub: "Trésorerie SAIC", email: "E-mail", password: "Mot de passe", signin_btn: "Se connecter", bad_login: "E-mail ou mot de passe incorrect.", signout: "Se déconnecter",
+    forgot: "Mot de passe oublié ?", reset_sent: "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.", enter_email: "Saisissez d'abord votre e-mail.",
+    no_access: "Votre compte n'a pas encore de rôle dans la trésorerie. Demandez à la DAF de vous l'attribuer.", loading: "Chargement de la trésorerie…", load_err: "Chargement impossible : {m}",
+    registry: "Registre des producteurs", nav_team: "Équipe", team_sub: "Rôle de chaque personne dans la trésorerie. Seule la DAF peut les modifier. Les comptes sont créés dans Supabase (Authentication → Users).",
+    team_name: "Nom", team_role: "Rôle", team_none: "Aucun accès", you: "vous", role_viewer: "Lecture seule",
+    void: "Annuler l'opération", void_reason: "Motif de l'annulation", voided_toast: "Opération annulée", save_err: "Enregistrement impossible : {m}",
+    att: "Pièces jointes", att_add: "Joindre des fichiers", att_hint: "Photos ou PDF (facture, bulletin de pesée, ordre de mission…), 20 Mo max. par fichier.", att_off: "L'ajout de fichiers n'est pas disponible dans cet affichage.",
+    att_uploading: "Envoi des fichiers…", att_fail: "Le fichier « {n} » n'a pas pu être envoyé : {m}", att_type: "Type non accepté : photos (JPG, PNG) et PDF uniquement.", att_remove: "Retirer",
+    viewing_as: "Rôle (démo)", lang: "English", draft: "Brouillon : données importées de vos fichiers Excel. Les demandes de fonds sont enregistrées et partagées.",
+    ov_title: "Trésorerie des caisses", ov_sub: "Soldes, plafonds, dépenses par catégorie et points de contrôle, selon le manuel des procédures de trésorerie.",
+    balance: "Solde", ceiling: "Plafond", of_ceiling: "du plafond", period: "Période", inflows: "Entrées", outflows: "Sorties", opening: "Solde d'ouverture", closing: "Solde de clôture",
+    st_over: "Au-dessus du plafond", st_low: "À réapprovisionner", st_ok: "Dans les limites",
+    request_funds: "Demander des fonds", open_box: "Voir la caisse", top_cats: "Principales dépenses", days_over: "{n} jour(s) au-dessus du plafond", max_bal: "Solde max. {v}",
+    controls: "Points de contrôle", no_controls: "Aucun point de contrôle ouvert.", pending_req: "Demandes en cours", no_pending: "Aucune demande en attente.",
+    t_in_supply: "dont approvisionnements {v}", t_in_return: "dont retours en caisse {v}", burn: "Sorties moyennes / jour", cover: "Couverture", cover_days: "≈ {n} jours", ops: "{n} opérations",
+    bal_chart: "Évolution du solde", by_cat: "Dépenses par catégorie", purchases: "Achats de cacao", by_type: "Achats par type", by_buyer: "Achats par acheteur", opex: "Frais opérationnels", opex_ratio: "{p} % des achats",
+    approval_split: "Niveau d'approbation", le150: "≤ 150 000 : Comptable", gt150: "> 150 000 : DG",
+    transactions: "Opérations", search: "Rechercher (libellé, bénéficiaire, référence)", all_cats: "Toutes les catégories", only_flags: "Seulement les points de contrôle",
+    c_date: "Date", c_ref: "Référence", c_party: "Bénéficiaire / source", c_cat: "Catégorie", c_details: "Libellé", c_out: "Sorties", c_in: "Entrées", c_bal: "Solde", total: "Total",
+    recon: "Rapprochement de caisse", recon_sub: "Modèle du manuel : solde théorique contre comptage physique.", recon_a: "Solde d'ouverture (A)", recon_b: "Total des entrées (B)", recon_c: "Total des sorties (C)", recon_d: "Solde théorique (D = A + B − C)", recon_e: "Comptage physique (E)", recon_gap: "Écart (E − D)",
+    req_title: "Demandes de fonds", req_sub: "Approvisionnement courant (hebdomadaire, validé par la DAF) ou exceptionnel (DAF puis DG). Les fonds viennent d'Afriland First Bank.",
+    new_req: "Nouvelle demande", no_req: "Aucune demande pour l'instant.", st_submitted: "Soumise", st_daf: "Validée DAF", st_dg: "Approuvée DG", st_funded: "Fonds versés", st_rejected: "Rejetée",
+    s_submit: "Soumise", s_daf: "Validation DAF", s_dg: "Approbation DG", s_fund: "Versement (Trésorier)",
+    act_approve: "Valider", act_reject: "Rejeter", act_fund: "Marquer comme versé", waiting_for: "En attente : {r}", own_request: "Vous avez soumis cette demande : un autre rôle doit la valider (séparation des fonctions).",
+    f_caisse: "Caisse", f_type: "Type d'approvisionnement", f_amount: "Montant demandé (FCFA)", f_reason: "Motif", f_details: "Justification", f_need: "Besoin pour le", f_by: "Demandé par",
+    ty_courant: "Courant (hebdomadaire)", ty_exceptionnel: "Exceptionnel",
+    r_volume: "Hausse exceptionnelle du volume de paiements", r_tonnage: "Gros tonnage à acheter", r_early: "Encaisse épuisée avant la date prévue", r_urgent: "Urgence justifiée", r_weekly: "Reconstitution hebdomadaire de l'encaisse",
+    suggest: "Solde actuel {b}. Niveau cible {t}. Montant suggéré pour revenir au niveau cible : {s}.", use_suggest: "Utiliser ce montant",
+    over_ceiling_warn: "Avec ce montant, le solde dépasserait le plafond de {c}.", need_amount: "Saisissez un montant supérieur à zéro et un motif.",
+    submit: "Soumettre la demande", cancel: "Annuler", close: "Fermer", reject_reason: "Motif du rejet", bank_ref: "Référence du virement Afriland", confirm: "Confirmer",
+    saved: "Enregistré", submitted_toast: "Demande {id} soumise", example: "Exemple", shared_off: "Stockage partagé indisponible : les demandes restent dans cet onglet.",
+    role_caissier: "Responsable de caisse", role_comptable: "Comptable", role_daf: "DAF", role_dg: "Direction Générale", role_tresorier: "Trésorier",
+    f_over: "Solde au-dessus du plafond de {c} pendant {n} jour(s) (max. {m} le {d}).",
+    f_low: "Solde de clôture {b} : moins de 10 % du niveau cible. Réapprovisionnement à prévoir.",
+    f_dg: "{a} > 150 000 FCFA : approbation de la DG requise (§8.2). Vérifier la fiche signée.",
+    f_single_over: "Paiement unique ({a}) supérieur au plafond de la caisse ({c}) : vérifier l'approbation exceptionnelle de la DG.",
+    f_noref: "Sans numéro de fiche de décaissement / bon.", f_noreceipt: "Retour en caisse sans reçu numéroté.",
+    f_scope: "Dépense hors du périmètre de la caisse cacao (« {c} »). Relève de la Caisse Administration.",
+    f_direction: "Dépense de la Direction payée par la caisse cacao : relève de la Caisse Principale.",
+    f_dup: "Même montant ({a}) payé aussi par la {o} le {d} : doublon possible à vérifier.",
+    f_ramassage: "Avance de ramassage de {a} retournée en caisse le {d} : vérifier la reddition des comptes."
+  },
+  en: {
+    sub: "Treasury", nav_overview: "Overview", nav_cacao: "Cocoa cash box", nav_admin: "Admin cash box", nav_requests: "Fund requests",
+    nav_expenses: "Expenses", new_entry: "New transaction", edit_entry: "Edit transaction", entry_sub: "Entered by Accounting, with its supporting document.",
+    e_kind: "Transaction type", e_out: "Expense (cash out)", e_in: "Cash in", e_nature: "Nature / category", e_date: "Date", e_amount: "Amount (FCFA)", e_party: "Paid to / received from",
+    e_details: "Details", e_ref: "Reference", e_ref_hint: "Generated in the manual's format; you can edit it.", e_market: "Market no.", e_proof: "Supporting document", e_approved: "Approved by",
+    p_facture: "Invoice / pro forma", p_bulletin: "Weighing slip", p_bon: "Delivery / purchase order", p_ordre: "Mission order", p_recu: "Cash receipt", p_none: "None yet",
+    a_comptable: "Accountant (≤ 150,000)", a_dg: "General Management", a_daf: "DAF",
+    need_entry: "Enter a date, an amount above zero and details.", entry_saved: "Transaction {r} saved", entry_deleted: "Transaction deleted", del: "Delete", edit: "Edit", save: "Save",
+    only_accountant: "Only Accounting enters transactions and fund requests.",
+    exp_title: "Expenses", exp_sub: "Every transaction from both cash boxes, by category. Accounting enters each expense with its supporting document.",
+    all_boxes: "Both cash boxes", all_months: "All months", by_cat_box: "Spending by category and cash box", c_box: "Cash box", added: "Entered in app", both: "Total",
+    f_noproof: "No supporting document attached.", f_needdg: "{a} > 150,000 FCFA approved by the Accountant only: needs DG approval (§8.2).", f_cacao_dg: "Cocoa purchase without General Management approval (§8.1).",
+    funded_entry: "Top-up {id} added to the {c}.",
+    nav_matrix: "Approval matrix", mx_title: "Approval matrix", mx_sub: "Who approves what, by cash box, transaction type and amount. The DAF and General Management can edit it; every transaction and fund request follows it.",
+    mx_box: "Cash box", mx_op: "Transaction", mx_min: "From (FCFA)", mx_max: "To (FCFA)", mx_appr: "Approvals required, in order", mx_any: "All cash boxes", mx_nolimit: "no limit",
+    op_expense: "Expense", op_asset: "Fixed asset purchase", op_topup_regular: "Regular top-up", op_topup_exceptional: "Exceptional top-up",
+    mx_add: "Add rule", mx_save: "Save matrix", mx_reset: "Reset to the manual's rules", mx_saved: "Matrix saved", mx_readonly: "Only the DAF and General Management can edit the matrix.",
+    mx_updated: "Last changed by {r}, {d}", mx_none: "Tick at least one approval for every rule.", mx_test: "Test the matrix", mx_result: "Approvals required: {r}",
+    e_asset: "Fixed asset purchase", e_approvals: "Approvals obtained (signed form)", e_required: "Required by the manual: {r}",
+    f_missing: "Missing approval under the manual: {r}.", f_check_appr: "Under the manual, {r} must approve ({a}). Check the signed form.",
+    signin: "Sign in", signin_sub: "SAIC treasury", email: "Email", password: "Password", signin_btn: "Sign in", bad_login: "Email or password is incorrect.", signout: "Sign out",
+    forgot: "Forgot password?", reset_sent: "If this email has an account, a reset link has been sent.", enter_email: "Enter your email first.",
+    no_access: "Your account doesn't have a treasury role yet. Ask the DAF to give you one.", loading: "Loading the treasury…", load_err: "Couldn't load: {m}",
+    registry: "Farmer registry", nav_team: "Team", team_sub: "Each person's treasury role. Only the DAF can change them. Accounts are created in Supabase (Authentication → Users).",
+    team_name: "Name", team_role: "Role", team_none: "No access", you: "you", role_viewer: "Read only",
+    void: "Cancel transaction", void_reason: "Reason for cancelling", voided_toast: "Transaction cancelled", save_err: "Couldn't save: {m}",
+    att: "Attachments", att_add: "Attach files", att_hint: "Photos or PDFs (invoice, weighing slip, mission order…), 20 MB max per file.", att_off: "Attaching files isn't available in this view.",
+    att_uploading: "Uploading files…", att_fail: "Couldn't upload \u201c{n}\u201d: {m}", att_type: "Type not accepted: photos (JPG, PNG) and PDFs only.", att_remove: "Remove",
+    viewing_as: "Role (demo)", lang: "Français", draft: "Draft: figures imported from your Excel files. Fund requests are saved and shared.",
+    ov_title: "Cash box treasury", ov_sub: "Balances, ceilings, spending by category and control points, following the treasury procedures manual.",
+    balance: "Balance", ceiling: "Ceiling", of_ceiling: "of ceiling", period: "Period", inflows: "Cash in", outflows: "Cash out", opening: "Opening balance", closing: "Closing balance",
+    st_over: "Above ceiling", st_low: "Needs replenishing", st_ok: "Within limits",
+    request_funds: "Request funds", open_box: "Open cash box", top_cats: "Top spending", days_over: "{n} day(s) above ceiling", max_bal: "Max balance {v}",
+    controls: "Control points", no_controls: "No open control points.", pending_req: "Open requests", no_pending: "No pending requests.",
+    t_in_supply: "of which supplies {v}", t_in_return: "of which returns {v}", burn: "Average cash out / day", cover: "Cover", cover_days: "≈ {n} days", ops: "{n} transactions",
+    bal_chart: "Balance over time", by_cat: "Spending by category", purchases: "Cocoa purchases", by_type: "Purchases by type", by_buyer: "Purchases by buyer", opex: "Operating costs", opex_ratio: "{p} % of purchases",
+    approval_split: "Approval level", le150: "≤ 150,000: Accountant", gt150: "> 150,000: DG",
+    transactions: "Transactions", search: "Search (details, payee, reference)", all_cats: "All categories", only_flags: "Control points only",
+    c_date: "Date", c_ref: "Reference", c_party: "Paid to / from", c_cat: "Category", c_details: "Details", c_out: "Cash out", c_in: "Cash in", c_bal: "Balance", total: "Total",
+    recon: "Cash count reconciliation", recon_sub: "The manual's template: theoretical balance against the physical count.", recon_a: "Opening balance (A)", recon_b: "Total cash in (B)", recon_c: "Total cash out (C)", recon_d: "Theoretical balance (D = A + B − C)", recon_e: "Physical count (E)", recon_gap: "Difference (E − D)",
+    req_title: "Fund requests", req_sub: "Regular weekly top-up (approved by the DAF) or exceptional (DAF, then DG). Funds come from Afriland First Bank.",
+    new_req: "New request", no_req: "No requests yet.", st_submitted: "Submitted", st_daf: "DAF approved", st_dg: "DG approved", st_funded: "Funded", st_rejected: "Rejected",
+    s_submit: "Submitted", s_daf: "DAF approval", s_dg: "DG approval", s_fund: "Transfer (Treasurer)",
+    act_approve: "Approve", act_reject: "Reject", act_fund: "Mark as funded", waiting_for: "Waiting for: {r}", own_request: "You submitted this request: another role must approve it (separation of duties).",
+    f_caisse: "Cash box", f_type: "Top-up type", f_amount: "Amount requested (FCFA)", f_reason: "Reason", f_details: "Justification", f_need: "Needed by", f_by: "Requested by",
+    ty_courant: "Regular (weekly)", ty_exceptionnel: "Exceptional",
+    r_volume: "Exceptional rise in payment volume", r_tonnage: "Large tonnage to buy", r_early: "Cash ran out before the scheduled top-up", r_urgent: "Justified emergency", r_weekly: "Weekly top-up to target level",
+    suggest: "Current balance {b}. Target level {t}. Suggested amount to reach the target: {s}.", use_suggest: "Use this amount",
+    over_ceiling_warn: "With this amount the balance would exceed the {c} ceiling.", need_amount: "Enter an amount above zero and a reason.",
+    submit: "Submit request", cancel: "Cancel", close: "Close", reject_reason: "Reason for rejection", bank_ref: "Afriland transfer reference", confirm: "Confirm",
+    saved: "Saved", submitted_toast: "Request {id} submitted", example: "Example", shared_off: "Shared storage unavailable: requests stay in this tab.",
+    role_caissier: "Cash box manager", role_comptable: "Accountant", role_daf: "DAF (Finance Director)", role_dg: "General Management", role_tresorier: "Treasurer",
+    f_over: "Balance above the {c} ceiling on {n} day(s) (max {m} on {d}).",
+    f_low: "Closing balance {b}: below 10 % of the target level. Plan a top-up.",
+    f_dg: "{a} > 150,000 FCFA: needs DG approval (§8.2). Check the signed form.",
+    f_single_over: "Single payment ({a}) larger than the cash box ceiling ({c}): check the DG's exceptional approval.",
+    f_noref: "No disbursement form / voucher number.", f_noreceipt: "Cash return without a numbered receipt.",
+    f_scope: "Outside the cocoa cash box scope (“{c}”). Belongs to the Admin cash box.",
+    f_direction: "Management expense paid from the cocoa cash box: belongs to the Caisse Principale.",
+    f_dup: "Same amount ({a}) also paid from the {o} on {d}: possible double payment, check.",
+    f_ramassage: "Collection advance of {a} returned on {d}: check the mission's expense report."
+  }
+};
+
+/* ---------- state ---------- */
+const S = { lang: (() => { try { const l = localStorage.getItem("saic-lang"); if (l === "en" || l === "fr") return l; } catch (e) {} return (navigator.language || "fr").slice(0, 2) === "en" ? "en" : "fr"; })(), role: null, me: null, ready: false, people: {}, members: [], loadError: "", assets: null, requests: [], entries: [], matrix: JSON.parse(JSON.stringify(DEFAULT_MATRIX)), matrixMeta: null, ex: { box: "", month: "", cat: "", q: "" }, db: null, uid: null, flt: { cacao: { q: "", cat: "", flags: false }, admin: { q: "", cat: "", flags: false } }, count: {} };
+const t = (k, p = {}) => String((STR[S.lang][k] ?? STR.fr[k] ?? k)).replace(/\{(\w+)\}/g, (_, x) => p[x] ?? "");
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const loc = () => S.lang === "fr" ? "fr-FR" : "en-GB";
+const fc = n => Math.round(n).toLocaleString(loc()).replace(/ /g, " ") + " F";
+const fcs = n => { const a = Math.abs(n); return a >= 1e6 ? (n / 1e6).toLocaleString(loc(), { maximumFractionDigits: 1 }) + " M" : a >= 1e3 ? Math.round(n / 1e3).toLocaleString(loc()) + " k" : Math.round(n).toLocaleString(loc()); };
+const dfmt = iso => new Date(iso + "T12:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short" });
+const dfull = iso => new Date(iso + "T12:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" });
+const cname = k => CAISSES[k].name[S.lang];
+const normCat = c => String(c || "").trim().replace(/\s+/g, " ");
+const normName = n => String(n || "").toUpperCase().split(/[\s-]+/).filter(Boolean).sort().join(" ");
+function toast(m) { $("#toastHost").innerHTML = `<div class="toast" role="status">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => $("#toastHost").innerHTML = "", 3000); }
+
+/* ---------- analysis ---------- */
+const NAME_FIX = {};  // display name per normalised name (first spelling seen)
+function analyse(key) {
+  const c = CAISSES[key], base = DATA[key];
+  const added = S.entries.filter(e => e.caisse === key).sort((x, y) => (x.date + x.created).localeCompare(y.date + y.created)).map(e => ({ ...e, added: true }));
+  const merged = [...base.rows.map((r, i) => ({ ...r, _o: i })), ...added.map((r, i) => ({ ...r, _o: 1e5 + i }))].sort((x, y) => x.date === y.date ? x._o - y._o : x.date.localeCompare(y.date));
+  const d = { ...base, rows: merged, to: merged.reduce((m, r) => r.date > m ? r.date : m, base.to) };
+  let bal = d.opening; const rows = [];
+  for (const r of d.rows) { bal += r.in - r.out; rows.push({ ...r, cat: normCat(r.cat), bal, flags: [] }); }
+  const totIn = rows.reduce((a, r) => a + r.in, 0), totOut = rows.reduce((a, r) => a + r.out, 0);
+  const supply = rows.filter(r => r.in && !/retour/i.test(r.cat)).reduce((a, r) => a + r.in, 0), returns = totIn - supply;
+  // end-of-day balances
+  const days = []; for (const r of rows) { if (days.length && days[days.length - 1].date === r.date) days[days.length - 1].bal = r.bal; else days.push({ date: r.date, bal: r.bal }); }
+  const over = days.filter(x => x.bal > c.ceiling), maxDay = days.reduce((m, x) => x.bal > m.bal ? x : m, { bal: d.opening, date: d.from });
+  // categories (cash out)
+  const cats = {}; for (const r of rows) if (r.out) cats[r.cat] = (cats[r.cat] || 0) + r.out;
+  const catList = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+  const span = Math.max(1, (new Date(d.to) - new Date(d.from)) / 864e5 + 1);
+  const burn = totOut / span;
+  // row flags
+  const other = key === "cacao" ? "admin" : "cacao";
+  for (const r of rows) {
+    if (r.out && !r.ref) r.flags.push({ lv: "warn", m: t("f_noref") });
+    if (r.in && /retour/i.test(r.cat) && !r.ref) r.flags.push({ lv: "warn", m: t("f_noreceipt") });
+    if (r.out > c.ceiling) r.flags.push({ lv: "warn", m: t("f_single_over", { a: fc(r.out), c: fc(c.ceiling) }) });
+    if (r.added && r.out && (!r.proof || r.proof === "none") && !(r.files || []).length) r.flags.push({ lv: "warn", m: t("f_noproof") });
+    if (r.added && r.out) { const req = required(key, r.asset ? "asset" : "expense", r.out), miss = req.filter(x => !(r.approvals || []).includes(x)); if (miss.length) r.flags.push({ lv: "bad", m: t("f_missing", { r: roleList(miss) }) }); }
+    if (!r.added && r.out && key === "admin") { const req = required(key, "expense", r.out).filter(x => x !== "comptable"); if (req.length) r.flags.push({ lv: "warn", m: t("f_check_appr", { r: roleList(req), a: fc(r.out) }) }); }
+    if (c.scope && r.out && !NATURES[key].some(n => n[1].toLowerCase() === r.cat.toLowerCase()) && !c.scope.some(s => s.toLowerCase() === r.cat.toLowerCase())) r.flags.push({ lv: "bad", m: t("f_scope", { c: r.cat }) });
+    if (key === "cacao" && r.out && (/^DG$/i.test(r.party) || /\bPDG\b/.test(r.details))) r.flags.push({ lv: "warn", m: t("f_direction") });
+    if (r.out >= DUP_MIN) for (const o of [...DATA[other].rows, ...S.entries.filter(e => e.caisse === other)]) {
+      if (o.out === r.out && Math.abs(new Date(o.date) - new Date(r.date)) <= 30 * 864e5) r.flags.push({ lv: "warn", m: t("f_dup", { a: fc(r.out), o: cname(other), d: dfull(o.date) }) });
+    }
+  }
+  // cocoa specifics
+  let extra = null;
+  if (key === "cacao") {
+    const pur = rows.filter(r => r.out && /achat de cacao/i.test(r.cat));
+    const purchases = pur.reduce((a, r) => a + r.out, 0);
+    const byType = {}; for (const r of pur) { const k = PURCHASE_TYPES[(r.ref || "").slice(0, 7)] || "autre"; byType[k] = (byType[k] || 0) + r.out; }
+    const byBuyer = {}; for (const r of pur) { const k = normName(r.party); NAME_FIX[k] ||= r.party; byBuyer[k] = (byBuyer[k] || 0) + r.out; }
+    const opexRows = rows.filter(r => r.out && !/achat de cacao/i.test(r.cat));
+    const opex = opexRows.reduce((a, r) => a + r.out, 0);
+    // ramassage advances returned
+    for (const r of rows) if (r.in && /retour/i.test(r.cat) && /^COC-002/.test(r.ref)) r.flags.push({ lv: "warn", m: t("f_ramassage", { a: fc(r.in), d: dfull(r.date) }) });
+    extra = { purchases, byType: Object.entries(byType).sort((a, b) => b[1] - a[1]), byBuyer: Object.entries(byBuyer).sort((a, b) => b[1] - a[1]), opex, nPur: pur.length };
+  } else {
+    const le = rows.filter(r => r.out && r.out <= DG_THRESHOLD), gt = rows.filter(r => r.out > DG_THRESHOLD);
+    extra = { le: [le.length, le.reduce((a, r) => a + r.out, 0)], gt: [gt.length, gt.reduce((a, r) => a + r.out, 0)] };
+  }
+  const closing = d.opening + totIn - totOut;
+  const status = closing > c.ceiling ? "over" : closing < c.target * LOW_SHARE ? "low" : "ok";
+  // caisse-level control points
+  const controls = [];
+  if (over.length) controls.push({ lv: "bad", m: t("f_over", { c: fc(c.ceiling), n: over.length, m: fc(maxDay.bal), d: dfull(maxDay.date) }) });
+  if (closing < c.target * LOW_SHARE) controls.push({ lv: "warn", m: t("f_low", { b: fc(closing) }) });
+  for (const r of rows) for (const f of r.flags) controls.push({ ...f, row: r });
+  return { key, c, d, rows, days, totIn, totOut, supply, returns, closing, over, maxDay, catList, burn, span, extra, status, controls };
+}
+let A = {};
+const recompute = () => { A = { cacao: analyse("cacao"), admin: analyse("admin") }; };
+
+/* ---------- charts ---------- */
+function balanceChart(a) {
+  const W = 760, H = 280, L = 64, R = 16, T = 18, B = 30;
+  const pts = [{ date: a.d.from, bal: a.d.opening }, ...a.days];
+  const t0 = new Date(a.d.from).getTime(), t1 = new Date(a.d.to).getTime();
+  const X = iso => L + (new Date(iso).getTime() - t0) / Math.max(1, t1 - t0) * (W - L - R);
+  const maxV = Math.max(a.c.ceiling, ...pts.map(p => p.bal)) * 1.08;
+  const Y = v => T + (1 - v / maxV) * (H - T - B);
+  const ticks = []; const stepRaw = maxV / 4, mag = Math.pow(10, Math.floor(Math.log10(stepRaw))); const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= stepRaw);
+  for (let v = 0; v <= maxV; v += step) ticks.push(v);
+  let path = "", px = null;
+  for (const p of pts) { const x = X(p.date), y = Y(p.bal); path += px === null ? `M${x},${y}` : `H${x}V${y}`; px = x; }
+  path += `H${X(a.d.to)}`;
+  const area = path + `V${Y(0)}H${L}Z`;
+  const xt = []; const d0 = new Date(a.d.from), d1 = new Date(a.d.to); const nd = Math.round((d1 - d0) / 864e5); const every = nd > 20 ? 7 : nd > 10 ? 3 : 1;
+  for (let i = 0; i <= nd; i += every) { const dd = new Date(d0.getTime() + i * 864e5).toISOString().slice(0, 10); xt.push(dd); }
+  const last = pts[pts.length - 1];
+  return `<div class="chart-wrap" data-chart="${a.key}"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t("bal_chart"))}">
+    ${ticks.map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${fcs(v)}</text>`).join("")}
+    ${xt.map(dd => `<text class="axis" x="${X(dd)}" y="${H - 8}" text-anchor="middle">${dfmt(dd)}</text>`).join("")}
+    <path class="area" d="${area}"/><path class="line" d="${path}"/>
+    <line class="ceil" x1="${L}" x2="${W - R}" y1="${Y(a.c.ceiling)}" y2="${Y(a.c.ceiling)}"/>
+    <text class="ceil-l" x="${W - R}" y="${Y(a.c.ceiling) - 6}" text-anchor="end">${esc(t("ceiling"))} ${fcs(a.c.ceiling)}</text>
+    <circle class="dot" cx="${X(a.d.to)}" cy="${Y(last.bal)}" r="5"/>
+    <line class="xh" id="xh-${a.key}" y1="${T}" y2="${H - B}" x1="-10" x2="-10"/>
+    <rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" data-hit="${a.key}"/>
+  </svg><div class="tip" id="tip-${a.key}" hidden></div></div>`;
+}
+function bindChart(a) {
+  const wrap = document.querySelector(`[data-chart="${a.key}"]`); if (!wrap) return;
+  const svg = wrap.querySelector("svg"), hit = wrap.querySelector("[data-hit]"), tip = wrap.querySelector(".tip"), xh = wrap.querySelector(".xh");
+  const W = 760, L = 64, R = 16, t0 = new Date(a.d.from).getTime(), t1 = new Date(a.d.to).getTime();
+  const pts = [{ date: a.d.from, bal: a.d.opening }, ...a.days];
+  const move = e => {
+    const r = svg.getBoundingClientRect(), vx = (e.clientX - r.left) / r.width * W;
+    const tt = t0 + (vx - L) / (W - L - R) * (t1 - t0);
+    let p = pts[0]; for (const q of pts) if (new Date(q.date).getTime() <= tt + 432e5) p = q;
+    const day = new Date(Math.min(Math.max(tt, t0), t1)).toISOString().slice(0, 10);
+    xh.setAttribute("x1", vx); xh.setAttribute("x2", vx);
+    tip.hidden = false; tip.style.left = (e.clientX - wrap.getBoundingClientRect().left) + "px"; tip.style.top = (e.clientY - wrap.getBoundingClientRect().top) + "px";
+    tip.textContent = `${dfull(day)} · ${t("balance")} ${fc(p.bal)}`;
+  };
+  hit.addEventListener("pointermove", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; xh.setAttribute("x1", -10); xh.setAttribute("x2", -10); });
+}
+function bars(list, total, opt = {}) {
+  const max = Math.max(...list.map(x => x[1]), 1);
+  return `<div class="bars">${list.map(([k, v]) => `<div class="bar-row" title="${esc(opt.label ? opt.label(k) : k)} : ${fc(v)}"><span class="lab">${esc(opt.label ? opt.label(k) : k)}</span><span class="bar-track"><span class="bar-fill ${opt.cls || ""}" style="width:${v / max * 100}%"></span></span><span class="val">${fcs(v)}<small>${Math.round(v / total * 100)} %</small></span></div>`).join("")}</div>`;
+}
+
+/* ---------- shell ---------- */
+const route = () => location.hash.replace(/^#/, "") || "overview";
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+function shell() {
+  document.documentElement.lang = S.lang;
+  $("#brandSub").textContent = t("sub");
+  const pend = S.requests.filter(r => !["funded", "rejected"].includes(r.status)).length;
+  const r = route();
+  $("#nav").innerHTML = !S.role ? "" : [["overview", t("nav_overview")], ["expenses", t("nav_expenses")], ["cacao", t("nav_cacao")], ["admin", t("nav_admin")], ["requests", t("nav_requests"), pend], ["team", t("nav_team")]]
+    .map(([k, l, n]) => `<a href="#${k}" class="${r === k ? "on" : ""}">${esc(l)}${n ? `<span class="badge">${n}</span>` : ""}</a>`).join("");
+  $("#railFoot").innerHTML = `<a href="../">${esc(t("registry"))}</a>
+    ${S.me ? `<span>${esc(S.me.name)}${S.role ? `<br>${esc(t("role_" + S.role))}` : ""}</span>` : ""}
+    <div class="row"><button class="btn small" id="langBtn">${esc(t("lang"))}</button>${S.me ? `<button class="btn small" id="outBtn">${esc(t("signout"))}</button>` : ""}</div>`;
+  const ob = $("#outBtn"); if (ob) ob.onclick = async () => { await sb.auth.signOut(); S.me = null; S.role = null; render(); };
+  try { localStorage.setItem("saic-lang", S.lang); } catch (e) {}
+  $("#langBtn").onclick = () => { S.lang = S.lang === "fr" ? "en" : "fr"; recompute(); render(); };
+}
+function render() {
+  shell();
+  const r = route(), m = $("#main");
+  if (!S.ready) { m.innerHTML = `<div class="card">${esc(t("loading"))}</div>`; return; }
+  if (!S.me) { m.innerHTML = viewLogin(); bindLogin(); return; }
+  if (!S.role) { m.innerHTML = `<div class="notice">${esc(t("no_access"))}</div>`; return; }
+  if (S.loadError) { m.innerHTML = `<div class="notice" style="background:var(--bad-bg);color:var(--bad)">${esc(t("load_err", { m: S.loadError }))}</div>`; return; }
+  const note = "";
+  if (r === "team") { m.innerHTML = viewTeam(); bindTeam(); return; }
+  if (r === "cacao" || r === "admin") { m.innerHTML = note + viewBox(A[r]); bindChart(A[r]); bindBox(A[r]); return; }
+  if (r === "requests") { m.innerHTML = note + viewRequests(); return; }
+  if (r === "expenses") { m.innerHTML = note + viewExpenses(); bindExpenses(); return; }
+  m.innerHTML = note + viewOverview(); bindChart(A.cacao); bindChart(A.admin);
+}
+const pill = st => `<span class="pill ${st === "over" ? "bad" : st === "low" ? "warn" : "ok"}">${esc(t("st_" + st))}</span>`;
+
+/* ---------- overview ---------- */
+function boxCard(a) {
+  const pct = a.closing / a.c.ceiling, w = Math.min(pct, 1.25) / 1.25 * 100, mark = 1 / 1.25 * 100;
+  return `<div class="card box">
+    <div class="box-head"><div><h2>${esc(cname(a.key))}</h2><span class="code">${a.c.code} · ${esc(t("period"))} ${dfmt(a.d.from)} – ${dfull(a.d.to)}</span></div>${pill(a.status)}</div>
+    <div><div class="muted small">${esc(t("closing"))}</div><div class="bal">${fc(a.closing)}</div></div>
+    <div class="gauge" title="${Math.round(pct * 100)} % ${esc(t("of_ceiling"))}"><span class="${a.status === "over" ? "over" : a.status === "low" ? "low" : ""}" style="width:${w}%"></span><i style="left:${mark}%"></i></div>
+    <div class="gauge-legend"><span>${Math.round(pct * 100)} % ${esc(t("of_ceiling"))}</span><span>${esc(t("ceiling"))} ${fc(a.c.ceiling)}</span></div>
+    <div class="kv3"><div><span class="muted">${esc(t("inflows"))}</span><b>${fcs(a.totIn)}</b></div><div><span class="muted">${esc(t("outflows"))}</span><b>${fcs(a.totOut)}</b></div><div><span class="muted">${esc(t("burn"))}</span><b>${fcs(a.burn)}</b></div></div>
+    ${a.over.length ? `<div class="small" style="color:var(--bad)">${esc(t("days_over", { n: a.over.length }))} · ${esc(t("max_bal", { v: fc(a.maxDay.bal) }))}</div>` : ""}
+    ${balanceChart(a)}
+    <div><h3 style="margin-bottom:8px">${esc(t("top_cats"))}</h3>${bars(a.catList.slice(0, 4), a.totOut)}</div>
+    <div class="row"><a class="btn" href="#${a.key}">${esc(t("open_box"))}</a><button class="btn primary" data-act="newReq" data-caisse="${a.key}">${esc(t("request_funds"))}</button></div>
+  </div>`;
+}
+function controlList(items, max = 99, showBox = false) {
+  if (!items.length) return `<ul class="issues"><li class="ok">${esc(t("no_controls"))}</li></ul>`;
+  const sorted = items.slice().sort((x, y) => x.lv === y.lv ? 0 : x.lv === "bad" ? -1 : 1).slice(0, max);
+  return `<ul class="issues">${sorted.map(f => `<li class="${f.lv}"><span>${esc(f.m)}${f.row ? `<span class="who">${dfull(f.row.date)} · ${esc(f.row.details)} · ${fc(f.row.out || f.row.in)}${showBox ? " · " + esc(cname(f.box)) : ""}</span>` : showBox ? `<span class="who">${esc(cname(f.box))}</span>` : ""}</span></li>`).join("")}</ul>`;
+}
+function viewOverview() {
+  const all = [...A.cacao.controls.map(x => ({ ...x, box: "cacao" })), ...A.admin.controls.map(x => ({ ...x, box: "admin" }))];
+  const pend = S.requests.filter(r => !["funded", "rejected"].includes(r.status));
+  return `<div class="topline"><div><h1>${esc(t("ov_title"))}</h1><p>${esc(t("ov_sub"))}</p></div>
+    <div class="row"><button class="btn" data-act="newReq">${esc(t("new_req"))}</button><button class="btn primary" data-act="newEntry">${esc(t("new_entry"))}</button></div></div>
+  <div class="grid2">${boxCard(A.cacao)}${boxCard(A.admin)}</div>
+  <div class="grid-wide">
+    <div class="card stack"><h3>${esc(t("controls"))} (${all.length})</h3>${controlList(all, 12, true)}</div>
+    <div class="card stack"><div class="topline"><h3>${esc(t("pending_req"))}</h3><a href="#requests">${esc(t("nav_requests"))}</a></div>
+      ${pend.length ? pend.map(reqCard).join("") : `<p class="muted">${esc(t("no_pending"))}</p>`}</div>
+  </div>`;
+}
+
+/* ---------- cash box page ---------- */
+function viewBox(a) {
+  const f = S.flt[a.key], cats = [...new Set(a.rows.map(r => r.cat))].sort();
+  const ex = a.extra;
+  const special = a.key === "cacao" ? `
+    <div class="card stack"><h3>${esc(t("purchases"))}</h3>
+      <div class="kv3"><div><span class="muted">${esc(t("purchases"))}</span><b>${fcs(ex.purchases)}</b></div><div><span class="muted">${esc(t("opex"))}</span><b>${fcs(ex.opex)}</b></div><div><span class="muted">${esc(t("ops", { n: ex.nPur }))}</span><b>${esc(t("opex_ratio", { p: (ex.opex / ex.purchases * 100).toLocaleString(loc(), { maximumFractionDigits: 1 }) }))}</b></div></div>
+      <h3>${esc(t("by_type"))}</h3>${bars(ex.byType, ex.purchases, { cls: "pod", label: k => ({ magasin: "Magasin (COC-001)", ramassage: "Ramassage (COC-002)", exceptionnel: "Exceptionnel (COC-003)" }[k] || k) })}
+      <h3>${esc(t("by_buyer"))}</h3>${bars(ex.byBuyer, ex.purchases, { cls: "pod", label: k => NAME_FIX[k] || k })}
+    </div>` : `
+    <div class="card stack"><h3>${esc(t("approval_split"))}</h3>
+      ${bars([[t("le150"), ex.le[1]], [t("gt150"), ex.gt[1]]], a.totOut)}
+      <p class="small muted">${ex.le[0]} / ${ex.gt[0]} ${esc(t("transactions").toLowerCase())}</p></div>`;
+  const theo = a.d.opening + a.totIn - a.totOut, cnt = S.count[a.key];
+  return `<div class="topline"><div><h1>${esc(cname(a.key))}</h1><p>${a.c.code} · ${esc(t("period"))} ${dfull(a.d.from)} – ${dfull(a.d.to)} · ${esc(t("ops", { n: a.rows.length }))}</p></div>
+    <div class="row">${pill(a.status)}<button class="btn" data-act="newReq" data-caisse="${a.key}">${esc(t("request_funds"))}</button><button class="btn primary" data-act="newEntry" data-caisse="${a.key}">${esc(t("new_entry"))}</button></div></div>
+  <div class="tiles">
+    <div class="tile"><span class="l">${esc(t("opening"))}</span><span class="v">${fcs(a.d.opening)}</span><span class="s">${fc(a.d.opening)}</span></div>
+    <div class="tile"><span class="l">${esc(t("inflows"))}</span><span class="v ok">+${fcs(a.totIn)}</span><span class="s">${esc(t("t_in_supply", { v: fcs(a.supply) }))}${a.returns ? " · " + esc(t("t_in_return", { v: fcs(a.returns) })) : ""}</span></div>
+    <div class="tile"><span class="l">${esc(t("outflows"))}</span><span class="v">−${fcs(a.totOut)}</span><span class="s">${esc(t("burn"))} ${fcs(a.burn)}</span></div>
+    <div class="tile"><span class="l">${esc(t("closing"))}</span><span class="v ${a.status === "over" ? "bad" : a.status === "low" ? "warn" : "ok"}">${fcs(a.closing)}</span><span class="s">${Math.round(a.closing / a.c.ceiling * 100)} % ${esc(t("of_ceiling"))} (${fcs(a.c.ceiling)})</span></div>
+    <div class="tile"><span class="l">${esc(t("cover"))}</span><span class="v">${esc(t("cover_days", { n: Math.max(0, Math.round(a.closing / Math.max(a.burn, 1))) }))}</span><span class="s">${esc(t("burn"))}</span></div>
+  </div>
+  <div class="grid-wide">
+    <div class="card stack"><h3>${esc(t("bal_chart"))}</h3>${balanceChart(a)}</div>
+    <div class="card stack"><h3>${esc(t("by_cat"))}</h3>${bars(a.catList, a.totOut)}</div>
+  </div>
+  <div class="grid-wide">
+    <div class="card stack"><h3>${esc(t("controls"))} (${a.controls.length})</h3>${controlList(a.controls)}</div>
+    <div class="stack">${special}
+      <div class="card stack"><div><h3>${esc(t("recon"))}</h3><p class="small muted">${esc(t("recon_sub"))}</p></div>
+        <div class="recon"><span>${esc(t("recon_a"))}</span><span class="num">${fc(a.d.opening)}</span><span>${esc(t("recon_b"))}</span><span class="num">${fc(a.totIn)}</span><span>${esc(t("recon_c"))}</span><span class="num">${fc(a.totOut)}</span>
+          <b>${esc(t("recon_d"))}</b><b class="num">${fc(theo)}</b>
+          <label for="count-${a.key}">${esc(t("recon_e"))}</label><input id="count-${a.key}" type="number" inputmode="numeric" value="${cnt ?? ""}" placeholder="${Math.round(theo)}">
+          <b>${esc(t("recon_gap"))}</b><b class="num" id="gap-${a.key}">${cnt === undefined || cnt === "" ? "—" : fc(cnt - theo)}</b></div></div>
+    </div>
+  </div>
+  <div class="card stack"><h3>${esc(t("transactions"))}</h3>
+    <div class="toolbar"><input type="search" id="q-${a.key}" placeholder="${esc(t("search"))}" value="${esc(f.q)}" aria-label="${esc(t("search"))}">
+      <select id="cat-${a.key}" aria-label="${esc(t("c_cat"))}"><option value="">${esc(t("all_cats"))}</option>${cats.map(c => `<option ${f.cat === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
+      <label class="row small"><input type="checkbox" id="fl-${a.key}" ${f.flags ? "checked" : ""}> ${esc(t("only_flags"))}</label></div>
+    <div id="tbl-${a.key}">${txTable(a)}</div></div>`;
+}
+function txTable(a) {
+  const f = S.flt[a.key], q = f.q.toLowerCase();
+  const rows = a.rows.filter(r => (!f.cat || r.cat === f.cat) && (!f.flags || r.flags.length) && (!q || [r.details, r.party, r.ref, r.cat, r.obs].join(" ").toLowerCase().includes(q)));
+  const so = rows.reduce((x, r) => x + r.out, 0), si = rows.reduce((x, r) => x + r.in, 0);
+  return `<div class="table-wrap"><table><thead><tr><th>${esc(t("c_date"))}</th><th>${esc(t("c_ref"))}</th>${a.key === "cacao" ? `<th>${esc(t("c_party"))}</th>` : ""}<th>${esc(t("c_cat"))}</th><th>${esc(t("c_details"))}</th><th class="r">${esc(t("c_out"))}</th><th class="r">${esc(t("c_in"))}</th><th class="r">${esc(t("c_bal"))}</th></tr></thead>
+  <tbody>${rows.map(r => { const lv = r.flags.some(x => x.lv === "bad") ? "bad" : r.flags.length ? "warn" : ""; return `<tr class="${lv ? "flag-" + lv : ""}">
+    <td class="num">${dfmt(r.date)}</td><td class="mono">${esc(r.ref || "—")}${r.added ? `<br><span class="tag">${esc(t("added"))}</span>${r.source === "app" && S.role === "comptable" ? ` <button class="btn small" data-act="editEntry" data-id="${esc(r.id)}">${esc(t("edit"))}</button>` : ""}` : ""}</td>${a.key === "cacao" ? `<td>${esc(r.party)}</td>` : ""}<td>${esc(r.cat)}</td>
+    <td>${esc(r.details)}${fileLinks(r.files)}${r.obs && r.obs !== "RAS" ? `<span class="flagtxt" style="color:var(--muted)">${esc(r.obs)}</span>` : ""}${r.flags.map(x => `<span class="flagtxt ${x.lv}">${esc(x.m)}</span>`).join("")}</td>
+    <td class="r num">${r.out ? fc(r.out) : ""}</td><td class="r num in">${r.in ? fc(r.in) : ""}</td><td class="r num">${fc(r.bal)}</td></tr>`; }).join("")}</tbody>
+  <tfoot><tr><td colspan="${a.key === "cacao" ? 5 : 4}">${esc(t("total"))} (${rows.length})</td><td class="r num">${fc(so)}</td><td class="r num">${fc(si)}</td><td></td></tr></tfoot></table></div>`;
+}
+function bindBox(a) {
+  const upd = () => { $("#tbl-" + a.key).innerHTML = txTable(a); };
+  $("#q-" + a.key).oninput = e => { S.flt[a.key].q = e.target.value; upd(); };
+  $("#cat-" + a.key).onchange = e => { S.flt[a.key].cat = e.target.value; upd(); };
+  $("#fl-" + a.key).onchange = e => { S.flt[a.key].flags = e.target.checked; upd(); };
+  $("#count-" + a.key).oninput = e => { const v = e.target.value; S.count[a.key] = v === "" ? "" : Number(v); const theo = a.d.opening + a.totIn - a.totOut; $("#gap-" + a.key).textContent = v === "" ? "—" : fc(Number(v) - theo); };
+}
+
+/* ---------- fund requests ---------- */
+// workflow from §7: courant → DAF → Trésorier ; exceptionnel → DAF → DG → Trésorier
+// the approval chain is taken from the matrix when the request is submitted, then kept with the request
+const reqFlow = r => r.flow || (r.type === "exceptionnel" ? ["daf", "dg"] : ["daf"]);
+function nextActor(r) {
+  if (r.status === "funded" || r.status === "rejected") return null;
+  const f = reqFlow(r), i = r.status === "submitted" ? -1 : f.indexOf(r.status);
+  return i + 1 < f.length ? f[i + 1] : "tresorier";
+}
+function reqCard(r) {
+  const flow = ["submitted", ...reqFlow(r), "funded"], idx = flow.indexOf(r.status);
+  const stepName = { submitted: t("s_submit"), comptable: t("role_comptable"), daf: t("s_daf"), dg: t("s_dg"), funded: t("s_fund") };
+  const steps = flow.map((s, i) => { let cls = i <= idx ? "done" : i === idx + 1 && r.status !== "rejected" ? "now" : ""; if (r.status === "rejected" && i === (r.rejectedAt ?? 1)) cls = "no"; return `<span class="step ${cls}">${esc(stepName[s])}</span>`; }).join("");
+  const actor = nextActor(r);
+  const mine = actor && actor === S.role;
+  const own = r.createdBy === S.me.id && actor;
+  const stLabel = r.status === "submitted" ? t("st_submitted") : r.status === "daf" ? t("st_daf") : r.status === "dg" ? t("st_dg") : r.status === "comptable" ? t("role_comptable") + " ✓" : r.status === "funded" ? t("st_funded") : t("st_rejected");
+  const stCls = r.status === "funded" ? "ok" : r.status === "rejected" ? "bad" : "warn";
+  return `<div class="req">
+    <div><div class="row"><b class="mono">${esc(r.id)}</b><span class="pill ${stCls}">${esc(stLabel)}</span>${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
+      <div style="margin-top:4px"><b>${esc(cname(r.caisse))}</b> · ${esc(t("ty_" + r.type))}</div>
+      <div class="small muted">${esc(t(r.reason))}${r.details ? " · " + esc(r.details) : ""}</div>
+      <div class="small muted">${esc(S.people[r.createdBy] || t("role_comptable"))} · ${dfull(r.date)}${r.need ? " · " + esc(t("f_need")) + " " + dfull(r.need) : ""}${r.bankRef ? " · " + esc(r.bankRef) : ""}${r.rejectReason ? " · " + esc(r.rejectReason) : ""}</div>${fileLinks(r.files)}</div>
+    <div class="amt">${fc(r.amount)}</div>
+    <div class="steps">${steps}</div>
+    ${actor ? `<div class="acts">${own ? `<span class="small muted">${esc(t("own_request"))}</span>` : mine ? (actor === "tresorier" ? `<button class="btn primary small" data-act="fund" data-id="${esc(r.id)}">${esc(t("act_fund"))}</button>` : `<button class="btn primary small" data-act="approve" data-id="${esc(r.id)}">${esc(t("act_approve"))}</button>`) + `<button class="btn small danger" data-act="reject" data-id="${esc(r.id)}">${esc(t("act_reject"))}</button>` : `<span class="small muted">${esc(t("waiting_for", { r: t("role_" + actor) }))}</span>`}</div>` : ""}
+  </div>`;
+}
+function viewRequests() {
+  const list = S.requests.slice().sort((a, b) => b.created.localeCompare(a.created));
+  return `<div class="topline"><div><h1>${esc(t("req_title"))}</h1><p>${esc(t("req_sub"))}</p></div><button class="btn primary" data-act="newReq">${esc(t("new_req"))}</button></div>
+  <div class="tiles">${["cacao", "admin"].map(k => { const a = A[k]; const sug = Math.max(0, a.c.target - a.closing); return `<div class="tile"><span class="l">${esc(cname(k))}</span><span class="v">${fcs(a.closing)} <small>/ ${fcs(a.c.target)}</small></span><span class="s">${esc(t("suggest", { b: fc(a.closing), t: fc(a.c.target), s: fc(sug) }))}</span></div>`; }).join("")}</div>
+  <div class="stack">${list.length ? list.map(reqCard).join("") : `<div class="card muted">${esc(t("no_req"))}</div>`}</div>`;
+}
+async function saveReq(r) {
+  const { error } = await sb.from("fund_requests").insert({ id: r.id, caisse: r.caisse, type: r.type, amount: r.amount, reason: r.reason, details: r.details || null, need: r.need || null, files: r.files || [] });
+  if (error) throw new Error(error.message);
+  await loadData();
+}
+async function stepReq(id, patch) {
+  const { error } = await sb.from("fund_requests").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+  await loadData();
+}
+function closeModal() { $("#modal").innerHTML = ""; }
+function modal(html) {
+  $("#modal").innerHTML = `<div class="scrim"><div class="drawer" role="dialog" aria-modal="true">${html}</div></div>`;
+  $("#modal .scrim").onclick = e => { if (e.target.classList.contains("scrim")) closeModal(); };
+  $("#modal").querySelectorAll("[data-close]").forEach(b => b.onclick = closeModal);
+}
+/* ---------- attachments ---------- */
+let attKeep = [], attNew = [];
+const fileLinks = files => (files || []).length ? `<span class="att-links">${files.map(f => `<a href="#" data-file="${esc(f.path)}">${esc(f.name)}</a>`).join("")}</span>` : "";
+document.addEventListener("click", async e => {
+  const a = e.target.closest("[data-file]"); if (!a) return; e.preventDefault();
+  const w = window.open("", "_blank");
+  const { data, error } = await sb.storage.from("treasury-files").createSignedUrl(a.dataset.file, 300);
+  if (error || !data) { if (w) w.close(); toast(t("save_err", { m: error ? error.message : "?" })); return; }
+  if (w) w.location = data.signedUrl; else location.href = data.signedUrl;
+});
+function attachField(existing) {
+  attKeep = (existing || []).slice(); attNew = [];
+  return `<div class="f full"><span style="font-size:13px;font-weight:500">${esc(t("att"))}</span>
+    ${S.role === "comptable" ? `<label class="btn small" style="align-self:flex-start"><input type="file" id="attIn" class="vh" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf">${esc(t("att_add"))}</label><span class="hint">${esc(t("att_hint"))}</span>` : `<span class="hint">${esc(t("att_off"))}</span>`}
+    <ul class="att-list" id="attList"></ul></div>`;
+}
+function bindAttach() {
+  const draw = () => { const l = $("#attList"); if (!l) return;
+    l.innerHTML = [...attKeep.map((f, i) => `<li><a href="#" data-file="${esc(f.path)}">${esc(f.name)}</a><button type="button" class="btn small" data-attk="${i}">${esc(t("att_remove"))}</button></li>`),
+      ...attNew.map((f, i) => `<li><span>${esc(f.name)} <span class="muted small">(${Math.round(f.size / 1024)} Ko)</span></span><button type="button" class="btn small" data-attn="${i}">${esc(t("att_remove"))}</button></li>`)].join("");
+    l.querySelectorAll("[data-attk]").forEach(b => b.onclick = () => { attKeep.splice(+b.dataset.attk, 1); draw(); });
+    l.querySelectorAll("[data-attn]").forEach(b => b.onclick = () => { attNew.splice(+b.dataset.attn, 1); draw(); }); };
+  const inp = $("#attIn");
+  if (inp) inp.onchange = () => { for (const f of inp.files) attNew.push(f); inp.value = ""; draw(); };
+  draw();
+}
+function toJpeg(file, max = 2000, q = 0.85) {
+  return new Promise((res, rej) => { const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => { const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob(b => b ? res(b) : rej(new Error("image")), "image/jpeg", q); };
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error(t("att_type"))); }; img.src = u; });
+}
+async function uploadAttachments(errEl) {
+  const out = attKeep.slice();
+  if (!attNew.length) return out;
+  errEl.textContent = t("att_uploading"); errEl.style.color = "var(--muted)";
+  for (const f of attNew) {
+    try {
+      let blob = f, type = f.type, name = f.name;
+      if (/^image\//.test(f.type) || /\.(heic|heif)$/i.test(f.name)) { if (f.size > 1.5e6 || !/^image\/(jpeg|png|webp)$/.test(f.type)) { blob = await toJpeg(f); type = "image/jpeg"; name = name.replace(/\.\w+$/, "") + ".jpg"; } }
+      else if (f.type !== "application/pdf") throw new Error(t("att_type"));
+      const path = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}-${name.replace(/[^\w.\-]+/g, "_")}`;
+      const { error } = await sb.storage.from("treasury-files").upload(path, blob, { contentType: type, upsert: false });
+      if (error) throw new Error(error.message);
+      out.push({ path, name, type, size: blob.size });
+    } catch (e) { errEl.style.color = ""; throw new Error(t("att_fail", { n: f.name, m: e.message || e.code })); }
+  }
+  errEl.textContent = ""; errEl.style.color = "";
+  return out;
+}
+
+/* ---------- transactions entered by Accounting ---------- */
+async function saveEntry(e, isNew) {
+  const body = { caisse: e.caisse, kind: e.kind, date: e.date, cat: e.cat, code: e.code || null, amount: e.amount, party: e.party || null, market: e.market || null,
+    details: e.details, ref: e.ref || null, proof: e.proof, approvals: e.approvals, asset: !!e.asset, files: e.files || [] };
+  const { error } = isNew ? await sb.from("cash_transactions").insert(body) : await sb.from("cash_transactions").update(body).eq("id", e.id);
+  if (error) throw new Error(error.message);
+  await loadData();
+}
+async function voidEntry(id, reason) {
+  const { error } = await sb.from("cash_transactions").update({ voided: true, void_reason: reason }).eq("id", id);
+  if (error) throw new Error(error.message);
+  await loadData();
+}
+function nextRef(box, code, date) {
+  if (box === "admin") {
+    const nums = [...DATA.admin.rows, ...S.entries.filter(e => e.caisse === "admin")].filter(r => r.out).map(r => (String(r.ref).match(/Bon N°\s*0*(\d+)/) || [])[1]).filter(Boolean).map(Number);
+    return "Bon N° " + String(Math.max(0, ...nums) + 1).padStart(7, "0") + (code ? " · " + code : "");
+  }
+  const ymd = date.replace(/-/g, ""), prefix = (code || "COC-000") + "-" + ymd + "-";
+  const same = [...DATA.cacao.rows, ...S.entries.filter(e => e.caisse === "cacao")].filter(r => String(r.ref).includes("-" + ymd + "-")).length;
+  return prefix + String(same + 1).padStart(3, "0");
+}
+function openEntryForm(box, id) {
+  const ex = id ? S.entries.find(e => e.id === id) : null;
+  box = ex ? ex.caisse : box || "cacao";
+  const today = new Date().toISOString().slice(0, 10);
+  modal(`<form id="ef" novalidate>
+    <header><div><h2>${esc(t(ex ? "edit_entry" : "new_entry"))}</h2><p>${esc(t("entry_sub"))}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body"><div class="fgrid">
+      <div class="f"><label for="eb">${esc(t("f_caisse"))}</label><select id="eb" ${ex ? "disabled" : ""}>${["cacao", "admin"].map(k => `<option value="${k}" ${k === box ? "selected" : ""}>${esc(cname(k))}</option>`).join("")}</select></div>
+      <div class="f"><label for="ek">${esc(t("e_kind"))}</label><select id="ek"><option value="out">${esc(t("e_out"))}</option><option value="in" ${ex && ex.kind === "in" ? "selected" : ""}>${esc(t("e_in"))}</option></select></div>
+      <div class="f full"><label for="en">${esc(t("e_nature"))}</label><select id="en"></select></div>
+      <div class="f"><label for="ed">${esc(t("e_date"))}</label><input id="ed" type="date" value="${esc(ex ? ex.date : today)}"></div>
+      <div class="f"><label for="ea">${esc(t("e_amount"))}</label><input id="ea" type="number" min="0" step="1" inputmode="numeric" value="${ex ? ex.amount : ""}"><span class="hint" id="eaHint"></span></div>
+      <div class="f"><label for="ep">${esc(t("e_party"))}</label><input id="ep" type="text" value="${esc(ex ? ex.party : "")}"></div>
+      <div class="f" id="emWrap"><label for="em">${esc(t("e_market"))}</label><input id="em" type="text" value="${esc(ex ? ex.market || "" : "")}"></div>
+      <div class="f full"><label for="et">${esc(t("e_details"))}</label><input id="et" type="text" value="${esc(ex ? ex.details : "")}" placeholder="Ex. : Achat de cacao magasin, 1,2 t"></div>
+      <div class="f"><label for="epr">${esc(t("e_proof"))}</label><select id="epr">${PROOFS.map(p => `<option value="${p}" ${ex && ex.proof === p ? "selected" : ""}>${esc(t("p_" + p))}</option>`).join("")}</select></div>
+      <div class="f" id="eassetWrap"><label class="row small" style="margin-top:24px"><input type="checkbox" id="easset" ${ex && ex.asset ? "checked" : ""}> ${esc(t("e_asset"))}</label></div>
+      <div class="f full"><span style="font-size:13px;font-weight:500">${esc(t("e_approvals"))}</span>
+        <div class="row">${APPROVERS.map(a => `<label class="row small"><input type="checkbox" class="eappr" value="${a}" ${ex && (ex.approvals || []).includes(a) ? "checked" : ""}> ${esc(t("role_" + a))}</label>`).join("")}</div>
+        <span class="hint" id="eReq"></span></div>
+      ${attachField(ex ? ex.files : [])}
+      <div class="f full"><label for="er">${esc(t("e_ref"))}</label><input id="er" type="text" value="${esc(ex ? ex.ref : "")}"><span class="hint">${esc(t("e_ref_hint"))}</span></div>
+    </div></div>
+    <footer><div class="row">${ex ? `<button type="button" class="btn danger" id="edel">${esc(t("void"))}</button>` : ""}<span class="err" id="efErr"></span></div><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("save"))}</button></div></footer></form>`);
+  let refTouched = !!ex;
+  const fill = () => {
+    const b = $("#eb").value, k = $("#ek").value;
+    const opts = k === "in" ? INFLOWS[b].map(c => ["", c, c]) : NATURES[b];
+    const cur = ex ? ex.code + "|" + ex.cat : "";
+    $("#en").innerHTML = opts.map(([code, cat, label]) => `<option value="${esc(code + "|" + cat)}" ${cur === code + "|" + cat ? "selected" : ""}>${esc((code ? code + " · " : "") + label + (label !== cat ? " → " + cat : ""))}</option>`).join("");
+    $("#emWrap").hidden = b !== "cacao";
+    ref(); hint();
+  };
+  const ref = () => { if (refTouched) return; const [code] = $("#en").value.split("|"); $("#er").value = $("#ek").value === "in" ? "" : nextRef($("#eb").value, code, $("#ed").value || today); };
+  const hint = () => { const v = Number($("#ea").value) || 0, b = $("#eb").value, out = $("#ek").value === "out";
+    $("#eassetWrap").hidden = !out;
+    const req = out ? required(b, $("#easset").checked ? "asset" : "expense", v) : [];
+    const got = [...document.querySelectorAll(".eappr:checked")].map(x => x.value), miss = req.filter(x => !got.includes(x));
+    $("#eReq").textContent = out ? t("e_required", { r: roleList(req) }) : ""; $("#eReq").style.color = miss.length && v ? "var(--warn)" : "var(--ok)"; };
+  $("#eb").onchange = fill; $("#ek").onchange = fill; $("#en").onchange = ref; $("#ed").onchange = ref; $("#ea").oninput = hint; $("#easset").onchange = hint; document.querySelectorAll(".eappr").forEach(x => x.onchange = hint); $("#er").oninput = () => refTouched = true;
+  fill(); bindAttach();
+  if (ex) $("#edel").onclick = () => {
+    modal(`<form id="vf"><header><div><h2>${esc(t("void"))}</h2><p class="mono">${esc(ex.ref || ex.details)} · ${fc(ex.amount)}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+      <div class="body"><div class="f"><label for="vx">${esc(t("void_reason"))}</label><input id="vx" type="text" required></div></div>
+      <footer><span class="err" id="vfErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("confirm"))}</button></div></footer></form>`);
+    $("#vx").focus();
+    $("#vf").onsubmit = async ev => { ev.preventDefault(); const v = $("#vx").value.trim(); if (!v) { $("#vfErr").textContent = t("void_reason"); return; }
+      try { await voidEntry(ex.id, v); closeModal(); toast(t("voided_toast")); } catch (x) { $("#vfErr").textContent = t("save_err", { m: x.message }); } };
+  };
+  $("#ef").onsubmit = async e => {
+    e.preventDefault();
+    const amount = Number($("#ea").value), date = $("#ed").value, details = $("#et").value.trim();
+    if (!(amount > 0) || !date || !details) { $("#efErr").textContent = t("need_entry"); return; }
+    const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+    let files; try { files = await uploadAttachments($("#efErr")); } catch (x) { $("#efErr").textContent = x.message; btn.disabled = false; return; }
+    const [code, cat] = $("#en").value.split("|"), kind = $("#ek").value, b = $("#eb").value;
+    const ent = { id: ex ? ex.id : null, caisse: b, kind, date, cat, code, amount, out: kind === "out" ? amount : 0, in: kind === "in" ? amount : 0,
+      party: $("#ep").value.trim(), market: b === "cacao" ? $("#em").value.trim() : "", details, ref: $("#er").value.trim(), proof: $("#epr").value, approvals: [...document.querySelectorAll(".eappr:checked")].map(x => x.value), asset: kind === "out" && $("#easset").checked,
+      obs: "", files, created: ex ? ex.created : new Date().toISOString(), by: S.role };
+    try { await saveEntry(ent, !ex); } catch (x) { $("#efErr").textContent = t("save_err", { m: x.message }); btn.disabled = false; return; }
+    closeModal(); toast(t("entry_saved", { r: ent.ref || details }));
+  };
+}
+
+/* ---------- expenses page: both cash boxes, by category ---------- */
+function viewExpenses() {
+  const f = S.ex;
+  const all = ["cacao", "admin"].flatMap(k => A[k].rows.filter(r => r.out).map(r => ({ ...r, box: k })));
+  const months = [...new Set(all.map(r => r.date.slice(0, 7)))].sort();
+  const mlabel = m => new Date(m + "-15").toLocaleDateString(loc(), { month: "long", year: "numeric" });
+  const inMonth = all.filter(r => (!f.month || r.date.startsWith(f.month)));
+  const cats = [...new Set(inMonth.map(r => r.cat))];
+  const piv = cats.map(c => { const v = { cacao: 0, admin: 0 }; for (const r of inMonth) if (r.cat === c) v[r.box] += r.out; return [c, v.cacao, v.admin, v.cacao + v.admin]; }).sort((a, b) => b[3] - a[3]);
+  const tot = piv.reduce((a, r) => [a[0] + r[1], a[1] + r[2], a[2] + r[3]], [0, 0, 0]);
+  const q = f.q.toLowerCase();
+  const list = inMonth.filter(r => (!f.box || r.box === f.box) && (!f.cat || r.cat === f.cat) && (!q || [r.details, r.party, r.ref, r.cat].join(" ").toLowerCase().includes(q))).sort((a, b) => b.date.localeCompare(a.date));
+  const sum = list.reduce((a, r) => a + r.out, 0);
+  return `<div class="topline"><div><h1>${esc(t("exp_title"))}</h1><p>${esc(t("exp_sub"))}</p></div>
+    <div class="row"><button class="btn primary" data-act="newEntry">${esc(t("new_entry"))}</button></div></div>
+  <div class="toolbar">
+    <select id="xBox" aria-label="${esc(t("c_box"))}"><option value="">${esc(t("all_boxes"))}</option>${["cacao", "admin"].map(k => `<option value="${k}" ${f.box === k ? "selected" : ""}>${esc(cname(k))}</option>`).join("")}</select>
+    <select id="xMonth" aria-label="Mois"><option value="">${esc(t("all_months"))}</option>${months.map(m => `<option value="${m}" ${f.month === m ? "selected" : ""}>${esc(mlabel(m))}</option>`).join("")}</select>
+    <select id="xCat" aria-label="${esc(t("c_cat"))}"><option value="">${esc(t("all_cats"))}</option>${cats.sort().map(c => `<option ${f.cat === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
+    <input type="search" id="xQ" placeholder="${esc(t("search"))}" value="${esc(f.q)}" aria-label="${esc(t("search"))}">
+  </div>
+  <div class="card stack"><h3>${esc(t("by_cat_box"))}</h3>
+    <div class="table-wrap"><table><thead><tr><th>${esc(t("c_cat"))}</th><th class="r">${esc(cname("cacao"))}</th><th class="r">${esc(cname("admin"))}</th><th class="r">${esc(t("both"))}</th><th style="width:30%"></th></tr></thead>
+    <tbody>${piv.map(r => `<tr class="pick" data-cat="${esc(r[0])}" style="cursor:pointer"><td>${esc(r[0])}</td><td class="r num">${r[1] ? fc(r[1]) : "—"}</td><td class="r num">${r[2] ? fc(r[2]) : "—"}</td><td class="r num"><b>${fc(r[3])}</b></td>
+      <td><div class="bar-track"><div class="bar-fill" style="width:${r[3] / Math.max(piv[0] ? piv[0][3] : 1, 1) * 100}%"></div></div></td></tr>`).join("")}</tbody>
+    <tfoot><tr><td>${esc(t("total"))}</td><td class="r num">${fc(tot[0])}</td><td class="r num">${fc(tot[1])}</td><td class="r num">${fc(tot[2])}</td><td></td></tr></tfoot></table></div></div>
+  <div class="card stack"><h3>${esc(t("transactions"))} (${list.length} · ${fc(sum)})</h3>
+    <div class="table-wrap"><table><thead><tr><th>${esc(t("c_date"))}</th><th>${esc(t("c_box"))}</th><th>${esc(t("c_ref"))}</th><th>${esc(t("c_cat"))}</th><th>${esc(t("c_details"))}</th><th class="r">${esc(t("c_out"))}</th></tr></thead>
+    <tbody>${list.map(r => { const lv = r.flags.some(x => x.lv === "bad") ? "bad" : r.flags.length ? "warn" : ""; return `<tr class="${lv ? "flag-" + lv : ""}"><td class="num">${dfull(r.date)}</td><td>${esc(CAISSES[r.box].code)}</td>
+      <td class="mono">${esc(r.ref || "—")}${r.added ? `<br><span class="tag">${esc(t("added"))}</span>${r.source === "app" && S.role === "comptable" ? ` <button class="btn small" data-act="editEntry" data-id="${esc(r.id)}">${esc(t("edit"))}</button>` : ""}` : ""}</td><td>${esc(r.cat)}</td>
+      <td>${esc(r.details)}${fileLinks(r.files)}${r.party ? `<span class="flagtxt" style="color:var(--muted)">${esc(r.party)}</span>` : ""}${r.flags.map(x => `<span class="flagtxt ${x.lv}">${esc(x.m)}</span>`).join("")}</td><td class="r num">${fc(r.out)}</td></tr>`; }).join("")}</tbody></table></div></div>`;
+}
+function bindExpenses() {
+  const re = () => { const y = window.scrollY; render(); window.scrollTo(0, y); };
+  $("#xBox").onchange = e => { S.ex.box = e.target.value; re(); };
+  $("#xMonth").onchange = e => { S.ex.month = e.target.value; re(); };
+  $("#xCat").onchange = e => { S.ex.cat = e.target.value; re(); };
+  $("#xQ").onchange = e => { S.ex.q = e.target.value; re(); };
+  document.querySelectorAll("tr.pick").forEach(tr => tr.onclick = () => { S.ex.cat = S.ex.cat === tr.dataset.cat ? "" : tr.dataset.cat; re(); });
+}
+
+const REASONS = { courant: ["r_weekly"], exceptionnel: ["r_tonnage", "r_volume", "r_early", "r_urgent"] };
+function openRequestForm(caisse = "cacao") {
+  modal(`<form id="rf" novalidate>
+    <header><div><h2>${esc(t("new_req"))}</h2><p>§7 · ${esc(t("req_sub"))}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body">
+      <div class="fgrid">
+        <div class="f"><label for="rc">${esc(t("f_caisse"))}</label><select id="rc">${["cacao", "admin"].map(k => `<option value="${k}" ${k === caisse ? "selected" : ""}>${esc(cname(k))}</option>`).join("")}</select></div>
+        <div class="f"><label for="rt">${esc(t("f_type"))}</label><select id="rt"><option value="courant">${esc(t("ty_courant"))}</option><option value="exceptionnel">${esc(t("ty_exceptionnel"))}</option></select></div>
+        <div class="f full" id="sugBox"></div>
+        <div class="f"><label for="ra">${esc(t("f_amount"))}</label><input id="ra" type="number" min="0" step="1000" inputmode="numeric"><span class="hint" id="raHint"></span></div>
+        <div class="f"><label for="rn">${esc(t("f_need"))}</label><input id="rn" type="date"></div>
+        <div class="f full"><label for="rr">${esc(t("f_reason"))}</label><select id="rr"></select></div>
+        <div class="f full"><label for="rd">${esc(t("f_details"))}</label><textarea id="rd" placeholder="Ex. : 20 t à acheter à Mfou, ordre de mission n°…"></textarea></div>
+        ${attachField([])}
+      </div>
+    </div>
+    <footer><span class="err" id="rfErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("submit"))}</button></div></footer></form>`);
+  const refresh = () => {
+    const k = $("#rc").value, a = A[k], sug = Math.max(0, a.c.target - a.closing), ty = $("#rt").value;
+    $("#sugBox").innerHTML = `<div class="suggest">${esc(t("suggest", { b: fc(a.closing), t: fc(a.c.target), s: fc(sug) }))} <button type="button" class="btn small" id="useSug">${esc(t("use_suggest"))}</button></div>`;
+    $("#useSug").onclick = () => { $("#ra").value = Math.round(sug); hint(); };
+    $("#rr").innerHTML = REASONS[ty].map(r => `<option value="${r}">${esc(t(r))}</option>`).join("");
+    hint();
+  };
+  const hint = () => { const k = $("#rc").value, a = A[k], v = Number($("#ra").value) || 0, over = a.closing + v > a.c.ceiling;
+    const chain = required(k, $("#rt").value === "exceptionnel" ? "topup_exceptional" : "topup_regular", v);
+    $("#raHint").textContent = (over ? t("over_ceiling_warn", { c: fc(a.c.ceiling) }) + " " : "") + t("e_required", { r: roleList(chain) + " → " + t("role_tresorier") }); $("#raHint").style.color = over ? "var(--bad)" : ""; };
+  $("#rc").onchange = refresh; $("#rt").onchange = refresh; $("#ra").oninput = hint;
+  refresh(); bindAttach();
+  $("#rf").onsubmit = async e => {
+    e.preventDefault();
+    const amount = Number($("#ra").value);
+    if (!(amount > 0) || !$("#rr").value) { $("#rfErr").textContent = t("need_amount"); return; }
+    const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+    let files; try { files = await uploadAttachments($("#rfErr")); } catch (x) { $("#rfErr").textContent = x.message; btn.disabled = false; return; }
+    const k = $("#rc").value, today = new Date().toISOString().slice(0, 10);
+    const id = `DF-${today.slice(0, 4)}-${CAISSES[k].code}-${String(Date.now()).slice(-5)}`;
+    try { await saveReq({ id, caisse: k, type: $("#rt").value, amount, reason: $("#rr").value, details: $("#rd").value.trim(), need: $("#rn").value, files }); }
+    catch (x) { $("#rfErr").textContent = t("save_err", { m: x.message }); btn.disabled = false; return; }
+    closeModal(); toast(t("submitted_toast", { id }));
+  };
+}
+function actOn(id, action) {
+  const r = JSON.parse(JSON.stringify(S.requests.find(x => x.id === id)));
+  const finish = async extra => { try { await stepReq(r.id, extra); closeModal(); toast(extra.status === "funded" ? t("funded_entry", { id: r.id, c: cname(r.caisse) }) : t("saved")); } catch (x) { closeModal(); toast(t("save_err", { m: x.message })); } };
+  if (action === "approve") { finish({ status: S.role }); return; }
+  const isFund = action === "fund";
+  modal(`<form id="af"><header><div><h2>${esc(isFund ? t("act_fund") : t("act_reject"))}</h2><p class="mono">${esc(r.id)} · ${fc(r.amount)}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body"><div class="f"><label for="ax">${esc(isFund ? t("bank_ref") : t("reject_reason"))}</label><input id="ax" type="text" required></div></div>
+    <footer><span class="err" id="afErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("confirm"))}</button></div></footer></form>`);
+  $("#ax").focus();
+  $("#af").onsubmit = e => { e.preventDefault(); const v = $("#ax").value.trim(); if (!v) { $("#afErr").textContent = "—"; return; }
+    finish(isFund ? { status: "funded", bank_ref: v } : { status: "rejected", reject_reason: v }); };
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const defBox = b.dataset.caisse || (["cacao", "admin"].includes(route()) ? route() : S.ex.box || "cacao");
+  if (["newReq", "newEntry", "editEntry"].includes(b.dataset.act) && S.role !== "comptable") { toast(t("only_accountant")); return; }
+  if (b.dataset.act === "newReq") openRequestForm(defBox);
+  else if (b.dataset.act === "newEntry") openEntryForm(defBox);
+  else if (b.dataset.act === "editEntry") openEntryForm(null, b.dataset.id);
+  else actOn(b.dataset.id, b.dataset.act);
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+/* ---------- login ---------- */
+function viewLogin() {
+  return `<div class="card stack" style="max-width:400px;margin:8vh auto 0;width:100%"><img src="${LOGO}" alt="SAIC" style="width:240px;max-width:100%;margin:0 auto 6px;display:block">
+    <div><h1>${esc(t("signin"))}</h1><p class="muted">${esc(t("signin_sub"))}</p></div>
+    <form id="lf" class="stack" novalidate>
+      <div class="f"><label for="lem">${esc(t("email"))}</label><input id="lem" type="email" autocomplete="username" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
+      <div class="f"><label for="lpw">${esc(t("password"))}</label><input id="lpw" type="password" autocomplete="current-password" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
+      <span class="err" id="lErr"></span><button class="btn primary" type="submit" id="lBtn">${esc(t("signin_btn"))}</button><a href="#" id="lForgot">${esc(t("forgot"))}</a></form></div>`;
+}
+function bindLogin() {
+  $("#lf").onsubmit = async e => { e.preventDefault(); $("#lBtn").disabled = true; $("#lErr").textContent = "";
+    const { error } = await sb.auth.signInWithPassword({ email: $("#lem").value.trim(), password: $("#lpw").value });
+    if (error) { $("#lErr").textContent = /invalid/i.test(error.message) ? t("bad_login") : error.message; $("#lBtn").disabled = false; return; }
+    await boot(); };
+  $("#lForgot").onclick = async e => { e.preventDefault(); const em = $("#lem").value.trim(); if (!em) { $("#lErr").textContent = t("enter_email"); return; }
+    await sb.auth.resetPasswordForEmail(em, { redirectTo: location.origin + "/" }); $("#lErr").textContent = t("reset_sent"); };
+}
+
+/* ---------- team (roles managed by the DAF) ---------- */
+function viewTeam() {
+  const isDaf = S.role === "daf";
+  const roleOf = id => (S.members.find(m => m.user_id === id) || {}).role || "";
+  return `<div class="topline"><div><h1>${esc(t("nav_team"))}</h1><p>${esc(t("team_sub"))}</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>${esc(t("team_name"))}</th><th>${esc(t("team_role"))}</th></tr></thead><tbody>
+  ${Object.entries(S.people).sort((a, b) => a[1].localeCompare(b[1])).map(([id, name]) => `<tr><td>${esc(name)} ${id === S.me.id ? `<span class="muted">(${esc(t("you"))})</span>` : ""}</td>
+    <td>${isDaf && id !== S.me.id ? `<select data-member="${esc(id)}" aria-label="${esc(t("team_role"))}" style="width:auto"><option value="">${esc(t("team_none"))}</option>${["comptable", "daf", "dg", "tresorier", "viewer"].map(r => `<option value="${r}" ${roleOf(id) === r ? "selected" : ""}>${esc(t("role_" + r))}</option>`).join("")}</select>`
+      : esc(roleOf(id) ? t("role_" + roleOf(id)) : t("team_none"))}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function bindTeam() {
+  document.querySelectorAll("[data-member]").forEach(sel => sel.onchange = async () => {
+    const role = sel.value || "viewer";
+    const { error } = await sb.from("treasury_members").upsert({ user_id: sel.dataset.member, role, updated_at: new Date().toISOString() });
+    if (error) toast(t("save_err", { m: error.message })); else { await loadData(); toast(t("saved")); }
+  });
+}
+
+/* ---------- data from Supabase ---------- */
+async function loadData() {
+  try {
+    const must = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
+    const [boxes, tx, reqs, people, members] = await Promise.all([
+      sb.from("cash_boxes").select("*").then(must),
+      sb.from("cash_transactions").select("*").eq("voided", false).order("date").order("seq").limit(10000).then(must),
+      sb.from("fund_requests").select("*").order("created_at", { ascending: false }).then(must),
+      sb.from("profiles").select("id, full_name").then(must),
+      sb.from("treasury_members").select("*").then(must)
+    ]);
+    S.people = Object.fromEntries(people.map(p => [p.id, p.full_name || "—"]));
+    S.members = members;
+    const nd = {};
+    for (const b of boxes) {
+      CAISSES[b.id].ceiling = Number(b.ceiling); CAISSES[b.id].target = Number(b.target); CAISSES[b.id].code = b.code;
+      const imp = tx.filter(r => r.caisse === b.id && r.source === "import");
+      nd[b.id] = { opening: Number(b.opening), from: b.start_date, to: imp.reduce((m, r) => r.date > m ? r.date : m, b.start_date),
+        rows: imp.map(r => ({ id: r.id, date: r.date, ref: r.ref || "", market: r.market || "", party: r.party || "", cat: r.cat, details: r.details, out: r.kind === "out" ? Number(r.amount) : 0, in: r.kind === "in" ? Number(r.amount) : 0, obs: r.obs || "" })) };
+    }
+    DATA = { ...DATA, ...nd };
+    S.entries = tx.filter(r => r.source !== "import").map(r => ({ id: r.id, caisse: r.caisse, kind: r.kind, date: r.date, cat: r.cat, code: r.code || "", amount: Number(r.amount),
+      out: r.kind === "out" ? Number(r.amount) : 0, in: r.kind === "in" ? Number(r.amount) : 0, party: r.party || "", market: r.market || "", details: r.details, ref: r.ref || "",
+      proof: r.proof || "", approvals: r.approvals || [], asset: r.asset, files: r.files || [], obs: r.obs || "", created: r.created_at, source: r.source }));
+    S.requests = reqs.map(r => ({ id: r.id, caisse: r.caisse, type: r.type, amount: Number(r.amount), reason: r.reason, details: r.details || "", need: r.need || "", files: r.files || [],
+      flow: r.flow, status: r.status, bankRef: r.bank_ref || "", rejectReason: r.reject_reason || "", rejectedAt: r.rejected_at, history: r.history, createdBy: r.created_by,
+      created: r.created_at, date: r.created_at.slice(0, 10) }));
+    S.loadError = "";
+  } catch (e) { S.loadError = e.message; }
+  recompute(); render();
+}
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { S.me = null; S.ready = true; render(); return; }
+  const user = session.user;
+  const [{ data: prof }, { data: mem }] = await Promise.all([
+    sb.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+    sb.from("treasury_members").select("role").eq("user_id", user.id).maybeSingle()]);
+  S.me = { id: user.id, email: user.email, name: (prof && prof.full_name) || user.email };
+  S.role = mem ? mem.role : null;
+  S.ready = true;
+  if (S.role) await loadData(); else render();
+}
+recompute(); render(); boot();
+</script>
+</body>
+</html>

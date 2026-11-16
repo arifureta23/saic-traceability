@@ -2,7 +2,7 @@
 export const STRINGS = {
   en: {
     "app.sub": "Cocoa traceability · TRC 01", "tag.example": "Example",
-    "nav.overview": "Overview", "nav.farmers": "Farmers", "nav.map": "Plot map", "nav.team": "Team",
+    "nav.overview": "Overview", "nav.farmers": "Farmers", "nav.map": "Plot map", "nav.team": "Team", "nav.treasury": "Treasury →",
     "foot.forms": "Forms F01 Sheet A and B, manual v1.2",
     "lang.switch": "Français",
     "auth.title": "Sign in", "auth.sub": "SAIC farmer registry", "auth.email": "Email", "auth.password": "Password",
@@ -95,7 +95,7 @@ export const STRINGS = {
   },
   fr: {
     "app.sub": "Traçabilité cacao · TRC 01", "tag.example": "Exemple",
-    "nav.overview": "Vue d'ensemble", "nav.farmers": "Producteurs", "nav.map": "Carte des parcelles", "nav.team": "Équipe",
+    "nav.overview": "Vue d'ensemble", "nav.farmers": "Producteurs", "nav.map": "Carte des parcelles", "nav.team": "Équipe", "nav.treasury": "Trésorerie →",
     "foot.forms": "Formulaires F01 feuilles A et B, manuel v1.2",
     "lang.switch": "English",
     "auth.title": "Connexion", "auth.sub": "Registre des producteurs SAIC", "auth.email": "E-mail", "auth.password": "Mot de passe",
