@@ -1,6 +1,8 @@
 // SAIC Farmer Registry — main application
 import { createApi } from "./api.js";
 import { STRINGS, FIELDS } from "./i18n.js";
+import { LOGO } from "./logo.js";
+document.getElementById("brandLogo").src = LOGO;
 
 /* ---------- rules (tweak here) ---------- */
 const POLYGON_THRESHOLD_HA = 4;   // manual: above 4 ha a perimeter polygon is required
@@ -233,7 +235,7 @@ function viewLogin() {
   if (recovery) return `<div class="card login stack"><h1>${esc(t("auth.newpw"))}</h1>
     <form id="pwForm" class="stack" novalidate><div class="f"><label for="newPw">${esc(t("auth.password"))}</label><input id="newPw" type="password" autocomplete="new-password" minlength="8" required></div>
     <span class="err" id="loginErr"></span><button class="btn primary" type="submit">${esc(t("auth.save_pw"))}</button></form></div>`;
-  return `<div class="card login stack"><img class="login-logo" src="icons/logo.png" alt="SAIC" onerror="this.remove()"><div><h1>${esc(t("auth.title"))}</h1><p class="muted">${esc(t("auth.sub"))}</p></div>
+  return `<div class="card login stack"><img class="login-logo" src="${LOGO}" alt="SAIC"><div><h1>${esc(t("auth.title"))}</h1><p class="muted">${esc(t("auth.sub"))}</p></div>
     <form id="loginForm" class="stack" novalidate>
       <div class="f"><label for="em">${esc(t("auth.email"))}</label><input id="em" type="email" autocomplete="username" required></div>
       <div class="f"><label for="pw">${esc(t("auth.password"))}</label><input id="pw" type="password" autocomplete="current-password" required></div>

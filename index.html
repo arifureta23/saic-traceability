@@ -48,9 +48,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .app{display:grid;grid-template-columns:220px 1fr;min-height:100%}
 .rail{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;height:100vh}
 .brand{display:flex;align-items:center;padding:0 6px;text-decoration:none;color:var(--ink)}
-.brand b{font-size:20px;letter-spacing:.02em}
-.logo{display:block;max-width:150px;max-height:56px;width:auto;height:auto}
-.login-logo{display:block;max-width:180px;max-height:72px;margin-bottom:4px}
+.logo{display:block;width:190px;max-width:100%;height:auto}
+.login-logo{display:block;width:260px;max-width:100%;height:auto;margin:0 auto 8px}
+@media (max-width:760px){.logo{width:120px}}
 .nav{display:flex;flex-direction:column;gap:2px}
 .nav a{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:6px;text-decoration:none;color:var(--ink);font-weight:500}
 .nav a:hover{background:var(--paper)} .nav a.on{background:var(--accent-soft);color:var(--accent)}
@@ -183,7 +183,7 @@ fieldset legend{grid-column:1/-1;font-size:13px;font-weight:600;text-transform:u
 <body>
 <div class="app">
   <aside class="rail">
-    <a class="brand" href="#overview" aria-label="SAIC"><img class="logo" src="icons/logo.png" alt="SAIC" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><b hidden>SAIC</b></a>
+    <a class="brand" href="#overview" aria-label="SAIC"><img class="logo" id="brandLogo" alt="SAIC" width="190" height="75"></a>
     <nav class="nav" id="nav"></nav>
     <div class="rail-foot" id="railFoot"></div>
   </aside>
