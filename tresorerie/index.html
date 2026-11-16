@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SAIC Trésorerie</title>
 <meta name="theme-color" content="#1f5c47">
-<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
+<link rel="apple-touch-icon" href="../icons/saic-apple-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -525,7 +525,7 @@ function shell() {
   const r = route();
   $("#nav").innerHTML = !S.role ? "" : [["overview", t("nav_overview")], ["expenses", t("nav_expenses")], ["cacao", t("nav_cacao")], ["admin", t("nav_admin")], ["requests", t("nav_requests"), pend], ["team", t("nav_team")]]
     .map(([k, l, n]) => `<a href="#${k}" class="${r === k ? "on" : ""}">${esc(l)}${n ? `<span class="badge">${n}</span>` : ""}</a>`).join("");
-  $("#railFoot").innerHTML = `<a href="../">${esc(t("registry"))}</a>
+  $("#railFoot").innerHTML = `<a href="../">${esc(t("registry"))}</a><a href="../reception/">${S.lang === "fr" ? "Réception cacao" : "Cocoa reception"}</a>
     ${S.me ? `<span>${esc(S.me.name)}${S.role ? `<br>${esc(t("role_" + S.role))}` : ""}</span>` : ""}
     <div class="row"><button class="btn small" id="langBtn">${esc(t("lang"))}</button>${S.me ? `<button class="btn small" id="outBtn">${esc(t("signout"))}</button>` : ""}</div>`;
   const ob = $("#outBtn"); if (ob) ob.onclick = async () => { await sb.auth.signOut(); S.me = null; S.role = null; render(); };

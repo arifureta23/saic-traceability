@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAIC Réception cacao</title>
+<meta name="theme-color" content="#1f5c47">
+<link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
+<link rel="apple-touch-icon" href="../icons/saic-apple-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* Layout: same shell as the SAIC farmer registry — left rail + work area; cash box page = tiles, balance chart | categories, table. */
+:root{
+  --paper:#f3f5f2; --surface:#ffffff; --ink:#1b2420; --muted:#5d6a63; --line:#d9dfd9;
+  --accent:#1f5c47; --accent-soft:#e2eee8; --pod:#a8641a; --pod-soft:#f6ead9;
+  --ok:#237a4b; --ok-bg:#e1f2e7; --warn:#9a6400; --warn-bg:#fbf0d9; --bad:#b3362c; --bad-bg:#fbe4e1;
+  --font-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --radius:8px; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121614; --surface:#1a201d; --ink:#e6ebe7; --muted:#9aa79f; --line:#2c3531;
+    --accent:#6cc39c; --accent-soft:#1e3229; --pod:#e0a35a; --pod-soft:#33270f;
+    --ok:#6fd39a; --ok-bg:#16301f; --warn:#e6b45a; --warn-bg:#33270f; --bad:#f08a7f; --bad-bg:#3a1c19;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121614; --surface:#1a201d; --ink:#e6ebe7; --muted:#9aa79f; --line:#2c3531;
+  --accent:#6cc39c; --accent-soft:#1e3229; --pod:#e0a35a; --pod-soft:#33270f;
+  --ok:#6fd39a; --ok-bg:#16301f; --warn:#e6b45a; --warn-bg:#33270f; --bad:#f08a7f; --bad-bg:#3a1c19;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--font-body)}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:24px;font-weight:700} h2{font-size:18px;font-weight:600}
+h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0}
+.mono{font-family:var(--font-mono);font-size:.9em} .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:var(--muted)} .small{font-size:13px}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100%}
+.rail{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;height:100vh}
+.brand{display:flex;flex-direction:column;gap:6px;padding:0 6px;text-decoration:none;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.logo{display:block;width:180px;max-width:100%;height:auto}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;text-decoration:none;color:var(--ink);font-weight:500}
+.nav a:hover{background:var(--paper)} .nav a.on{background:var(--accent-soft);color:var(--accent)}
+.nav .badge{background:var(--warn-bg);color:var(--warn);border-radius:999px;font-size:11px;padding:0 7px;font-weight:600}
+.rail-foot{margin-top:auto;font-size:12px;color:var(--muted);padding:0 6px;display:flex;flex-direction:column;gap:8px}
+.rail-foot select{font-size:13px;padding:5px 8px}
+.main{padding:24px 28px 60px;min-width:0;display:flex;flex-direction:column;gap:20px}
+.topline{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.topline p{margin-top:4px;color:var(--muted)}
+.notice{padding:10px 14px;border-radius:var(--radius);background:var(--accent-soft);color:var(--accent);font-size:14px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:6px;cursor:pointer;font-weight:500;text-decoration:none;color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn.danger{color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.tile .v{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:13px;font-weight:500;color:var(--muted)}
+.tile .l{font-size:13px;color:var(--muted)} .tile .s{font-size:12px;color:var(--muted)}
+.v.ok{color:var(--ok)} .v.bad{color:var(--bad)} .v.warn{color:var(--warn)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.grid-wide{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+
+/* cash box summary cards */
+.box{display:flex;flex-direction:column;gap:12px}
+.box-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.box-head .code{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.bal{font-size:32px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.bal small{font-size:15px;color:var(--muted);font-weight:500}
+.gauge{position:relative;height:10px;border-radius:5px;background:var(--paper);overflow:visible}
+.gauge span{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--accent)}
+.gauge span.over{background:var(--bad)} .gauge span.low{background:var(--warn)}
+.gauge i{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.gauge-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.kv3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;font-size:13px}
+.kv3 b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.neutral{background:var(--accent-soft);color:var(--muted)}
+
+.issues{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.issues li{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:7px 10px;border-radius:6px;border-left:3px solid}
+.issues li.bad{background:var(--bad-bg);border-color:var(--bad)} .issues li.warn{background:var(--warn-bg);border-color:var(--warn)} .issues li.ok{background:var(--ok-bg);border-color:var(--ok)}
+.issues li .who{font-size:12px;color:var(--muted);display:block}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:grid;grid-template-columns:minmax(110px,38%) 1fr auto;gap:10px;align-items:center;font-size:13px}
+.bar-row .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:12px;background:var(--paper);border-radius:0 4px 4px 0;position:relative}
+.bar-fill{height:100%;background:var(--accent);border-radius:0 4px 4px 0;min-width:2px}
+.bar-fill.pod{background:var(--pod)}
+.bar-row .val{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar-row .val small{color:var(--muted);margin-left:6px}
+.bar-row:hover .bar-fill{filter:brightness(1.12)}
+
+/* chart */
+.chart-wrap{position:relative}
+svg.chart{width:100%;display:block}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{fill:var(--muted);font-size:13px;font-family:var(--font-body)}
+.chart .line{fill:none;stroke:var(--accent);stroke-width:2}
+.chart .area{fill:var(--accent);fill-opacity:.08}
+.chart .ceil{stroke:var(--bad);stroke-width:1.5;stroke-dasharray:5 4}
+.chart .ceil-l{fill:var(--bad);font-size:13px;font-weight:600}
+.chart .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.chart .xh{stroke:var(--muted);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:6px 9px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-110%);z-index:5}
+
+/* table */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar input[type=search]{flex:1 1 220px;min-width:0}
+input[type=text],input[type=search],input[type=date],input[type=number],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:100%}
+.toolbar select{width:auto}
+textarea{min-height:70px;resize:vertical}
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.r,th.r{text-align:right}
+td.mono{white-space:nowrap;font-size:12px}
+td.in{color:var(--ok)}
+tr.flag-bad td:first-child{box-shadow:inset 3px 0 0 var(--bad)} tr.flag-warn td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+.flagtxt{font-size:12px;display:block;margin-top:2px} .flagtxt.bad{color:var(--bad)} .flagtxt.warn{color:var(--warn)}
+tfoot td{font-weight:600;border-top:1px solid var(--line)}
+
+/* requests */
+.req{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px}
+.req .amt{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.steps{display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1}
+.step{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+.step.done{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.step.now{background:var(--warn-bg);color:var(--warn);border-color:transparent;font-weight:600}
+.step.no{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.req .acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:600;background:var(--pod-soft);color:var(--pod);text-transform:uppercase;letter-spacing:.04em}
+.recon{display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:14px;align-items:center}
+.recon .num{text-align:right}
+.recon input{width:160px;text-align:right}
+
+.scrim{position:fixed;inset:0;background:rgba(10,15,12,.45);display:flex;justify-content:flex-end;z-index:20}
+.drawer{background:var(--surface);width:min(620px,100%);height:100%;overflow:auto;display:flex;flex-direction:column}
+.drawer form{display:flex;flex-direction:column;min-height:100%}
+.drawer header{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:2}
+.drawer header p{margin-top:2px;color:var(--muted);font-size:13px}
+.drawer .body{padding:18px 22px;display:flex;flex-direction:column;gap:16px;flex:1}
+.drawer footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 22px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0} .f.full{grid-column:1/-1}
+.f label{font-size:13px;font-weight:500}
+.hint{font-size:12px;color:var(--muted)}
+.err{color:var(--bad);font-size:13px}
+.att-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.att-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:6px}
+.att-links{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;margin-top:3px}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.suggest{background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:10px 12px;font-size:13px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;font-size:14px;z-index:40}
+
+@media (max-width:1050px){ .grid2,.grid-wide{grid-template-columns:1fr} }
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px 16px;gap:12px;border-right:none;border-bottom:1px solid var(--line)}
+  .logo{width:120px} .brand span{display:none}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .rail-foot{margin-top:0;flex-direction:row;flex-wrap:wrap;align-items:center}
+  .main{padding:18px 16px 50px}
+  .fgrid{grid-template-columns:1fr}
+  .kv3{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Reception dashboard additions — same SAIC shell; overview = KPI row, price trend | zones, buyers | traceability. */
+fieldset{border:none;margin:0;padding:0;min-width:0}
+input[type=email],input[type=password]{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:100%}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.b-ok{background:var(--ok)} .b-pod{background:var(--pod)} .b-acc{background:var(--accent)} .b-bad{background:var(--bad)}
+.lines{display:flex;flex-direction:column;gap:8px}
+.line{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 120px auto;gap:8px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:8px}
+.line .who{font-size:12px;color:var(--muted);margin-top:3px}
+.line .who.bad{color:var(--bad)} .line .who.ok{color:var(--ok)}
+.calc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;background:var(--paper);border-radius:8px;padding:10px 12px;font-size:13px}
+.calc b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--paper)}
+.chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--accent-soft);color:var(--accent);letter-spacing:.03em}
+.chip.r{background:var(--pod-soft);color:var(--pod)}
+@media (max-width:760px){ .line{grid-template-columns:1fr} .calc{grid-template-columns:1fr 1fr} }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <a class="brand" href="#overview"><img class="logo" id="brandLogo" alt="SAIC"><span id="brandSub"></span></a>
+    <nav class="nav" id="nav"></nav>
+    <div class="rail-foot" id="railFoot"></div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+<div id="modal"></div>
+<div id="toastHost"></div>
+
+<script type="module">
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../js/config.js";
+import { LOGO } from "../js/logo.js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm";
+document.getElementById("brandLogo").src = LOGO;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+let DATA = { purchases: [], sales: [] };
+let CASH_COCOA = [];
+let FARMERS = [];
+
+const KINDS = ["magasin", "ramassage", "exceptionnel"];
+const GRADES = ["", "Grade I", "Grade II", "Hors standard"];
+
+const STR = {
+  fr: {
+    sub: "Réception cacao", nav_overview: "Vue d'ensemble", nav_receptions: "Réceptions", nav_zones: "Zones", nav_farmers: "Par producteur", nav_stock: "Stock et ventes",
+    signin: "Connexion", signin_sub: "Réception cacao SAIC", email: "E-mail", password: "Mot de passe", signin_btn: "Se connecter", bad_login: "E-mail ou mot de passe incorrect.", signout: "Se déconnecter",
+    forgot: "Mot de passe oublié ?", reset_sent: "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.", enter_email: "Saisissez d'abord votre e-mail.",
+    no_access: "Votre compte n'a pas accès à la réception cacao. Demandez un rôle au responsable traçabilité.", loading: "Chargement…", load_err: "Chargement impossible : {m}", save_err: "Enregistrement impossible : {m}",
+    registry_link: "Registre des producteurs →", treasury_link: "Trésorerie →", r_lead: "Responsable traçabilité", r_warehouse: "Chef de magasin", r_viewer: "Lecture seule", r_pdg: "PDG (lecture)",
+    viewing_as: "Rôle (démo)", lang: "English", draft: "Brouillon : 86 réceptions importées de votre compte d'inventaire 2026/2027. Les producteurs sont ceux d'exemple du registre. Les saisies sont enregistrées et partagées.",
+    r_magasin: "Chef de magasin", r_trace: "Responsable traçabilité", r_view: "Lecture seule",
+    ov_title: "Réception cacao", ov_sub: "Quantités reçues, prix moyen, zones d'origine et traçabilité jusqu'au producteur.",
+    k_qty: "Cacao acheté", k_qty_sub: "{n} réceptions · {r} reçus", k_price: "Prix moyen pondéré", k_price_sub: "min. {min} · max. {max} F/kg", k_amount: "Montant des achats", k_zones: "Zones d'origine", k_zones_sub: "1re : {z} ({p} %)", k_traced: "Traçabilité producteur", k_traced_sub: "{t} kg rattachés à un producteur",
+    price_trend: "Prix moyen par semaine (F/kg)", by_zone: "Quantités par zone", by_buyer: "Quantités par acheteur", by_kind: "Par type d'achat", controls: "Points de contrôle", no_controls: "Aucun point de contrôle.",
+    kind_magasin: "Achat magasin", kind_ramassage: "Ramassage", kind_exceptionnel: "Achat exceptionnel",
+    new_rec: "Nouvelle réception", edit_rec: "Modifier la réception", only_wh: "Seul le chef de magasin enregistre les réceptions.",
+    search: "Rechercher (n°, zone, acheteur, producteur)", all_zones: "Toutes les zones", all_kinds: "Tous les types", all_months: "Tous les mois", only_untraced: "Sans producteur seulement",
+    c_no: "N° achat", c_date: "Date", c_zone: "Zone", c_buyer: "Acheteur / exécutant", c_kind: "Type", c_qty: "Acheté (kg)", c_rec: "Reçu (kg)", c_price: "Prix F/kg", c_amount: "Montant", c_farmers: "Producteurs", total: "Total",
+    untraced: "non tracé", traced: "tracé", partial: "partiel", imported: "importé",
+    f_date: "Date de réception", f_no: "N° achat", f_market: "N° marché", f_zone: "Zone / provenance", f_kind: "Type d'achat", f_buyer: "Acheteur / exécutant", f_qty: "Quantité achetée (kg)", f_price: "Prix d'achat (F/kg)", f_received: "Quantité reçue au magasin (kg)", f_bags: "Nombre de sacs", f_humidity: "Humidité (%)", f_grade: "Qualité", f_slip: "N° bulletin de pesée", f_vehicle: "Véhicule / transporteur", f_obs: "Observations",
+    s_main: "Réception", s_weights: "Poids, prix et qualité", s_farmers: "Producteurs livreurs (registre)", s_other: "Détails", hint_buyer: "« Achat magasin » ou le nom de l'agent de ramassage",
+    amount_calc: "Montant", bonus_calc: "Bonus poids", loss_calc: "Perte", diff: "Écart",
+    add_line: "Ajouter un producteur", farmer_id: "ID producteur", plot: "Parcelle", kg: "kg", remove: "Retirer", lines_hint: "Saisissez l'ID du registre (ex. F0001). Le nom, le statut et les parcelles s'affichent.",
+    unknown_id: "ID inconnu dans le registre", on_hold: "Producteur EN ATTENTE : cacao bloqué", lines_sum: "Total producteurs : {s} kg sur {q} kg achetés", lines_ok: "La somme correspond à la quantité achetée.",
+    need: "Saisissez la date, la zone, la quantité et le prix.", saved: "Réception n° {n} enregistrée", save: "Enregistrer", cancel: "Annuler", close: "Fermer",
+    att: "Pièces jointes (bulletin de pesée, photos)", att_add: "Joindre des fichiers", att_off: "L'ajout de fichiers n'est pas disponible ici.", att_remove: "Retirer", att_type: "Photos (JPG, PNG) et PDF uniquement.", att_fail: "« {n} » n'a pas pu être envoyé : {m}",
+    z_title: "Zones d'origine", z_sub: "Quantités, prix moyen et acheteurs par zone de provenance.", z_kg: "kg achetés", z_share: "part", z_n: "réceptions", z_price: "prix moyen", z_buyers: "acheteurs",
+    fr_title: "Livraisons par producteur", fr_sub: "Ce que chaque producteur du registre a livré, d'après les réceptions qui lui sont rattachées.", fr_search: "Rechercher un producteur (ID, nom, village)",
+    fr_none: "Aucune livraison rattachée à ce producteur pour l'instant.", fr_deliv: "Livraisons", fr_kg: "kg livrés", fr_amount: "Montant", fr_last: "Dernière livraison", fr_status: "Statut registre", open_registry: "Ouvrir le registre",
+    st_verified: "Vérifié", st_pending: "À vérifier", st_hold: "En attente",
+    sk_title: "Stock et ventes", sk_sub: "Stock = cacao acheté − cacao vendu, comme dans votre compte d'inventaire.", sk_stock: "Stock en magasin", sk_value: "Valeur au prix moyen", sk_sold: "Vendu", sk_client: "Client", sk_escort: "Escorte", sk_bags: "Sacs", sk_status: "Paiement",
+    ct_untraced: "{n} réception(s) ({kg} kg) sans producteur identifié : origine non traçable pour l'EUDR. À compléter.",
+    ct_noreceived: "{n} réception(s) sans quantité reçue au magasin : réception à confirmer.",
+    ct_dupno: "Le n° d'achat {no} est utilisé {n} fois.",
+    ct_loss: "Pertes de poids : {kg} kg sur {n} réception(s).",
+    ct_price: "N° {no} : prix {p} F/kg, à plus de 10 % de la moyenne de la semaine ({a} F/kg).",
+    ct_amount: "N° {no} : montant {m} ≠ quantité × prix ({c}).",
+    ct_cash: "N° {no} ({d}) : {m} au compte d'achat, {c} payés par la caisse cacao (écart {x}).",
+    ct_cash_ok: "{n} réception(s) d'octobre retrouvée(s) à l'identique dans la caisse cacao.",
+    ct_hold: "{n} kg livrés par des producteurs EN ATTENTE dans le registre.",
+    example: "Exemple", added: "saisie app"
+  },
+  en: {
+    sub: "Cocoa reception", nav_overview: "Overview", nav_receptions: "Receptions", nav_zones: "Zones", nav_farmers: "By farmer", nav_stock: "Stock and sales",
+    signin: "Sign in", signin_sub: "SAIC cocoa reception", email: "Email", password: "Password", signin_btn: "Sign in", bad_login: "Email or password is incorrect.", signout: "Sign out",
+    forgot: "Forgot password?", reset_sent: "If this email has an account, a reset link has been sent.", enter_email: "Enter your email first.",
+    no_access: "Your account doesn't have access to cocoa reception. Ask the Traceability Lead for a role.", loading: "Loading…", load_err: "Couldn't load: {m}", save_err: "Couldn't save: {m}",
+    registry_link: "Farmer registry →", treasury_link: "Treasury →", r_lead: "Traceability Lead", r_warehouse: "Warehouse Manager", r_viewer: "Read only", r_pdg: "PDG (read only)",
+    viewing_as: "Role (demo)", lang: "Français", draft: "Draft: 86 receptions imported from your 2026/2027 inventory account. Farmers are the registry's example farmers. Entries are saved and shared.",
+    r_magasin: "Warehouse Manager", r_trace: "Traceability Lead", r_view: "Read only",
+    ov_title: "Cocoa reception", ov_sub: "Quantities received, average price, zones of origin and traceability down to the farmer.",
+    k_qty: "Cocoa bought", k_qty_sub: "{n} receptions · {r} received", k_price: "Weighted average price", k_price_sub: "min {min} · max {max} F/kg", k_amount: "Purchase value", k_zones: "Zones of origin", k_zones_sub: "Top: {z} ({p} %)", k_traced: "Farmer traceability", k_traced_sub: "{t} kg linked to a farmer",
+    price_trend: "Average price per week (F/kg)", by_zone: "Quantities by zone", by_buyer: "Quantities by buyer", by_kind: "By purchase type", controls: "Control points", no_controls: "No control points.",
+    kind_magasin: "Store purchase", kind_ramassage: "Collection run", kind_exceptionnel: "Exceptional purchase",
+    new_rec: "New reception", edit_rec: "Edit reception", only_wh: "Only the Warehouse Manager records receptions.",
+    search: "Search (no., zone, buyer, farmer)", all_zones: "All zones", all_kinds: "All types", all_months: "All months", only_untraced: "Without farmer only",
+    c_no: "Purchase no.", c_date: "Date", c_zone: "Zone", c_buyer: "Buyer / agent", c_kind: "Type", c_qty: "Bought (kg)", c_rec: "Received (kg)", c_price: "Price F/kg", c_amount: "Amount", c_farmers: "Farmers", total: "Total",
+    untraced: "not traced", traced: "traced", partial: "partial", imported: "imported",
+    f_date: "Reception date", f_no: "Purchase no.", f_market: "Market no.", f_zone: "Zone / origin", f_kind: "Purchase type", f_buyer: "Buyer / agent", f_qty: "Quantity bought (kg)", f_price: "Purchase price (F/kg)", f_received: "Quantity received at the warehouse (kg)", f_bags: "Number of bags", f_humidity: "Moisture (%)", f_grade: "Quality", f_slip: "Weighing slip no.", f_vehicle: "Vehicle / carrier", f_obs: "Notes",
+    s_main: "Reception", s_weights: "Weights, price and quality", s_farmers: "Delivering farmers (registry)", s_other: "Details", hint_buyer: "“Achat magasin” or the collection agent's name",
+    amount_calc: "Amount", bonus_calc: "Weight bonus", loss_calc: "Loss", diff: "Difference",
+    add_line: "Add a farmer", farmer_id: "Farmer ID", plot: "Plot", kg: "kg", remove: "Remove", lines_hint: "Type the registry ID (e.g. F0001). The name, status and plots appear.",
+    unknown_id: "ID not found in the registry", on_hold: "Farmer ON HOLD: cocoa blocked", lines_sum: "Farmers total: {s} kg of {q} kg bought", lines_ok: "The total matches the quantity bought.",
+    need: "Enter the date, zone, quantity and price.", saved: "Reception no. {n} saved", save: "Save", cancel: "Cancel", close: "Close",
+    att: "Attachments (weighing slip, photos)", att_add: "Attach files", att_off: "Attaching files isn't available here.", att_remove: "Remove", att_type: "Photos (JPG, PNG) and PDFs only.", att_fail: "Couldn't upload “{n}”: {m}",
+    z_title: "Zones of origin", z_sub: "Quantities, average price and buyers by zone of origin.", z_kg: "kg bought", z_share: "share", z_n: "receptions", z_price: "avg price", z_buyers: "buyers",
+    fr_title: "Deliveries by farmer", fr_sub: "What each registered farmer delivered, from the receptions linked to them.", fr_search: "Search a farmer (ID, name, village)",
+    fr_none: "No deliveries linked to this farmer yet.", fr_deliv: "Deliveries", fr_kg: "kg delivered", fr_amount: "Amount", fr_last: "Last delivery", fr_status: "Registry status", open_registry: "Open the registry",
+    st_verified: "Verified", st_pending: "Pending review", st_hold: "On hold",
+    sk_title: "Stock and sales", sk_sub: "Stock = cocoa bought − cocoa sold, as in your inventory account.", sk_stock: "Warehouse stock", sk_value: "Value at average price", sk_sold: "Sold", sk_client: "Client", sk_escort: "Escort", sk_bags: "Bags", sk_status: "Payment",
+    ct_untraced: "{n} reception(s) ({kg} kg) without an identified farmer: origin not traceable for EUDR. To complete.",
+    ct_noreceived: "{n} reception(s) without a quantity received at the warehouse: reception to confirm.",
+    ct_dupno: "Purchase no. {no} is used {n} times.",
+    ct_loss: "Weight losses: {kg} kg over {n} reception(s).",
+    ct_price: "No. {no}: price {p} F/kg, more than 10 % from that week's average ({a} F/kg).",
+    ct_amount: "No. {no}: amount {m} ≠ quantity × price ({c}).",
+    ct_cash: "No. {no} ({d}): {m} in the purchase account, {c} paid from the cocoa cash box (difference {x}).",
+    ct_cash_ok: "{n} October reception(s) found with the same amount in the cocoa cash box.",
+    ct_hold: "{n} kg delivered by farmers ON HOLD in the registry.",
+    example: "Example", added: "entered in app"
+  }
+};
+
+const S = { lang: (() => { try { const l = localStorage.getItem("saic-lang"); if (l === "en" || l === "fr") return l; } catch (e) {} return (navigator.language || "fr").slice(0, 2) === "en" ? "en" : "fr"; })(), role: null, appRole: null, me: null, ready: false, loadError: "", recs: [], edits: [], db: null, assets: null, flt: { q: "", zone: "", kind: "", month: "", untraced: false }, fq: "", farmer: null };
+const t = (k, p = {}) => String((STR[S.lang][k] ?? STR.fr[k] ?? k)).replace(/\{(\w+)\}/g, (_, x) => p[x] ?? "");
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const loc = () => S.lang === "fr" ? "fr-FR" : "en-GB";
+const fc = n => Math.round(n).toLocaleString(loc()).replace(/ /g, " ") + " F";
+const fn = (n, d = 0) => Number(n).toLocaleString(loc(), { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/ /g, " ");
+const fkg = n => fn(n) + " kg";
+const ft = n => n >= 1000 ? fn(n / 1000, 1) + " t" : fkg(n);
+const fcs = n => { const a = Math.abs(n); return a >= 1e6 ? (n / 1e6).toLocaleString(loc(), { maximumFractionDigits: 1 }) + " M" : a >= 1e3 ? Math.round(n / 1e3).toLocaleString(loc()) + " k" : Math.round(n).toLocaleString(loc()); };
+const dfmt = iso => new Date(iso + "T12:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short" });
+const dfull = iso => new Date(iso + "T12:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" });
+function toast(m) { $("#toastHost").innerHTML = `<div class="toast" role="status">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => $("#toastHost").innerHTML = "", 3000); }
+const canEdit = () => S.role === "magasin";  // set for the Traceability Lead and the Warehouse Manager
+
+/* ---------- registry lookup ---------- */
+const farmerStatus = f => f.decision === "Approved" ? "verified" : (!f.idNumber || (f.plots || []).some(p => !p.defoDate || !p.defoEvidence)) ? "hold" : "pending";
+let FMAP = {};
+const findFarmer = id => FMAP[String(id || "").trim().toUpperCase()];
+
+/* ---------- receptions = imported lines + app entries/edits ---------- */
+function receptions() {
+  const list = S.recs;
+  return list.map(r => ({ ...r, amount: r.amount ?? (r.qty || 0) * (r.price || 0), lines: r.lines || [] })).sort((a, b) => a.date === b.date ? a.no - b.no : a.date.localeCompare(b.date));
+}
+const weekKey = iso => { const d = new Date(iso + "T12:00:00"); const day = (d.getDay() + 6) % 7; d.setDate(d.getDate() - day); return d.toISOString().slice(0, 10); };
+function stats(list) {
+  list = list.filter(r => !r.example);
+  const qty = list.reduce((a, r) => a + (r.qty || 0), 0), amount = list.reduce((a, r) => a + (r.amount || 0), 0);
+  const received = list.reduce((a, r) => a + (r.received || 0), 0);
+  const traced = list.reduce((a, r) => a + r.lines.reduce((s, l) => s + (Number(l.kg) || 0), 0), 0);
+  const prices = list.map(r => r.price).filter(Boolean);
+  const group = key => { const g = {}; for (const r of list) { const k = key(r); (g[k] ||= { kg: 0, amount: 0, n: 0, buyers: new Set() }); g[k].kg += r.qty || 0; g[k].amount += r.amount || 0; g[k].n++; g[k].buyers.add(r.buyer); } return Object.entries(g).sort((a, b) => b[1].kg - a[1].kg); };
+  const weeks = group(r => weekKey(r.date)).sort((a, b) => a[0].localeCompare(b[0])).map(([w, v]) => ({ w, avg: v.amount / v.kg, kg: v.kg }));
+  return { qty, amount, received, traced, avg: qty ? amount / qty : 0, min: Math.min(...prices), max: Math.max(...prices), zones: group(r => r.zone), buyers: group(r => r.buyer), kinds: group(r => r.kind), weeks, n: list.length };
+}
+
+/* ---------- control points ---------- */
+function controls(list) {
+  list = list.filter(r => !r.example);
+  const out = [];
+  const unt = list.filter(r => !r.lines.length);
+  if (unt.length) out.push({ lv: "bad", m: t("ct_untraced", { n: unt.length, kg: fn(unt.reduce((a, r) => a + (r.qty || 0), 0)) }) });
+  const hold = list.reduce((a, r) => a + r.lines.filter(l => { const f = findFarmer(l.farmer); return f && farmerStatus(f) === "hold"; }).reduce((s, l) => s + (Number(l.kg) || 0), 0), 0);
+  if (hold) out.push({ lv: "bad", m: t("ct_hold", { n: fn(hold) }) });
+  const nor = list.filter(r => !r.received);
+  if (nor.length) out.push({ lv: "warn", m: t("ct_noreceived", { n: nor.length }) });
+  const cnt = {}; for (const r of list) cnt[r.no] = (cnt[r.no] || 0) + 1;
+  for (const [no, n] of Object.entries(cnt)) if (n > 1) out.push({ lv: "warn", m: t("ct_dupno", { no, n }) });
+  const loss = list.filter(r => (r.loss || 0) > 0);
+  if (loss.length) out.push({ lv: "warn", m: t("ct_loss", { kg: fn(loss.reduce((a, r) => a + r.loss, 0)), n: loss.length }) });
+  const wk = Object.fromEntries(stats(list).weeks.map(w => [w.w, w.avg]));
+  for (const r of list) { const a = wk[weekKey(r.date)]; if (r.price && a && Math.abs(r.price - a) / a > 0.10) out.push({ lv: "warn", m: t("ct_price", { no: r.no, p: fn(r.price), a: fn(a) }) }); }
+  for (const r of list) { const c = (r.qty || 0) * (r.price || 0); if (r.amount && Math.abs(r.amount - c) > 1) out.push({ lv: "warn", m: t("ct_amount", { no: r.no, m: fc(r.amount), c: fc(c) }) }); }
+  // reconciliation with the cocoa cash box (store purchases paid in cash)
+  const cash = CASH_COCOA.slice(); let ok = 0;
+  for (const r of list.filter(r => r.date >= "2026-10-01" && r.date <= "2026-10-31")) {
+    const near = cash.filter(c => Math.abs(new Date(c.date) - new Date(r.date)) <= 3 * 864e5);
+    const same = near.find(c => Math.round(c.out) === Math.round(r.amount));
+    if (same) { ok++; cash.splice(cash.indexOf(same), 1); continue; }
+    const close = near.filter(c => Math.abs(c.out - r.amount) / r.amount < 0.01).sort((a, b) => Math.abs(a.out - r.amount) - Math.abs(b.out - r.amount))[0];
+    if (close) { out.push({ lv: "warn", m: t("ct_cash", { no: r.no, d: dfmt(r.date), m: fc(r.amount), c: fc(close.out), x: fc(close.out - r.amount) }) }); cash.splice(cash.indexOf(close), 1); }
+  }
+  if (ok) out.push({ lv: "ok", m: t("ct_cash_ok", { n: ok }) });
+  return out.sort((a, b) => ({ bad: 0, warn: 1, ok: 2 }[a.lv] - { bad: 0, warn: 1, ok: 2 }[b.lv]));
+}
+
+/* ---------- charts ---------- */
+function bars(list, total, opt = {}) {
+  const max = Math.max(...list.map(x => x[1]), 1);
+  return `<div class="bars">${list.map(([k, v, extra]) => `<div class="bar-row" title="${esc(k)} : ${fkg(v)}"><span class="lab">${esc(k)}</span><span class="bar-track"><span class="bar-fill ${opt.cls || ""}" style="width:${v / max * 100}%"></span></span><span class="val">${ft(v)}<small>${extra ?? Math.round(v / total * 100) + " %"}</small></span></div>`).join("")}</div>`;
+}
+function priceChart(weeks, avg) {
+  const W = 760, H = 260, L = 56, R = 16, T = 16, B = 30;
+  if (!weeks.length) return "";
+  const vals = weeks.map(w => w.avg), lo = Math.floor((Math.min(...vals, avg) - 60) / 100) * 100, hi = Math.ceil((Math.max(...vals, avg) + 60) / 100) * 100;
+  const X = i => L + (weeks.length === 1 ? (W - L - R) / 2 : i / (weeks.length - 1) * (W - L - R)), Y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const ticks = []; for (let v = lo; v <= hi; v += 100) ticks.push(v);
+  const path = weeks.map((w, i) => `${i ? "L" : "M"}${X(i)},${Y(w.avg)}`).join("");
+  const every = Math.max(1, Math.ceil(weeks.length / 8));
+  return `<div class="chart-wrap"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t("price_trend"))}">
+    ${ticks.map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${fn(v)}</text>`).join("")}
+    ${weeks.map((w, i) => i % every === 0 ? `<text class="axis" x="${X(i)}" y="${H - 8}" text-anchor="${i === weeks.length - 1 ? "end" : i === 0 ? "start" : "middle"}">${dfmt(w.w)}</text>` : "").join("")}
+    <line class="ceil" style="stroke:var(--pod)" x1="${L}" x2="${W - R}" y1="${Y(avg)}" y2="${Y(avg)}"/><text class="ceil-l" style="fill:var(--pod)" x="${W - R}" y="${Y(avg) - 6}" text-anchor="end">${esc(S.lang === "fr" ? "moyenne" : "average")} ${fn(avg)}</text>
+    <path class="line" d="${path}"/>
+    ${weeks.map((w, i) => `<circle class="dot" cx="${X(i)}" cy="${Y(w.avg)}" r="4"><title>${dfull(w.w)} : ${fn(w.avg)} F/kg · ${fkg(w.kg)}</title></circle>`).join("")}
+  </svg></div>`;
+}
+
+/* ---------- shell ---------- */
+const route = () => location.hash.replace(/^#/, "") || "overview";
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+function shell() {
+  document.documentElement.lang = S.lang;
+  $("#brandSub").textContent = t("sub");
+  const r = route();
+  $("#nav").innerHTML = !S.role ? "" : [["overview", t("nav_overview")], ["receptions", t("nav_receptions")], ["zones", t("nav_zones")], ["farmers", t("nav_farmers")], ["stock", t("nav_stock")]]
+    .map(([k, l]) => `<a href="#${k}" class="${r === k || (k === "farmers" && r.startsWith("farmer-")) ? "on" : ""}">${esc(l)}</a>`).join("");
+  $("#railFoot").innerHTML = `<a href="../">${esc(t("registry_link"))}</a>
+    ${S.me ? `<span>${esc(S.me.name)}${S.appRole ? `<br>${esc(t("r_" + S.appRole))}` : ""}</span>` : ""}
+    <div class="row"><button class="btn small" id="langBtn">${esc(t("lang"))}</button>${S.me ? `<button class="btn small" id="outBtn">${esc(t("signout"))}</button>` : ""}</div>`;
+  const ob = $("#outBtn"); if (ob) ob.onclick = async () => { await sb.auth.signOut(); S.me = null; S.role = null; render(); };
+  try { localStorage.setItem("saic-lang", S.lang); } catch (e) {}
+  $("#langBtn").onclick = () => { S.lang = S.lang === "fr" ? "en" : "fr"; render(); };
+}
+function render() {
+  shell();
+  const r = route(), m = $("#main"), note = "";
+  if (!S.ready) { m.innerHTML = `<div class="card">${esc(t("loading"))}</div>`; return; }
+  if (!S.me) { m.innerHTML = viewLogin(); bindLogin(); return; }
+  if (!S.role) { m.innerHTML = `<div class="notice">${esc(t("no_access"))}</div>`; return; }
+  if (S.loadError) { m.innerHTML = `<div class="notice" style="background:var(--bad-bg);color:var(--bad)">${esc(t("load_err", { m: S.loadError }))}</div>`; return; }
+  if (r === "receptions") { m.innerHTML = note + viewReceptions(); bindReceptions(); return; }
+  if (r === "zones") { m.innerHTML = note + viewZones(); return; }
+  if (r === "farmers") { m.innerHTML = note + viewFarmers(); bindFarmers(); return; }
+  if (r.startsWith("farmer-")) { m.innerHTML = note + viewFarmer(r.slice(7)); return; }
+  if (r === "stock") { m.innerHTML = note + viewStock(); return; }
+  m.innerHTML = note + viewOverview();
+}
+const newBtn = () => canEdit() ? `<button class="btn primary" data-act="new">${esc(t("new_rec"))}</button>` : "";
+
+/* ---------- overview ---------- */
+function viewOverview() {
+  const list = receptions(), s = stats(list), top = s.zones[0];
+  const kindLabel = k => t("kind_" + k);
+  return `<div class="topline"><div><h1>${esc(t("ov_title"))}</h1><p>${esc(t("ov_sub"))}</p></div><div class="row">${newBtn()}</div></div>
+  <div class="tiles">
+    <div class="tile"><span class="l">${esc(t("k_qty"))}</span><span class="v">${ft(s.qty)}</span><span class="s">${esc(t("k_qty_sub", { n: s.n, r: ft(s.received) }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("k_price"))}</span><span class="v">${fn(s.avg)} <small>F/kg</small></span><span class="s">${esc(t("k_price_sub", { min: fn(s.min), max: fn(s.max) }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("k_amount"))}</span><span class="v">${fcs(s.amount)}</span><span class="s">${fc(s.amount)}</span></div>
+    <div class="tile"><span class="l">${esc(t("k_zones"))}</span><span class="v">${s.zones.length}</span><span class="s">${esc(t("k_zones_sub", { z: top ? top[0] : "—", p: top ? Math.round(top[1].kg / s.qty * 100) : 0 }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("k_traced"))}</span><span class="v ${s.traced / s.qty < 0.5 ? "bad" : "ok"}">${Math.round(s.traced / Math.max(s.qty, 1) * 100)} %</span><span class="s">${esc(t("k_traced_sub", { t: fn(s.traced) }))}</span></div>
+  </div>
+  <div class="grid-wide">
+    <div class="card stack"><h3>${esc(t("price_trend"))}</h3>${priceChart(s.weeks, s.avg)}</div>
+    <div class="card stack"><div class="topline"><h3>${esc(t("by_zone"))}</h3><a href="#zones">${esc(t("nav_zones"))}</a></div>${bars(s.zones.slice(0, 8).map(([k, v]) => [k, v.kg]), s.qty)}</div>
+  </div>
+  <div class="grid-wide">
+    <div class="card stack"><h3>${esc(t("controls"))}</h3>${ctlList(controls(list))}</div>
+    <div class="stack">
+      <div class="card stack"><h3>${esc(t("by_buyer"))}</h3>${bars(s.buyers.slice(0, 7).map(([k, v]) => [k, v.kg]), s.qty, { cls: "pod" })}</div>
+      <div class="card stack"><h3>${esc(t("by_kind"))}</h3>${bars(s.kinds.map(([k, v]) => [kindLabel(k), v.kg, fn(v.amount / v.kg) + " F/kg"]), s.qty)}</div>
+    </div>
+  </div>`;
+}
+const ctlList = items => items.length ? `<ul class="issues">${items.map(c => `<li class="${c.lv}"><span>${esc(c.m)}</span></li>`).join("")}</ul>` : `<ul class="issues"><li class="ok">${esc(t("no_controls"))}</li></ul>`;
+
+/* ---------- receptions list ---------- */
+function traceState(r) { const s = r.lines.reduce((a, l) => a + (Number(l.kg) || 0), 0); return !r.lines.length ? "untraced" : Math.abs(s - (r.qty || 0)) < 0.5 ? "traced" : "partial"; }
+function viewReceptions() {
+  const all = receptions(), f = S.flt;
+  const zones = [...new Set(all.map(r => r.zone))].sort(), months = [...new Set(all.map(r => r.date.slice(0, 7)))].sort();
+  return `<div class="topline"><div><h1>${esc(t("nav_receptions"))}</h1><p>${esc(t("ov_sub"))}</p></div><div class="row">${newBtn()}</div></div>
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="${esc(t("search"))}" value="${esc(f.q)}" aria-label="${esc(t("search"))}">
+    <select id="fz" aria-label="${esc(t("c_zone"))}"><option value="">${esc(t("all_zones"))}</option>${zones.map(z => `<option ${f.zone === z ? "selected" : ""}>${esc(z)}</option>`).join("")}</select>
+    <select id="fk" aria-label="${esc(t("c_kind"))}"><option value="">${esc(t("all_kinds"))}</option>${KINDS.map(k => `<option value="${k}" ${f.kind === k ? "selected" : ""}>${esc(t("kind_" + k))}</option>`).join("")}</select>
+    <select id="fm" aria-label="month"><option value="">${esc(t("all_months"))}</option>${months.map(m => `<option value="${m}" ${f.month === m ? "selected" : ""}>${new Date(m + "-15").toLocaleDateString(loc(), { month: "long", year: "numeric" })}</option>`).join("")}</select>
+    <label class="row small"><input type="checkbox" id="fu" ${f.untraced ? "checked" : ""}> ${esc(t("only_untraced"))}</label>
+  </div><div id="tbl">${recTable()}</div>`;
+}
+function recTable() {
+  const f = S.flt, q = f.q.toLowerCase();
+  const list = receptions().filter(r => (!f.zone || r.zone === f.zone) && (!f.kind || r.kind === f.kind) && (!f.month || r.date.startsWith(f.month)) && (!f.untraced || !r.lines.length)
+    && (!q || [r.no, r.zone, r.buyer, r.market, r.slip, ...r.lines.map(l => l.farmer + " " + ((findFarmer(l.farmer) || {}).name || ""))].join(" ").toLowerCase().includes(q))).reverse();
+  const s = stats(list);
+  return `<div class="table-wrap"><table><thead><tr><th>${esc(t("c_no"))}</th><th>${esc(t("c_date"))}</th><th>${esc(t("c_zone"))}</th><th>${esc(t("c_buyer"))}</th><th>${esc(t("c_kind"))}</th><th class="r">${esc(t("c_qty"))}</th><th class="r">${esc(t("c_rec"))}</th><th class="r">${esc(t("c_price"))}</th><th class="r">${esc(t("c_amount"))}</th><th>${esc(t("c_farmers"))}</th></tr></thead>
+  <tbody>${list.map(r => { const ts = traceState(r); return `<tr class="click" data-rec="${esc(r.id)}" tabindex="0">
+    <td class="mono">${esc(r.no)}${r.example ? `<br><span class="tag">${esc(t("example"))}</span>` : r.imported ? "" : `<br><span class="tag">${esc(t("added"))}</span>`}</td><td class="num">${dfmt(r.date)}</td><td>${esc(r.zone)}</td><td>${esc(r.buyer)}</td><td>${esc(t("kind_" + r.kind))}</td>
+    <td class="r num">${fn(r.qty || 0)}</td><td class="r num">${r.received ? fn(r.received) : "—"}</td><td class="r num">${fn(r.price || 0)}</td><td class="r num">${fc(r.amount)}</td>
+    <td>${ts === "untraced" ? `<span class="pill bad">${esc(t("untraced"))}</span>` : `${r.lines.map(l => `<span class="chip">${esc(l.farmer)}</span>`).join(" ")} ${ts === "partial" ? `<span class="pill warn">${esc(t("partial"))}</span>` : ""}`}</td></tr>`; }).join("")}</tbody>
+  <tfoot><tr><td colspan="5">${esc(t("total"))} (${list.length})</td><td class="r num">${fn(s.qty)}</td><td class="r num">${fn(s.received)}</td><td class="r num">${fn(s.avg)}</td><td class="r num">${fc(s.amount)}</td><td></td></tr></tfoot></table></div>`;
+}
+function bindReceptions() {
+  const upd = () => { $("#tbl").innerHTML = recTable(); };
+  $("#q").oninput = e => { S.flt.q = e.target.value; upd(); };
+  $("#fz").onchange = e => { S.flt.zone = e.target.value; upd(); };
+  $("#fk").onchange = e => { S.flt.kind = e.target.value; upd(); };
+  $("#fm").onchange = e => { S.flt.month = e.target.value; upd(); };
+  $("#fu").onchange = e => { S.flt.untraced = e.target.checked; upd(); };
+}
+
+/* ---------- zones ---------- */
+function viewZones() {
+  const s = stats(receptions());
+  return `<div class="topline"><div><h1>${esc(t("z_title"))}</h1><p>${esc(t("z_sub"))}</p></div></div>
+  <div class="card stack">${bars(s.zones.map(([k, v]) => [k, v.kg]), s.qty)}</div>
+  <div class="table-wrap"><table><thead><tr><th>${esc(t("c_zone"))}</th><th class="r">${esc(t("z_kg"))}</th><th class="r">${esc(t("z_share"))}</th><th class="r">${esc(t("z_n"))}</th><th class="r">${esc(t("z_price"))}</th><th class="r">${esc(t("c_amount"))}</th><th>${esc(t("z_buyers"))}</th></tr></thead>
+  <tbody>${s.zones.map(([z, v]) => `<tr class="click" data-zone="${esc(z)}"><td><b>${esc(z)}</b></td><td class="r num">${fn(v.kg)}</td><td class="r num">${Math.round(v.kg / s.qty * 100)} %</td><td class="r num">${v.n}</td><td class="r num">${fn(v.amount / v.kg)} F</td><td class="r num">${fc(v.amount)}</td><td class="small">${esc([...v.buyers].join(", "))}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+/* ---------- farmers ---------- */
+function deliveries() {
+  const d = {};
+  for (const r of receptions()) for (const l of r.lines) { const k = String(l.farmer).toUpperCase(); (d[k] ||= []).push({ r, kg: Number(l.kg) || 0, plot: l.plot }); }
+  return d;
+}
+function viewFarmers() {
+  const d = deliveries(), q = S.fq.toLowerCase();
+  const rows = FARMERS.filter(f => !q || [f.id, f.name, f.village].join(" ").toLowerCase().includes(q)).map(f => { const l = d[f.id.toUpperCase()] || []; const kg = l.reduce((a, x) => a + x.kg, 0), amt = l.reduce((a, x) => a + x.kg * (x.r.price || 0), 0); return { f, n: l.length, kg, amt, last: l.map(x => x.r.date).sort().pop() }; }).sort((a, b) => b.kg - a.kg);
+  return `<div class="topline"><div><h1>${esc(t("fr_title"))}</h1><p>${esc(t("fr_sub"))}</p></div><a class="btn" href="../">${esc(t("open_registry"))}</a></div>
+  <div class="toolbar"><input type="search" id="fq" placeholder="${esc(t("fr_search"))}" value="${esc(S.fq)}" aria-label="${esc(t("fr_search"))}"></div>
+  <div class="table-wrap"><table><thead><tr><th>ID</th><th>${esc(S.lang === "fr" ? "Producteur" : "Farmer")}</th><th>Village</th><th>${esc(t("fr_status"))}</th><th class="r">${esc(t("fr_deliv"))}</th><th class="r">${esc(t("fr_kg"))}</th><th class="r">${esc(t("fr_amount"))}</th><th>${esc(t("fr_last"))}</th></tr></thead>
+  <tbody>${rows.map(x => { const st = farmerStatus(x.f); return `<tr class="click" data-farmer="${esc(x.f.id)}"><td class="mono">${esc(x.f.id)}</td><td><b>${esc(x.f.name)}</b></td><td>${esc(x.f.village)}</td><td><span class="pill ${st === "verified" ? "ok" : st === "hold" ? "bad" : "neutral"}">${esc(t("st_" + st))}</span></td>
+    <td class="r num">${x.n}</td><td class="r num">${fn(x.kg)}</td><td class="r num">${x.amt ? fc(x.amt) : "—"}</td><td>${x.last ? dfull(x.last) : "—"}</td></tr>`; }).join("")}</tbody></table></div>`;
+}
+function bindFarmers() { $("#fq").oninput = e => { S.fq = e.target.value; const y = window.scrollY; render(); window.scrollTo(0, y); const i = $("#fq"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }; }
+function viewFarmer(id) {
+  const f = findFarmer(id); if (!f) return `<div class="card">${esc(t("unknown_id"))}</div>`;
+  const l = (deliveries()[f.id.toUpperCase()] || []).sort((a, b) => b.r.date.localeCompare(a.r.date)), st = farmerStatus(f);
+  const kg = l.reduce((a, x) => a + x.kg, 0), amt = l.reduce((a, x) => a + x.kg * (x.r.price || 0), 0);
+  return `<div><a href="#farmers">← ${esc(t("fr_title"))}</a></div>
+  <div class="topline"><div><h1>${esc(f.name)}</h1><p><span class="mono">${esc(f.id)}</span> · ${esc(f.village)} · <span class="pill ${st === "verified" ? "ok" : st === "hold" ? "bad" : "neutral"}">${esc(t("st_" + st))}</span></p></div><a class="btn" href="../#farmer-${esc(f.id)}">${esc(t("open_registry"))}</a></div>
+  <div class="tiles"><div class="tile"><span class="l">${esc(t("fr_kg"))}</span><span class="v">${fn(kg)}</span></div><div class="tile"><span class="l">${esc(t("fr_deliv"))}</span><span class="v">${l.length}</span></div><div class="tile"><span class="l">${esc(t("fr_amount"))}</span><span class="v">${fcs(amt)}</span><span class="s">${kg ? fn(amt / kg) + " F/kg" : ""}</span></div>
+    <div class="tile"><span class="l">${esc(t("plot"))}s</span><span class="v">${(f.plots || []).length}</span><span class="s">${(f.plots || []).reduce((a, p) => a + (Number(p.area) || 0), 0).toLocaleString(loc(), { maximumFractionDigits: 2 })} ha</span></div></div>
+  ${l.length ? `<div class="table-wrap"><table><thead><tr><th>${esc(t("c_date"))}</th><th>${esc(t("c_no"))}</th><th>${esc(t("c_zone"))}</th><th>${esc(t("plot"))}</th><th class="r">kg</th><th class="r">${esc(t("c_price"))}</th><th class="r">${esc(t("c_amount"))}</th></tr></thead>
+    <tbody>${l.map(x => `<tr class="click" data-rec="${esc(x.r.id)}"><td>${dfull(x.r.date)}</td><td class="mono">${esc(x.r.no)}</td><td>${esc(x.r.zone)}</td><td class="mono">${esc(x.plot ? f.id + " " + x.plot : "—")}</td><td class="r num">${fn(x.kg)}</td><td class="r num">${fn(x.r.price || 0)}</td><td class="r num">${fc(x.kg * (x.r.price || 0))}</td></tr>`).join("")}</tbody></table></div>`
+    : `<div class="card muted">${esc(t("fr_none"))}</div>`}`;
+}
+
+/* ---------- stock & sales ---------- */
+function viewStock() {
+  const s = stats(receptions()), sold = DATA.sales.reduce((a, x) => a + (x.qty || 0), 0), stock = s.qty - sold;
+  return `<div class="topline"><div><h1>${esc(t("sk_title"))}</h1><p>${esc(t("sk_sub"))}</p></div></div>
+  <div class="tiles"><div class="tile"><span class="l">${esc(t("k_qty"))}</span><span class="v">${fn(s.qty)} <small>kg</small></span></div><div class="tile"><span class="l">${esc(t("sk_sold"))}</span><span class="v">${fn(sold)} <small>kg</small></span></div>
+    <div class="tile"><span class="l">${esc(t("sk_stock"))}</span><span class="v ${stock < 0 ? "bad" : ""}">${fn(stock)} <small>kg</small></span></div><div class="tile"><span class="l">${esc(t("sk_value"))}</span><span class="v">${fcs(stock * s.avg)}</span><span class="s">${fn(s.avg)} F/kg</span></div></div>
+  <div class="table-wrap"><table><thead><tr><th>${esc(t("c_date"))}</th><th>${esc(t("sk_client"))}</th><th>${esc(t("sk_escort"))}</th><th class="r">kg</th><th class="r">${esc(t("sk_bags"))}</th><th class="r">${esc(t("c_rec"))}</th><th>${esc(t("sk_status"))}</th></tr></thead>
+  <tbody>${DATA.sales.map(x => `<tr><td>${dfull(x.date)}</td><td><b>${esc(x.client)}</b></td><td>${esc(x.escort)}</td><td class="r num">${fn(x.qty)}</td><td class="r num">${fn(x.bags || 0)}</td><td class="r num">${x.received ? fn(x.received) : "—"}</td><td>${esc(x.status || "—")}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+/* ---------- reception form ---------- */
+function closeModal() { $("#modal").innerHTML = ""; }
+function modal(html) {
+  $("#modal").innerHTML = `<div class="scrim"><div class="drawer" role="dialog" aria-modal="true">${html}</div></div>`;
+  $("#modal .scrim").onclick = e => { if (e.target.classList.contains("scrim")) closeModal(); };
+  $("#modal").querySelectorAll("[data-close]").forEach(b => b.onclick = closeModal);
+}
+let attNew = [], attKeep = [];
+const fileLinks = files => (files || []).length ? `<span class="att-links">${files.map(f => `<a href="#" data-file="${esc(f.path)}">${esc(f.name)}</a>`).join("")}</span>` : "";
+document.addEventListener("click", async e => {
+  const a = e.target.closest("[data-file]"); if (!a) return; e.preventDefault(); e.stopPropagation();
+  const w = window.open("", "_blank");
+  const { data, error } = await sb.storage.from("reception-files").createSignedUrl(a.dataset.file, 300);
+  if (error || !data) { if (w) w.close(); toast(t("save_err", { m: error ? error.message : "?" })); return; }
+  if (w) w.location = data.signedUrl; else location.href = data.signedUrl;
+}, true);
+function lineRow(l, i) {
+  const f = findFarmer(l.farmer), st = f && farmerStatus(f);
+  const info = !l.farmer ? "" : !f ? `<div class="who bad">${esc(t("unknown_id"))}</div>` : `<div class="who ${st === "hold" ? "bad" : "ok"}">${esc(f.name)} · ${esc(f.village)} · ${esc(t("st_" + st))}${st === "hold" ? " — " + esc(t("on_hold")) : ""}</div>`;
+  return `<div class="line" data-line="${i}">
+    <div class="f"><label for="lf${i}">${esc(t("farmer_id"))}</label><input id="lf${i}" data-k="farmer" type="text" value="${esc(l.farmer || "")}" placeholder="F0001" list="farmerIds" autocomplete="off">${info}</div>
+    <div class="f"><label for="lp${i}">${esc(t("plot"))}</label><select id="lp${i}" data-k="plot"><option value="">—</option>${f ? (f.plots || []).map(p => `<option value="${esc(p.pid)}" ${l.plot === p.pid ? "selected" : ""}>${esc(p.pid)} · ${esc(p.area)} ha</option>`).join("") : ""}</select></div>
+    <div class="f"><label for="lk${i}">${esc(t("kg"))}</label><input id="lk${i}" data-k="kg" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(l.kg ?? "")}"></div>
+    <div class="f"><label>&nbsp;</label><button type="button" class="btn small" data-rmline="${i}">${esc(t("remove"))}</button></div></div>`;
+}
+function openForm(id) {
+  const ex = id ? receptions().find(r => r.id === id) : null;
+  const all = receptions(), nextNo = Math.max(0, ...all.map(r => r.no || 0)) + 1, today = new Date().toISOString().slice(0, 10);
+  const r = ex ? JSON.parse(JSON.stringify(ex)) : { id: "", no: nextNo, date: today, kind: "magasin", buyer: "Achat magasin", lines: [], files: [] };
+  let lines = (r.lines || []).map(l => ({ ...l }));
+  attKeep = (r.files || []).slice(); attNew = [];
+  const zones = [...new Set(all.map(x => x.zone))].sort(), buyers = [...new Set(all.map(x => x.buyer))].sort();
+  const ro = !canEdit();
+  modal(`<form id="rf" novalidate>
+    <header><div><h2>${esc(t(ex ? "edit_rec" : "new_rec"))} <span class="mono">n° ${esc(r.no)}</span></h2><p>${ex && ex.imported ? esc(t("imported")) + " · " : ""}${esc(r.zone || "")}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body">
+      <fieldset class="fgrid" ${ro ? "disabled" : ""}><legend style="grid-column:1/-1;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">${esc(t("s_main"))}</legend>
+        <div class="f"><label for="fdate">${esc(t("f_date"))}</label><input id="fdate" type="date" value="${esc(r.date)}"></div>
+        <div class="f"><label for="fno">${esc(t("f_no"))}</label><input id="fno" type="number" min="1" value="${esc(r.no)}"></div>
+        <div class="f"><label for="fzone">${esc(t("f_zone"))}</label><input id="fzone" type="text" list="zoneList" value="${esc(r.zone || "")}"><datalist id="zoneList">${zones.map(z => `<option value="${esc(z)}">`).join("")}</datalist></div>
+        <div class="f"><label for="fkind">${esc(t("f_kind"))}</label><select id="fkind">${KINDS.map(k => `<option value="${k}" ${r.kind === k ? "selected" : ""}>${esc(t("kind_" + k))}</option>`).join("")}</select></div>
+        <div class="f"><label for="fbuyer">${esc(t("f_buyer"))}</label><input id="fbuyer" type="text" list="buyerList" value="${esc(r.buyer || "")}"><span class="hint">${esc(t("hint_buyer"))}</span><datalist id="buyerList">${buyers.map(b => `<option value="${esc(b)}">`).join("")}</datalist></div>
+        <div class="f"><label for="fmarket">${esc(t("f_market"))}</label><input id="fmarket" type="text" value="${esc(r.market || "")}"></div>
+      </fieldset>
+      <fieldset class="fgrid" ${ro ? "disabled" : ""}><legend style="grid-column:1/-1;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">${esc(t("s_weights"))}</legend>
+        <div class="f"><label for="fqty">${esc(t("f_qty"))}</label><input id="fqty" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(r.qty ?? "")}"></div>
+        <div class="f"><label for="fprice">${esc(t("f_price"))}</label><input id="fprice" type="number" min="0" step="5" inputmode="numeric" value="${esc(r.price ?? "")}"></div>
+        <div class="f"><label for="frec">${esc(t("f_received"))}</label><input id="frec" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(r.received ?? "")}"></div>
+        <div class="f"><label for="fbags">${esc(t("f_bags"))}</label><input id="fbags" type="number" min="0" step="1" value="${esc(r.bags ?? "")}"></div>
+        <div class="f"><label for="fhum">${esc(t("f_humidity"))}</label><input id="fhum" type="number" min="0" max="30" step="0.1" inputmode="decimal" value="${esc(r.humidity ?? "")}"></div>
+        <div class="f"><label for="fgrade">${esc(t("f_grade"))}</label><select id="fgrade">${GRADES.map(g => `<option ${r.grade === g ? "selected" : ""} value="${esc(g)}">${esc(g || "—")}</option>`).join("")}</select></div>
+        <div class="f full"><div class="calc" id="calc"></div></div>
+      </fieldset>
+      <div class="stack"><h3>${esc(t("s_farmers"))}</h3><p class="hint">${esc(t("lines_hint"))}</p>
+        <datalist id="farmerIds">${FARMERS.map(f => `<option value="${esc(f.id)}">${esc(f.name)}</option>`).join("")}</datalist>
+        <div class="lines" id="lines"></div><p class="small" id="linesSum"></p>
+        ${ro ? "" : `<button type="button" class="btn small" id="addLine" style="align-self:flex-start">${esc(t("add_line"))}</button>`}</div>
+      <fieldset class="fgrid" ${ro ? "disabled" : ""}><legend style="grid-column:1/-1;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">${esc(t("s_other"))}</legend>
+        <div class="f"><label for="fslip">${esc(t("f_slip"))}</label><input id="fslip" type="text" value="${esc(r.slip || "")}"></div>
+        <div class="f"><label for="fveh">${esc(t("f_vehicle"))}</label><input id="fveh" type="text" value="${esc(r.vehicle || "")}"></div>
+        <div class="f full"><label for="fobs">${esc(t("f_obs"))}</label><textarea id="fobs">${esc(r.obs || "")}</textarea></div>
+        <div class="f full"><span style="font-size:13px;font-weight:500">${esc(t("att"))}</span>
+          ${!ro ? `<label class="btn small" style="align-self:flex-start"><input type="file" id="attIn" class="vh" multiple accept="image/jpeg,image/png,image/webp,image/heic,application/pdf">${esc(t("att_add"))}</label>` : ro ? "" : `<span class="hint">${esc(t("att_off"))}</span>`}
+          <ul class="att-list" id="attList"></ul></div>
+      </fieldset>
+    </div>
+    <footer><span class="err" id="rfErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button>${ro ? "" : `<button class="btn primary" type="submit">${esc(t("save"))}</button>`}</div></footer></form>`);
+  const num = id => { const v = $("#" + id).value; return v === "" ? null : Number(v); };
+  const calc = () => {
+    const q = num("fqty") || 0, p = num("fprice") || 0, rc = num("frec");
+    const bonus = rc != null ? Math.max(0, rc - q) : 0, loss = rc != null ? Math.max(0, q - rc) : 0;
+    $("#calc").innerHTML = `<div><span class="muted">${esc(t("amount_calc"))}</span><b>${fc(q * p)}</b></div><div><span class="muted">${esc(t("bonus_calc"))}</span><b>${fkg(bonus)}</b></div><div><span class="muted">${esc(t("loss_calc"))}</span><b style="color:${loss ? "var(--bad)" : ""}">${fkg(loss)} ${loss && p ? "· " + fc(loss * p) : ""}</b></div>`;
+    sum();
+  };
+  const sum = () => { const s = lines.reduce((a, l) => a + (Number(l.kg) || 0), 0), q = num("fqty") || 0; const el = $("#linesSum");
+    el.textContent = lines.length ? (Math.abs(s - q) < 0.5 ? t("lines_ok") : t("lines_sum", { s: fn(s, s % 1 ? 1 : 0), q: fn(q) })) : ""; el.style.color = lines.length && Math.abs(s - q) >= 0.5 ? "var(--warn)" : "var(--ok)"; };
+  const drawLines = () => {
+    $("#lines").innerHTML = lines.map(lineRow).join("");
+    if (ro) $("#lines").querySelectorAll("input,select,button").forEach(x => x.disabled = true);
+    $("#lines").querySelectorAll("[data-line]").forEach(row => { const i = +row.dataset.line;
+      row.querySelectorAll("[data-k]").forEach(inp => inp.onchange = () => { lines[i][inp.dataset.k] = inp.value.trim(); if (inp.dataset.k === "farmer") { lines[i].farmer = inp.value.trim().toUpperCase(); lines[i].plot = ""; drawLines(); } else sum(); });
+      row.querySelector("[data-k=kg]").oninput = e => { lines[i].kg = e.target.value; sum(); }; });
+    $("#lines").querySelectorAll("[data-rmline]").forEach(b => b.onclick = () => { lines.splice(+b.dataset.rmline, 1); drawLines(); });
+    sum();
+  };
+  const drawAtt = () => { const l = $("#attList"); l.innerHTML = [...attKeep.map((f, i) => `<li><a href="#" data-file="${esc(f.path)}">${esc(f.name)}</a>${ro ? "" : `<button type="button" class="btn small" data-attk="${i}">${esc(t("att_remove"))}</button>`}</li>`), ...attNew.map((f, i) => `<li><span>${esc(f.name)}</span><button type="button" class="btn small" data-attn="${i}">${esc(t("att_remove"))}</button></li>`)].join("");
+    l.querySelectorAll("[data-attk]").forEach(b => b.onclick = () => { attKeep.splice(+b.dataset.attk, 1); drawAtt(); }); l.querySelectorAll("[data-attn]").forEach(b => b.onclick = () => { attNew.splice(+b.dataset.attn, 1); drawAtt(); }); };
+  const inp = $("#attIn"); if (inp) inp.onchange = () => { for (const f of inp.files) attNew.push(f); inp.value = ""; drawAtt(); };
+  ["fqty", "fprice", "frec"].forEach(i => $("#" + i).oninput = calc);
+  $("#fkind").onchange = e => { if (e.target.value === "magasin" && !$("#fbuyer").value) $("#fbuyer").value = "Achat magasin"; };
+  const add = $("#addLine"); if (add) add.onclick = () => { lines.push({ farmer: "", plot: "", kg: lines.length ? "" : ($("#fqty").value || "") }); drawLines(); $("#lf" + (lines.length - 1)).focus(); };
+  calc(); drawLines(); drawAtt();
+  $("#rf").onsubmit = async e => {
+    e.preventDefault();
+    const q = num("fqty"), p = num("fprice"), zone = $("#fzone").value.trim(), date = $("#fdate").value;
+    if (!date || !zone || !(q > 0) || !(p > 0)) { $("#rfErr").textContent = t("need"); return; }
+    const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+    let files = attKeep.slice();
+    try { for (const f of attNew) { if (!/^image\/|application\/pdf/.test(f.type)) throw new Error(t("att_type"));
+      const path = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}-${f.name.replace(/[^\w.\-]+/g, "_")}`;
+      const { error } = await sb.storage.from("reception-files").upload(path, f, { contentType: f.type, upsert: false }); if (error) throw new Error(error.message);
+      files.push({ path, name: f.name, type: f.type }); } }
+    catch (x) { $("#rfErr").textContent = t("att_fail", { n: "", m: x.message || x.code }); btn.disabled = false; return; }
+    const rc = num("frec");
+    const rec = { ...(ex || {}), id: ex ? ex.id : null, no: num("fno") || nextNo, date, zone, kind: $("#fkind").value, buyer: $("#fbuyer").value.trim() || "Achat magasin", market: $("#fmarket").value.trim(),
+      qty: q, price: p, amount: q * p, received: rc, bonus: rc != null ? Math.max(0, rc - q) : null, loss: rc != null ? Math.max(0, q - rc) : null,
+      bags: num("fbags"), humidity: num("fhum"), grade: $("#fgrade").value, slip: $("#fslip").value.trim(), vehicle: $("#fveh").value.trim(), obs: $("#fobs").value.trim(),
+      lines: lines.filter(l => l.farmer && Number(l.kg) > 0).map(l => ({ farmer: l.farmer.toUpperCase(), plot: l.plot || "", kg: Number(l.kg) })), files, updated: new Date().toISOString() };
+    const body = { no: rec.no, date: rec.date, zone: rec.zone, kind: rec.kind, buyer: rec.buyer, market: rec.market || null, qty: rec.qty, price: rec.price, received: rec.received,
+      bags: rec.bags, humidity: rec.humidity, grade: rec.grade || null, slip: rec.slip || null, vehicle: rec.vehicle || null, obs: rec.obs || null, lines: rec.lines, files: rec.files };
+    const { error } = ex ? await sb.from("cocoa_receptions").update(body).eq("id", ex.id) : await sb.from("cocoa_receptions").insert(body);
+    if (error) { $("#rfErr").textContent = t("save_err", { m: error.message }); btn.disabled = false; return; }
+    closeModal(); await loadData(); toast(t("saved", { n: rec.no }));
+  };
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]");
+  if (b && b.dataset.act === "new") { if (!canEdit()) { toast(t("only_wh")); return; } openForm(); return; }
+  const rec = e.target.closest("[data-rec]"); if (rec) { openForm(rec.dataset.rec); return; }
+  const fa = e.target.closest("[data-farmer]"); if (fa) { location.hash = "farmer-" + fa.dataset.farmer; return; }
+  const z = e.target.closest("[data-zone]"); if (z) { S.flt = { ...S.flt, zone: z.dataset.zone }; location.hash = "receptions"; }
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); const r = e.target.closest && e.target.closest("[data-rec]"); if (r && e.key === "Enter") openForm(r.dataset.rec); });
+
+/* ---------- login ---------- */
+function viewLogin() {
+  return `<div class="card stack" style="max-width:400px;margin:8vh auto 0;width:100%"><img src="${LOGO}" alt="SAIC" style="width:240px;max-width:100%;margin:0 auto 6px;display:block">
+    <div><h1>${esc(t("signin"))}</h1><p class="muted">${esc(t("signin_sub"))}</p></div>
+    <form id="lf" class="stack" novalidate>
+      <div class="f"><label for="lem">${esc(t("email"))}</label><input id="lem" type="email" autocomplete="username"></div>
+      <div class="f"><label for="lpw">${esc(t("password"))}</label><input id="lpw" type="password" autocomplete="current-password" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
+      <span class="err" id="lErr"></span><button class="btn primary" type="submit" id="lBtn">${esc(t("signin_btn"))}</button><a href="#" id="lForgot">${esc(t("forgot"))}</a></form></div>`;
+}
+function bindLogin() {
+  $("#lf").onsubmit = async e => { e.preventDefault(); $("#lBtn").disabled = true; $("#lErr").textContent = "";
+    const { error } = await sb.auth.signInWithPassword({ email: $("#lem").value.trim(), password: $("#lpw").value });
+    if (error) { $("#lErr").textContent = /invalid/i.test(error.message) ? t("bad_login") : error.message; $("#lBtn").disabled = false; return; }
+    await boot(); };
+  $("#lForgot").onclick = async e => { e.preventDefault(); const em = $("#lem").value.trim(); if (!em) { $("#lErr").textContent = t("enter_email"); return; }
+    await sb.auth.resetPasswordForEmail(em, { redirectTo: location.origin + "/" }); $("#lErr").textContent = t("reset_sent"); };
+}
+
+/* ---------- data from Supabase ---------- */
+async function loadData() {
+  try {
+    const must = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
+    const [recs, sales, farmers] = await Promise.all([
+      sb.from("cocoa_receptions").select("*").order("date").order("no").limit(20000).then(must),
+      sb.from("cocoa_sales").select("*").order("date").then(must),
+      sb.from("farmers").select("id, name, village, decision, id_number, archived, plots(pid, area, defo_date, defo_evidence)").limit(20000).then(must)
+    ]);
+    S.recs = recs.map(r => ({ id: r.id, no: r.no, date: r.date, market: r.market || "", zone: r.zone, kind: r.kind, buyer: r.buyer || "", qty: Number(r.qty), price: Number(r.price), amount: Number(r.amount),
+      received: r.received === null ? null : Number(r.received), bonus: r.bonus === null ? null : Number(r.bonus), loss: r.loss === null ? null : Number(r.loss), bags: r.bags, humidity: r.humidity, grade: r.grade || "",
+      slip: r.slip || "", vehicle: r.vehicle || "", obs: r.obs || "", lines: r.lines || [], files: r.files || [], imported: r.source === "import" }));
+    DATA = { purchases: S.recs, sales: sales.map(x => ({ date: x.date, client: x.client, escort: x.escort || "", qty: Number(x.qty), bags: x.bags, price: x.price, received: x.received === null ? null : Number(x.received), amount: x.amount, status: x.status })) };
+    FARMERS = farmers.map(f => ({ id: f.id, name: f.name, village: f.village || "", decision: f.decision || "", idNumber: f.id_number || "", archived: f.archived,
+      plots: (f.plots || []).map(p => ({ pid: p.pid, area: p.area, defoDate: p.defo_date, defoEvidence: p.defo_evidence })).sort((a, b) => a.pid.localeCompare(b.pid)) })).filter(f => !f.archived);
+    FMAP = Object.fromEntries(FARMERS.map(f => [f.id.toUpperCase(), f]));
+    // optional: cocoa cash box payments, for the reconciliation (only if this account can read the treasury)
+    const cash = await sb.from("cash_transactions").select("date, amount, cat, kind").eq("caisse", "cacao").eq("kind", "out").eq("voided", false);
+    CASH_COCOA = cash.error ? [] : cash.data.filter(c => /achat de cacao/i.test(c.cat)).map(c => ({ date: c.date, out: Number(c.amount) }));
+    S.loadError = "";
+  } catch (e) { S.loadError = e.message; }
+  render();
+}
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { S.me = null; S.ready = true; render(); return; }
+  const user = session.user;
+  const [{ data: prof }, { data: ex }] = await Promise.all([
+    sb.from("profiles").select("full_name, role").eq("id", user.id).maybeSingle(),
+    sb.from("exec_members").select("role").eq("user_id", user.id).maybeSingle()]);
+  S.me = { id: user.id, name: (prof && prof.full_name) || user.email };
+  const ar = prof && prof.role;
+  S.appRole = ar && ar !== "viewer" ? ar : ex && ex.role === "pdg" ? "pdg" : ar || null;
+  S.role = ar === "lead" || ar === "warehouse" ? "magasin" : S.appRole ? "view" : null;
+  S.ready = true;
+  if (S.role) await loadData(); else render();
+}
+render(); boot();
+</script>
+</body>
+</html>

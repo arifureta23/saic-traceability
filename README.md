@@ -100,3 +100,13 @@ Group dashboard for the PDG of Wenkam Holding Plus: group overview, department h
    select id, 'pdg' from auth.users where email = 'pdg@example.com'
    on conflict (user_id) do update set role = excluded.role;
    ```
+
+---
+
+# SAIC — Cocoa reception (`/reception`)
+
+Receptions of cocoa at the warehouse: quantities, weighted average price, zones of origin, buyers, losses and bonuses, stock and sales, and deliveries by farmer (linked to the registry by farmer ID and plot).
+
+- **Who records:** the registry's Warehouse Manager and Traceability Lead. Everyone else with a registry role, and the PDG, reads.
+- **Checked by the database:** every farmer and plot named in a reception must exist in the registry; amount, bonus and loss are calculated from quantity, price and quantity received; receptions are never deleted; every change goes to `reception_log`.
+- **Setup:** Supabase → SQL Editor → run `supabase/reception.sql` (after `schema.sql`, `treasury.sql` and `pdg.sql`). It imports the 86 lines and 6 sales of the 2026/2027 inventory account once.

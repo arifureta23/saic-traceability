@@ -260,6 +260,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
 let CASH = { cacao: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] }, admin: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] } };
 let FARMERS = [];
+let RECEP = { recs: [], sold: 0 };
 const APP_BASE = "..";
 const CEILINGS = { cacao: 20000000, admin: 500000 };
 
@@ -273,6 +274,7 @@ const STR = {
     forgot: "Mot de passe oublié ?", reset_sent: "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.", enter_email: "Saisissez d'abord votre e-mail.",
     no_access: "Ce tableau de bord est réservé au PDG et aux directions de WHP et de la SAIC. Demandez l'accès à l'administrateur.", loading: "Chargement…", load_err: "Chargement impossible : {m}", save_err: "Enregistrement impossible : {m}", r_none: "",
     d_from: "Soumise par", d_ent: "Société", d_type: "Type", d_amount: "Montant", d_urgency: "Urgence", d_due: "Décision souhaitée avant le", d_created: "Soumise le", d_ref: "Référence", d_details: "Détails et justification", d_files: "Pièces jointes", d_history: "Historique", d_nofiles: "Aucune pièce jointe.", d_open: "Ouvrir", d_none: "—", view: "Voir le détail", f_normal2: "Normale",
+    d_recep: "Réception cacao", rc_bought: "achetés", rc_avg: "prix moyen", rc_traced: "tracés jusqu'au producteur", rc_stock: "stock", app_recep: "Réception cacao", app_recep_d: "Réceptions, prix, zones, livraisons par producteur",
     viewing_as: "Rôle (démo)", lang: "English", draft: "Brouillon : chiffres de trésorerie importés de vos fichiers Excel ; la traçabilité montre les producteurs d'exemple. Les demandes au PDG sont enregistrées et partagées.",
     r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
     rl_dg_whp: "Directeur Général, WHP", rl_daf_whp: "Directeur Administratif et Financier, WHP", rl_dg_saic: "Directeur Général, SAIC",
@@ -310,6 +312,7 @@ const STR = {
     forgot: "Forgot password?", reset_sent: "If this email has an account, a reset link has been sent.", enter_email: "Enter your email first.",
     no_access: "This dashboard is for the PDG and the WHP and SAIC management. Ask the administrator for access.", loading: "Loading…", load_err: "Couldn't load: {m}", save_err: "Couldn't save: {m}", r_none: "",
     d_from: "Submitted by", d_ent: "Company", d_type: "Type", d_amount: "Amount", d_urgency: "Urgency", d_due: "Decision needed by", d_created: "Submitted on", d_ref: "Reference", d_details: "Details and justification", d_files: "Attachments", d_history: "History", d_nofiles: "No attachments.", d_open: "Open", d_none: "—", view: "See details", f_normal2: "Normal",
+    d_recep: "Cocoa reception", rc_bought: "bought", rc_avg: "average price", rc_traced: "traced to the farmer", rc_stock: "stock", app_recep: "Cocoa reception", app_recep_d: "Receptions, prices, zones, deliveries by farmer",
     viewing_as: "Role (demo)", lang: "Français", draft: "Draft: treasury figures imported from your Excel files; traceability shows the example farmers. Requests to the PDG are saved and shared.",
     r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
     rl_dg_whp: "Managing Director, WHP", rl_daf_whp: "Finance Director, WHP", rl_dg_saic: "Managing Director, SAIC",
@@ -511,6 +514,18 @@ function deptTrace() {
     <div class="legend"><span><i class="b-ok"></i>${esc(t("verified"))} ${s.verified}</span><span><i class="b-pend"></i>${esc(t("pending"))} ${s.pending}</span><span><i class="b-bad"></i>${esc(t("hold"))} ${s.hold}</span></div>
     <div class="foot"><a href="#trace">${esc(t("open_detail"))}</a><a class="btn small" href="${APP_BASE}/">${esc(t("open_app"))}</a></div></div>`;
 }
+function deptRecep() {
+  const r = RECEP.recs, qty = r.reduce((a, x) => a + x.qty, 0), amt = r.reduce((a, x) => a + x.amount, 0), traced = r.reduce((a, x) => a + (x.lines || []).reduce((s, l) => s + (Number(l.kg) || 0), 0), 0);
+  const pct = qty ? traced / qty : 0, stock = qty - RECEP.sold, st = pct < 0.5 ? "bad" : pct < 0.9 ? "watch" : "ok";
+  const zones = {}; for (const x of r) zones[x.zone] = (zones[x.zone] || 0) + x.qty;
+  const top = Object.entries(zones).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  return `<div class="card dept">
+    <div class="box-head"><div><div class="ent">SAIC</div><h2>${esc(t("d_recep"))}</h2></div>${statusPill(st)}</div>
+    <div><div class="big">${(qty / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} t <small>${esc(t("rc_bought"))}</small></div>
+      <div class="small muted">${qty ? Math.round(amt / qty).toLocaleString(loc()) : 0} F/kg ${esc(t("rc_avg"))} · ${Math.round(pct * 100)} % ${esc(t("rc_traced"))} · ${Math.round(stock).toLocaleString(loc())} kg ${esc(t("rc_stock"))}</div></div>
+    <div class="bars">${top.map(([z, v]) => `<div class="bar-row"><span class="lab">${esc(z)}</span><span class="bar-track"><span class="bar-fill" style="width:${v / (top[0] ? top[0][1] : 1) * 100}%"></span></span><span class="val">${(v / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} t<small>${Math.round(v / (qty || 1) * 100)} %</small></span></div>`).join("")}</div>
+    <div class="foot"><span></span><a class="btn small" href="${APP_BASE}/reception/">${esc(t("open_app"))}</a></div></div>`;
+}
 function deptRequests() {
   return `<div class="card dept">
     <div class="box-head"><div><div class="ent">WHP · SAIC</div><h2>${esc(t("d_requests"))}</h2></div>${statusPill(pendingForPdg().some(r => r.urgency === "urgent") ? "bad" : pendingForPdg().length ? "watch" : "ok")}</div>
@@ -533,7 +548,7 @@ function viewOverview() {
     <div class="card stack"><h3>${esc(t("attention"))}</h3><ul class="issues">${al.map(a => `<li class="${a.lv}"><a href="${a.href}" style="color:inherit;text-decoration:none">${esc(a.m)}</a></li>`).join("")}</ul></div>
   </div>
   <h2>${esc(t("depts"))}</h2>
-  <div class="dept-grid">${deptCash("cacao")}${deptCash("admin")}${deptTrace()}${deptRequests()}</div>`;
+  <div class="dept-grid">${deptCash("cacao")}${deptCash("admin")}${deptRecep()}${deptTrace()}${deptRequests()}</div>`;
 }
 
 /* ---------- approvals ---------- */
@@ -652,7 +667,7 @@ function viewApps() {
   <div class="apps">
     <a class="app-tile" href="${APP_BASE}/"><span class="ent-chip SAIC" style="align-self:flex-start">SAIC</span><b>${esc(t("app_trace"))}</b><span>${esc(t("app_trace_d"))}</span></a>
     <a class="app-tile" href="${APP_BASE}/tresorerie/"><span class="ent-chip SAIC" style="align-self:flex-start">SAIC</span><b>${esc(t("app_treso"))}</b><span>${esc(t("app_treso_d"))}</span></a>
-    <div class="app-tile soon"><b>${esc(t("soon"))}</b><span>${esc(t("app_soon_d"))}</span></div>
+    <a class="app-tile" href="${APP_BASE}/reception/"><span class="ent-chip SAIC" style="align-self:flex-start">SAIC</span><b>${esc(t("app_recep"))}</b><span>${esc(t("app_recep_d"))}</span></a>
     <div class="app-tile soon"><b>${esc(t("soon"))}</b><span>${esc(t("app_soon_d"))}</span></div>
   </div>`;
 }
@@ -796,6 +811,10 @@ async function loadData() {
         sb.from("cash_transactions").select("caisse, kind, date, ref, party, cat, amount, seq").eq("voided", false).order("date").order("seq").limit(20000).then(must),
         sb.from("farmers").select("id, name, village, decision, id_number, archived, plots(area, lat, lon, polygon, defo_date, defo_evidence)").eq("archived", false).limit(10000).then(must)
       ]);
+      const [recs, sales] = await Promise.all([
+        sb.from("cocoa_receptions").select("date, zone, qty, amount, lines").limit(20000).then(r => r.error ? [] : r.data),
+        sb.from("cocoa_sales").select("qty").then(r => r.error ? [] : r.data)]);
+      RECEP = { recs: recs.map(x => ({ ...x, qty: Number(x.qty), amount: Number(x.amount) })), sold: sales.reduce((a, x) => a + Number(x.qty), 0) };
       const nd = {};
       for (const b of boxes) {
         CEILINGS[b.id] = Number(b.ceiling);
