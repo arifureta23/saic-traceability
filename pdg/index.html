@@ -226,6 +226,16 @@ label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .thread{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:13px}
 .thread li{border-left:2px solid var(--line);padding-left:10px}
 .thread .when{color:var(--muted)}
+.req.clickable{cursor:pointer} .req.clickable:hover{border-color:var(--accent)}
+.dkv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px;font-size:14px}
+.dkv dt{color:var(--muted);font-size:12px} .dkv dd{margin:0;font-weight:500}
+.dtext{white-space:pre-wrap;line-height:1.6;background:var(--paper);border-radius:6px;padding:12px 14px;font-size:14px}
+.files{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.file{border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;background:var(--surface);text-decoration:none;color:var(--ink)}
+.file .thumb{height:110px;background:var(--paper);display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700;font-size:18px;letter-spacing:.05em}
+.file .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.file .fn{font-size:12px;padding:6px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file:hover{border-color:var(--accent)}
 .statusbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--paper)}
 .statusbar span{display:block;height:100%}
 </style>
@@ -260,6 +270,7 @@ const STR = {
     signin: "Connexion", signin_sub: "Tableau de bord du groupe WHP", email: "E-mail", password: "Mot de passe", signin_btn: "Se connecter", bad_login: "E-mail ou mot de passe incorrect.", signout: "Se déconnecter",
     forgot: "Mot de passe oublié ?", reset_sent: "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.", enter_email: "Saisissez d'abord votre e-mail.",
     no_access: "Ce tableau de bord est réservé au PDG et aux directions de WHP et de la SAIC. Demandez l'accès à l'administrateur.", loading: "Chargement…", load_err: "Chargement impossible : {m}", save_err: "Enregistrement impossible : {m}", r_none: "",
+    d_from: "Soumise par", d_ent: "Société", d_type: "Type", d_amount: "Montant", d_urgency: "Urgence", d_due: "Décision souhaitée avant le", d_created: "Soumise le", d_ref: "Référence", d_details: "Détails et justification", d_files: "Pièces jointes", d_history: "Historique", d_nofiles: "Aucune pièce jointe.", d_open: "Ouvrir", d_none: "—", view: "Voir le détail", f_normal2: "Normale",
     viewing_as: "Rôle (démo)", lang: "English", draft: "Brouillon : chiffres de trésorerie importés de vos fichiers Excel ; la traçabilité montre les producteurs d'exemple. Les demandes au PDG sont enregistrées et partagées.",
     r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
     rl_dg_whp: "Directeur Général, WHP", rl_daf_whp: "Directeur Administratif et Financier, WHP", rl_dg_saic: "Directeur Général, SAIC",
@@ -296,6 +307,7 @@ const STR = {
     signin: "Sign in", signin_sub: "WHP group dashboard", email: "Email", password: "Password", signin_btn: "Sign in", bad_login: "Email or password is incorrect.", signout: "Sign out",
     forgot: "Forgot password?", reset_sent: "If this email has an account, a reset link has been sent.", enter_email: "Enter your email first.",
     no_access: "This dashboard is for the PDG and the WHP and SAIC management. Ask the administrator for access.", loading: "Loading…", load_err: "Couldn't load: {m}", save_err: "Couldn't save: {m}", r_none: "",
+    d_from: "Submitted by", d_ent: "Company", d_type: "Type", d_amount: "Amount", d_urgency: "Urgency", d_due: "Decision needed by", d_created: "Submitted on", d_ref: "Reference", d_details: "Details and justification", d_files: "Attachments", d_history: "History", d_nofiles: "No attachments.", d_open: "Open", d_none: "—", view: "See details", f_normal2: "Normal",
     viewing_as: "Role (demo)", lang: "Français", draft: "Draft: treasury figures imported from your Excel files; traceability shows the example farmers. Requests to the PDG are saved and shared.",
     r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
     rl_dg_whp: "Managing Director, WHP", rl_daf_whp: "Finance Director, WHP", rl_dg_saic: "Managing Director, SAIC",
@@ -528,14 +540,14 @@ function reqCard(r, compact) {
   const canDecide = S.role === "pdg" && r.status === "pending";
   const canReply = S.role === r.from && r.status === "info";
   const last = (r.history || [])[r.history.length - 1];
-  return `<div class="req">
+  return `<div class="req clickable" data-open="${esc(r.id)}" tabindex="0" role="button" aria-label="${esc(t("view"))} : ${esc(r.title)}">
     <div><div class="row"><span class="ent-chip ${r.ent}">${r.ent}</span><b>${esc(r.title)}</b>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}<span class="pill ${stCls}">${esc(t("s_" + r.status))}</span>${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
       <div class="small muted" style="margin-top:4px">${esc(t("rl_" + r.from))} · ${esc(t("t_" + r.type))} · ${dfull(r.created)}${r.due ? " · " + esc(t("due", { d: dfull(r.due) })) : ""}</div>
       ${compact ? "" : `<p style="margin-top:8px;white-space:pre-wrap">${esc(r.details)}</p>${fileLinks(r.files)}
       <ul class="thread" style="margin-top:10px">${(r.history || []).map(h => `<li><span class="when">${dtime(h.at)} · ${esc(t("r_" + h.role))}</span> — ${esc(t("h_" + h.action))}${h.note ? ` : ${esc(h.note)}` : ""}</li>`).join("")}</ul>`}
       ${compact && last && last.note ? `<div class="small" style="margin-top:4px">${esc(last.note)}</div>` : ""}</div>
     <div class="amt">${r.amount ? fc(r.amount) : `<span class="small muted">${esc(t("no_amount"))}</span>`}</div>
-    ${canDecide || canReply ? `<div class="acts">${canDecide ? `<button class="btn primary small" data-act="approve" data-id="${esc(r.id)}">${esc(t("approve"))}</button><button class="btn small" data-act="info" data-id="${esc(r.id)}">${esc(t("ask_info"))}</button><button class="btn small danger" data-act="reject" data-id="${esc(r.id)}">${esc(t("reject"))}</button>` : `<button class="btn primary small" data-act="reply" data-id="${esc(r.id)}">${esc(t("reply"))}</button>`}${compact ? ` <a href="#approvals" class="small">${esc(t("open_detail"))}</a>` : ""}</div>` : compact ? `<div class="acts"><a href="#approvals" class="small">${esc(t("open_detail"))}</a></div>` : ""}
+    ${canDecide || canReply ? `<div class="acts">${canDecide ? `<button class="btn primary small" data-act="approve" data-id="${esc(r.id)}">${esc(t("approve"))}</button><button class="btn small" data-act="info" data-id="${esc(r.id)}">${esc(t("ask_info"))}</button><button class="btn small danger" data-act="reject" data-id="${esc(r.id)}">${esc(t("reject"))}</button>` : `<button class="btn primary small" data-act="reply" data-id="${esc(r.id)}">${esc(t("reply"))}</button>`}<button class="btn small" data-open="${esc(r.id)}">${esc(t("view"))}</button></div>` : `<div class="acts"><button class="btn small" data-open="${esc(r.id)}">${esc(t("view"))}${(r.files || []).length ? ` · ${r.files.length} ${esc(t("d_files").toLowerCase())}` : ""}</button></div>`}
   </div>`;
 }
 function viewApprovals() {
@@ -548,7 +560,7 @@ function viewApprovals() {
     ${isPdg ? `<select id="fFrom" aria-label="${esc(t("f_from"))}"><option value="">${esc(t("f_from"))}</option>${Object.keys(SUBMITTERS).map(k => `<option value="${k}" ${f.from === k ? "selected" : ""}>${esc(t("r_" + k))}</option>`).join("")}</select>
     <select id="fEnt" aria-label="${esc(t("f_ent"))}"><option value="">${esc(t("f_ent"))}</option>${["WHP", "SAIC"].map(k => `<option ${f.ent === k ? "selected" : ""}>${k}</option>`).join("")}</select>` : ""}
   </div>
-  <div class="stack">${list.length ? list.map(r => reqCard(r, false)).join("") : `<div class="card muted">${esc(t("no_req"))}</div>`}</div>
+  <div class="stack">${list.length ? list.map(r => reqCard(r, true)).join("") : `<div class="card muted">${esc(t("no_req"))}</div>`}</div>
   <p class="small muted">${esc(t("mine_only"))}</p>`;
 }
 function bindApprovals() {
@@ -556,6 +568,47 @@ function bindApprovals() {
   const ff = $("#fFrom"); if (ff) ff.onchange = e => { S.flt.from = e.target.value; render(); };
   const fe = $("#fEnt"); if (fe) fe.onchange = e => { S.flt.ent = e.target.value; render(); };
 }
+
+/* ---------- request detail ---------- */
+function openDetail(id) {
+  const r = S.requests.find(x => x.id === id); if (!r) return;
+  const stCls = r.status === "approved" ? "ok" : r.status === "rejected" ? "bad" : "warn";
+  const canDecide = S.role === "pdg" && r.status === "pending", canReply = S.role === r.from && r.status === "info";
+  const files = r.files || [];
+  modal(`<div style="display:flex;flex-direction:column;min-height:100%">
+    <header><div><div class="row"><span class="ent-chip ${r.ent}">${r.ent}</span><span class="pill ${stCls}">${esc(t("s_" + r.status))}</span>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
+      <h2 style="margin-top:8px">${esc(r.title)}</h2></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body">
+      <dl class="dkv">
+        <div><dt>${esc(t("d_from"))}</dt><dd>${esc(t("rl_" + r.from))}</dd></div>
+        <div><dt>${esc(t("d_amount"))}</dt><dd style="font-size:20px">${r.amount ? fc(r.amount) : esc(t("no_amount"))}</dd></div>
+        <div><dt>${esc(t("d_ent"))}</dt><dd>${r.ent === "WHP" ? "Wenkam Holding Plus" : "SAIC"}</dd></div>
+        <div><dt>${esc(t("d_type"))}</dt><dd>${esc(t("t_" + r.type))}</dd></div>
+        <div><dt>${esc(t("d_urgency"))}</dt><dd>${esc(r.urgency === "urgent" ? t("urgent") : t("f_normal2"))}</dd></div>
+        <div><dt>${esc(t("d_due"))}</dt><dd>${r.due ? dfull(r.due) : esc(t("d_none"))}</dd></div>
+        <div><dt>${esc(t("d_created"))}</dt><dd>${dtime(r.created)}</dd></div>
+        <div><dt>${esc(t("d_ref"))}</dt><dd class="mono">${esc(r.id)}</dd></div>
+      </dl>
+      <div class="stack"><h3>${esc(t("d_details"))}</h3><div class="dtext">${esc(r.details)}</div></div>
+      <div class="stack"><h3>${esc(t("d_files"))} (${files.length})</h3>
+        ${files.length ? `<div class="files">${files.map((f, i) => `<a class="file" href="#" data-fileidx="${i}"><span class="thumb">${/^image\//.test(f.type || "") ? `<img alt="" data-thumb="${i}">` : esc(((f.name || "").split(".").pop() || "DOC").toUpperCase())}</span><span class="fn">${esc(f.name)}</span></a>`).join("")}</div>` : `<p class="muted">${esc(t("d_nofiles"))}</p>`}</div>
+      <div class="stack"><h3>${esc(t("d_history"))}</h3>
+        <ul class="thread">${(r.history || []).map(h => `<li><span class="when">${dtime(h.at)} · ${esc(t("r_" + h.role))}</span> — <b>${esc(t("h_" + h.action))}</b>${h.note ? `<br>${esc(h.note)}` : ""}</li>`).join("")}</ul></div>
+    </div>
+    ${canDecide || canReply ? `<footer><span></span><div class="row">${canDecide ? `<button class="btn small danger" data-act="reject" data-id="${esc(r.id)}">${esc(t("reject"))}</button><button class="btn small" data-act="info" data-id="${esc(r.id)}">${esc(t("ask_info"))}</button><button class="btn primary" data-act="approve" data-id="${esc(r.id)}">${esc(t("approve"))}</button>` : `<button class="btn primary" data-act="reply" data-id="${esc(r.id)}">${esc(t("reply"))}</button>`}</div></footer>` : ""}
+  </div>`);
+  files.forEach(async (f, i) => {
+    const link = document.querySelector(`[data-fileidx="${i}"]`);
+    if (link) link.onclick = async e => { e.preventDefault(); const w = window.open("", "_blank"); const u = await fileUrl(f); if (!u) { if (w) w.close(); return; } if (w) w.location = u; else location.href = u; };
+    const img = document.querySelector(`[data-thumb="${i}"]`);
+    if (img) { const u = await fileUrl(f); if (u) img.src = u; }
+  });
+}
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-act]") || e.target.closest("a[href]:not([href='#'])")) return;
+  const o = e.target.closest("[data-open]"); if (o) { e.preventDefault(); openDetail(o.dataset.open); }
+});
+document.addEventListener("keydown", e => { const o = e.target.closest && e.target.closest(".req[data-open]"); if (o && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openDetail(o.dataset.open); } });
 
 /* ---------- treasury (read-only) ---------- */
 function viewTreasury() {
@@ -604,6 +657,7 @@ function viewApps() {
 
 /* ---------- attachments ---------- */
 let attKeep = [], attNew = [];
+const fileUrl = async f => { const { data, error } = await sb.storage.from("pdg-files").createSignedUrl(f.path, 600); if (error || !data) { toast(t("save_err", { m: error ? error.message : "?" })); return null; } return data.signedUrl; };
 const fileLinks = files => (files || []).length ? `<span class="att-links">${files.map(f => `<a href="#" data-file="${esc(f.path)}">${esc(f.name)}</a>`).join("")}</span>` : "";
 document.addEventListener("click", async e => {
   const a = e.target.closest("[data-file]"); if (!a) return; e.preventDefault();
