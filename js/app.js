@@ -200,7 +200,6 @@ window.addEventListener("online", () => { if (S.offline) loadAll(); });
 function shell() {
   document.documentElement.lang = L;
   $("#nav").innerHTML = ["overview", "farmers", "map", "team"].map(r => `<a href="#${r}" data-r="${r}">${esc(t("nav." + r))}${r === "farmers" ? ` <small>${S.farmers.filter(f => !f.archived).length || ""}</small>` : ""}</a>`).join("");
-  $("#appSub").textContent = t("app.sub");
   $("#railFoot").innerHTML = `<span>${esc(t("foot.forms"))}</span>${S.me ? `<span>${esc(S.me.name)}<br>${esc(t("role." + S.me.role))}</span>` : ""}
     <div class="row"><button class="btn small" id="langBtn">${esc(t("lang.switch"))}</button>${S.api && S.api.mode === "live" && S.me ? `<button class="btn small" id="outBtn">${esc(t("auth.signout"))}</button>` : ""}</div>
     ${S.api && S.api.mode === "demo" ? `<a href="#" id="resetDemo">${esc(t("demo.reset"))}</a>` : ""}`;
@@ -234,7 +233,7 @@ function viewLogin() {
   if (recovery) return `<div class="card login stack"><h1>${esc(t("auth.newpw"))}</h1>
     <form id="pwForm" class="stack" novalidate><div class="f"><label for="newPw">${esc(t("auth.password"))}</label><input id="newPw" type="password" autocomplete="new-password" minlength="8" required></div>
     <span class="err" id="loginErr"></span><button class="btn primary" type="submit">${esc(t("auth.save_pw"))}</button></form></div>`;
-  return `<div class="card login stack"><div><h1>${esc(t("auth.title"))}</h1><p class="muted">${esc(t("auth.sub"))}</p></div>
+  return `<div class="card login stack"><img class="login-logo" src="icons/logo.png" alt="SAIC" onerror="this.remove()"><div><h1>${esc(t("auth.title"))}</h1><p class="muted">${esc(t("auth.sub"))}</p></div>
     <form id="loginForm" class="stack" novalidate>
       <div class="f"><label for="em">${esc(t("auth.email"))}</label><input id="em" type="email" autocomplete="username" required></div>
       <div class="f"><label for="pw">${esc(t("auth.password"))}</label><input id="pw" type="password" autocomplete="current-password" required></div>
