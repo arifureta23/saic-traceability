@@ -31,7 +31,7 @@ const errMsg = e => (e && (e.message || e.error_description)) || String(e);
 
 /* ------------------------------------------------------------------ */
 async function supabaseBackend() {
-  const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm");
+  const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm");
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
   const urlCache = new Map();
   const must = ({ data, error }) => { if (error) throw new Error(errMsg(error)); return data; };

@@ -1,9 +1,9 @@
 // Offline support: keeps the app itself available without a connection.
 // Data requests to Supabase always go to the network (the app shows the last loaded registry when offline).
-const VERSION = "saic-v1";
+const VERSION = "saic-v2";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "js/app.js", "js/api.js", "js/i18n.js", "js/config.js", "js/demo-data.js",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png"];
-const CDN = ["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm", "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"];
+const CDN = ["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm", "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(async c => { await c.addAll(SHELL); for (const u of CDN) { try { await c.add(u); } catch (x) {} } }).then(() => self.skipWaiting()));
