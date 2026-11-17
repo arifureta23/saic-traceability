@@ -7,6 +7,15 @@
 <meta name="theme-color" content="#1f5c47">
 <link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
 <link rel="apple-touch-icon" href="../icons/saic-apple-180.png">
+<script>
+/* /dg-whp is the same page for WHP: use the WHP logo as the tab icon, like the PDG dashboard */
+if (location.pathname.startsWith("/dg-whp")) {
+  document.querySelector('link[rel="icon"]').href = "../icons/whp-logo.png";
+  document.querySelector('link[rel="apple-touch-icon"]').href = "../icons/whp-logo.png";
+  document.querySelector('meta[name="theme-color"]').content = "#1a5fd6";
+  document.title = "Direction Générale WHP";
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
