@@ -1,0 +1,34 @@
+{
+  "name": "saic-suite",
+  "productName": "SAIC Suite",
+  "version": "1.0.0",
+  "description": "SAIC Suite: registre, trésorerie, réception cacao, Direction Générale et PDG",
+  "author": "SAIC",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "cm.saic.suite",
+    "productName": "SAIC Suite",
+    "copyright": "SAIC",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "build/icon.png", "package.json"],
+    "win": { "target": "nsis", "icon": "build/icon.png", "artifactName": "SAIC-Suite-Setup.${ext}" },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "SAIC Suite",
+      "language": "1036"
+    }
+  }
+}

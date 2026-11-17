@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAIC Suite</title>
+<meta name="theme-color" content="#1f5c47">
+<link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
+<link rel="apple-touch-icon" href="../icons/saic-apple-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* SAIC Suite: one start screen for every SAIC app. Same palette as the registry. */
+:root{--paper:#f3f5f2;--surface:#fff;--ink:#1b2420;--muted:#5d6a63;--line:#d9dfd9;--accent:#1f5c47;--accent-soft:#e2eee8;--pod:#a8641a;--pod-soft:#f6ead9;--bad:#b3362c;--radius:10px;
+  --font:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--paper:#121614;--surface:#1a201d;--ink:#e6ebe7;--muted:#9aa79f;--line:#2c3531;--accent:#6cc39c;--accent-soft:#1e3229;--pod:#e0a35a;--pod-soft:#33270f;--bad:#f08a7f;color-scheme:dark}}
+*{box-sizing:border-box} [hidden]{display:none!important}
+html,body{margin:0;min-height:100%} body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--font)}
+h1,h2{margin:0;line-height:1.2;text-wrap:balance} h1{font-size:26px} h2{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0} a{color:var(--accent)}
+button,input{font:inherit;color:inherit} :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 28px;background:var(--surface);border-bottom:1px solid var(--line);border-top:4px solid var(--pod)}
+.top img{height:54px;width:auto;display:block}
+.top .who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);text-align:right}
+main{max-width:1080px;margin:0 auto;padding:28px;display:flex;flex-direction:column;gap:24px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:500;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--muted)} .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)} .btn.small{padding:4px 10px;font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.mod{display:flex;flex-direction:column;gap:8px;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;min-height:150px;transition:border-color .15s,transform .15s}
+.mod:hover{border-color:var(--accent);transform:translateY(-2px)}
+.mod .ic{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:18px}
+.mod.whp .ic{background:var(--pod-soft);color:var(--pod)}
+.mod b{font-size:17px} .mod span{font-size:13px;color:var(--muted)}
+.mod .role{margin-top:auto;font-size:12px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+.dl{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.f{display:flex;flex-direction:column;gap:4px} .f label{font-size:13px;font-weight:500}
+.f input{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.err{color:var(--bad);font-size:13px;min-height:1em}
+.login{max-width:400px;margin:6vh auto 0;width:100%;display:flex;flex-direction:column;gap:14px}
+.login img{width:220px;max-width:100%;margin:0 auto;display:block}
+.muted{color:var(--muted)} .small{font-size:13px}
+@media (max-width:640px){.top{padding:12px 16px}.top img{height:40px} main{padding:18px 16px}}
+</style>
+</head>
+<body>
+<header class="top"><img id="logo" alt="SAIC"><div class="who" id="who"></div></header>
+<main id="main"><div class="card">…</div></main>
+<script type="module">
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../js/config.js";
+import { LOGO } from "../js/logo.js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm";
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+document.getElementById("logo").src = LOGO;
+
+const DOWNLOAD_URL = "https://github.com/arifureta23/saic-traceability/releases/latest/download/SAIC-Suite-Setup.exe";
+const IN_DESKTOP = /SAICSuite/.test(navigator.userAgent);
+const STR = {
+  fr: { title: "SAIC Suite", hello: "Bonjour, {n}", sub: "Vos applications SAIC et Wenkam Holdings Plus.", none: "Aucune application n'est encore ouverte pour votre compte. Demandez l'accès à l'administrateur.",
+    signin: "Connexion", signin_sub: "Un seul compte pour toutes les applications SAIC.", email: "E-mail", password: "Mot de passe", go: "Se connecter", bad: "E-mail ou mot de passe incorrect.", out: "Se déconnecter", lang: "English",
+    forgot: "Mot de passe oublié ?", sent: "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.", need_email: "Saisissez d'abord votre e-mail.",
+    dl_t: "Application pour ordinateur", dl_d: "Installez SAIC Suite sur votre ordinateur Windows : une icône sur le bureau, une fenêtre dédiée, les mises à jour automatiques.", dl_b: "Télécharger pour Windows", dl_n: "Au premier lancement, Windows peut afficher « Windows a protégé votre ordinateur » : cliquez sur « Informations complémentaires » puis « Exécuter quand même ».",
+    m_reg: "Registre des producteurs", m_reg_d: "Producteurs, parcelles, cartographie, F01", m_tre: "Trésorerie", m_tre_d: "Caisses, dépenses, demandes de fonds", m_rec: "Réception cacao", m_rec_d: "Réceptions, prix, zones, livraisons par producteur",
+    m_dg: "Direction Générale SAIC", m_dg_d: "Tableau de bord de la DG, SAIC Cacao et SAIC Industries", m_dg_s: "Demandes à la DG", m_dg_s_d: "Envoyer une demande à la Directrice Générale et suivre la réponse",
+    m_pdg: "Tableau de bord PDG", m_pdg_d: "Groupe Wenkam Holdings Plus, approbations", m_pdg_s: "Demandes au PDG", m_pdg_s_d: "Envoyer une demande au PDG et suivre la réponse",
+    r_lead: "Responsable traçabilité", r_warehouse: "Magasinier", r_viewer: "Lecture", r_comptable: "Comptable", r_daf: "DAF", r_dg: "DG", r_tresorier: "Trésorier", r_pdg: "PDG", r_dg_saic: "DG SAIC", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_staff: "Personnel" },
+  en: { title: "SAIC Suite", hello: "Hello, {n}", sub: "Your SAIC and Wenkam Holdings Plus apps.", none: "No app is open for your account yet. Ask the administrator for access.",
+    signin: "Sign in", signin_sub: "One account for every SAIC app.", email: "Email", password: "Password", go: "Sign in", bad: "Email or password is incorrect.", out: "Sign out", lang: "Français",
+    forgot: "Forgot password?", sent: "If this email has an account, a reset link has been sent.", need_email: "Enter your email first.",
+    dl_t: "Desktop app", dl_d: "Install SAIC Suite on your Windows computer: a desktop icon, its own window, automatic updates.", dl_b: "Download for Windows", dl_n: "On first launch Windows may show “Windows protected your PC”: click “More info”, then “Run anyway”.",
+    m_reg: "Farmer registry", m_reg_d: "Farmers, plots, mapping, F01", m_tre: "Treasury", m_tre_d: "Cash boxes, expenses, fund requests", m_rec: "Cocoa reception", m_rec_d: "Receptions, prices, zones, deliveries by farmer",
+    m_dg: "SAIC General Management", m_dg_d: "DG dashboard for SAIC Cacao and SAIC Industries", m_dg_s: "Requests to the DG", m_dg_s_d: "Send a request to the Managing Director and follow the answer",
+    m_pdg: "PDG dashboard", m_pdg_d: "Wenkam Holdings Plus group, approvals", m_pdg_s: "Requests to the PDG", m_pdg_s_d: "Send a request to the PDG and follow the answer",
+    r_lead: "Traceability lead", r_warehouse: "Warehouse manager", r_viewer: "Read only", r_comptable: "Accountant", r_daf: "DAF", r_dg: "DG", r_tresorier: "Treasurer", r_pdg: "PDG", r_dg_saic: "DG SAIC", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_staff: "Staff" }
+};
+const S = { lang: (() => { try { const l = localStorage.getItem("saic-lang"); if (l === "en" || l === "fr") return l; } catch (e) {} return (navigator.language || "fr").slice(0, 2) === "en" ? "en" : "fr"; })(), me: null, mods: [] };
+const t = (k, p = {}) => String(STR[S.lang][k] ?? k).replace(/\{(\w+)\}/g, (_, x) => p[x] ?? "");
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const $ = s => document.querySelector(s);
+
+function header() {
+  document.documentElement.lang = S.lang;
+  $("#who").innerHTML = `${S.me ? `<span>${esc(S.me.name)}</span>` : ""}<button class="btn small" id="lang">${esc(t("lang"))}</button>${S.me ? `<button class="btn small" id="out">${esc(t("out"))}</button>` : ""}`;
+  $("#lang").onclick = () => { S.lang = S.lang === "fr" ? "en" : "fr"; try { localStorage.setItem("saic-lang", S.lang); } catch (e) {} render(); };
+  const o = $("#out"); if (o) o.onclick = async () => { await sb.auth.signOut(); S.me = null; render(); };
+}
+const download = () => IN_DESKTOP ? "" : `<div class="card dl"><div style="max-width:640px"><b>${esc(t("dl_t"))}</b><p class="muted small" style="margin-top:4px">${esc(t("dl_d"))}</p><p class="muted small" style="margin-top:6px">${esc(t("dl_n"))}</p></div><a class="btn primary" href="${DOWNLOAD_URL}">${esc(t("dl_b"))}</a></div>`;
+function render() {
+  header();
+  const m = $("#main");
+  if (!S.me) {
+    m.innerHTML = `<div class="card login"><img src="${LOGO}" alt="SAIC"><div><h1>${esc(t("signin"))}</h1><p class="muted">${esc(t("signin_sub"))}</p></div>
+      <form id="lf" style="display:flex;flex-direction:column;gap:12px" novalidate>
+        <div class="f"><label for="em">${esc(t("email"))}</label><input id="em" type="email" autocomplete="username"></div>
+        <div class="f"><label for="pw">${esc(t("password"))}</label><input id="pw" type="password" autocomplete="current-password"></div>
+        <span class="err" id="er"></span><button class="btn primary" type="submit" style="justify-content:center">${esc(t("go"))}</button><a href="#" id="fg">${esc(t("forgot"))}</a></form></div>${download()}`;
+    $("#lf").onsubmit = async e => { e.preventDefault(); $("#er").textContent = "";
+      const { error } = await sb.auth.signInWithPassword({ email: $("#em").value.trim(), password: $("#pw").value });
+      if (error) { $("#er").textContent = /invalid/i.test(error.message) ? t("bad") : error.message; return; } await boot(); };
+    $("#fg").onclick = async e => { e.preventDefault(); const em = $("#em").value.trim(); if (!em) { $("#er").textContent = t("need_email"); return; }
+      await sb.auth.resetPasswordForEmail(em, { redirectTo: location.origin + "/" }); $("#er").textContent = t("sent"); };
+    return;
+  }
+  m.innerHTML = `<div><h1>${esc(t("hello", { n: S.me.name }))}</h1><p class="muted" style="margin-top:4px">${esc(t("sub"))}</p></div>
+    ${S.mods.length ? `<div class="grid">${S.mods.map(x => `<a class="mod ${x.whp ? "whp" : ""}" href="${x.href}"><span class="ic" aria-hidden="true">${esc(x.ic)}</span><b>${esc(t(x.k))}</b><span>${esc(t(x.k + "_d"))}</span><span class="role">${esc(x.role)}</span></a>`).join("")}</div>` : `<div class="card">${esc(t("none"))}</div>`}
+    ${download()}`;
+}
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { S.me = null; render(); return; }
+  const uid = session.user.id;
+  const one = q => q.then(r => r.error ? null : r.data);
+  const [prof, tre, exe, staff] = await Promise.all([
+    one(sb.from("profiles").select("full_name, role").eq("id", uid).maybeSingle()),
+    one(sb.from("treasury_members").select("role").eq("user_id", uid).maybeSingle()),
+    one(sb.from("exec_members").select("role").eq("user_id", uid).maybeSingle()),
+    one(sb.from("saic_staff").select("entity, active").eq("user_id", uid).maybeSingle())]);
+  S.me = { name: (prof && prof.full_name) || session.user.email };
+  const mods = [], reg = prof && prof.role, ex = exe && exe.role;
+  if (ex === "pdg") mods.push({ k: "m_pdg", href: "../pdg/", ic: "W", whp: true, role: t("r_pdg") });
+  else if (ex) mods.push({ k: "m_pdg_s", href: "../pdg/", ic: "W", whp: true, role: t("r_" + ex) });
+  if (ex === "dg_saic") mods.push({ k: "m_dg", href: "../dg-saic/", ic: "DG", role: t("r_dg_saic") });
+  else if ((staff && staff.active) || ["lead", "warehouse"].includes(reg) || tre) mods.push({ k: "m_dg_s", href: "../dg-saic/", ic: "DG", role: t("r_staff") });
+  if (reg) mods.push({ k: "m_reg", href: "../", ic: "F", role: t("r_" + reg) });
+  if (reg || ex === "pdg" || ex === "dg_saic") mods.push({ k: "m_rec", href: "../reception/", ic: "R", role: t(["lead", "warehouse"].includes(reg) ? "r_" + reg : "r_viewer") });
+  if (tre) mods.push({ k: "m_tre", href: "../tresorerie/", ic: "T", role: t("r_" + tre.role) });
+  S.mods = mods;
+  render();
+}
+render(); boot();
+</script>
+</body>
+</html>
