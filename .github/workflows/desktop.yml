@@ -1,0 +1,38 @@
+# Builds the SAIC Suite Windows installer and publishes it as the latest GitHub release.
+# Download link (always the newest version):
+#   https://github.com/arifureta23/saic-traceability/releases/latest/download/SAIC-Suite-Setup.exe
+name: Desktop app (Windows)
+
+on:
+  push:
+    paths: ["desktop/**", ".github/workflows/desktop.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run dist
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="desktop-v${VERSION}"
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" "dist/SAIC-Suite-Setup.exe" \
+            --title "SAIC Suite ${VERSION} (Windows)" \
+            --notes "Installateur Windows de SAIC Suite. Téléchargez SAIC-Suite-Setup.exe et lancez-le." \
+            --target "$GITHUB_SHA" --latest
