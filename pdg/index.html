@@ -893,9 +893,10 @@ async function boot() {
   const user = session.user;
   const [{ data: prof }, { data: mem }] = await Promise.all([
     sb.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
-    sb.from("exec_members").select("role").eq("user_id", user.id).maybeSingle()]);
+    sb.from("exec_members").select("role").eq("user_id", user.id)]);
   S.me = { id: user.id, name: (prof && prof.full_name) || user.email };
-  S.role = mem ? mem.role : null;
+  const roles = (mem || []).map(m => m.role);
+  S.role = roles.includes("pdg") ? "pdg" : roles.find(r => SUBMITTERS[r]) || null;
   S.ready = true;
   if (S.role && S.role !== "pdg" && !["approvals", "apps"].includes(route())) location.hash = "approvals";
   if (S.role) await loadData(); else render();

@@ -116,19 +116,20 @@ async function boot() {
   const [prof, tre, exe, staff] = await Promise.all([
     one(sb.from("profiles").select("full_name, role").eq("id", uid).maybeSingle()),
     one(sb.from("treasury_members").select("role").eq("user_id", uid).maybeSingle()),
-    one(sb.from("exec_members").select("role").eq("user_id", uid).maybeSingle()),
+    one(sb.from("exec_members").select("role").eq("user_id", uid)),
     one(sb.from("saic_staff").select("entity, active").eq("user_id", uid).maybeSingle())]);
   S.me = { name: (prof && prof.full_name) || session.user.email };
-  const mods = [], reg = prof && prof.role, ex = exe && exe.role;
-  if (ex === "pdg") mods.push({ k: "m_pdg", href: "../pdg/", ic: "W", whp: true, role: t("r_pdg") });
-  else if (ex) mods.push({ k: "m_pdg_s", href: "../pdg/", ic: "W", whp: true, role: t("r_" + ex) });
+  const mods = [], reg = prof && prof.role, ex = (exe || []).map(x => x.role), has = r => ex.includes(r);
+  const sub = ["dg_whp", "daf_whp", "dg_saic"].find(has);
+  if (has("pdg")) mods.push({ k: "m_pdg", href: "../pdg/", ic: "W", whp: true, role: t("r_pdg") });
+  else if (sub) mods.push({ k: "m_pdg_s", href: "../pdg/", ic: "W", whp: true, role: t("r_" + sub) });
   const whpStaff = staff && staff.active && staff.entity === "whp";
-  if (ex === "dg_whp") mods.push({ k: "m_dgw", href: "../dg-whp/", ic: "DG", whp: true, role: t("r_dg_whp") });
+  if (has("dg_whp")) mods.push({ k: "m_dgw", href: "../dg-whp/", ic: "DG", whp: true, role: t("r_dg_whp") });
   else if (whpStaff) mods.push({ k: "m_dgw_s", href: "../dg-whp/", ic: "DG", whp: true, role: t("r_staff") });
-  if (ex === "dg_saic") mods.push({ k: "m_dg", href: "../dg-saic/", ic: "DG", role: t("r_dg_saic") });
-  else if (!whpStaff && ((staff && staff.active) || ["lead", "warehouse"].includes(reg) || tre)) mods.push({ k: "m_dg_s", href: "../dg-saic/", ic: "DG", role: t("r_staff") });
+  if (has("dg_saic")) mods.push({ k: "m_dg", href: "../dg-saic/", ic: "DG", role: t("r_dg_saic") });
+  else if (!whpStaff && !has("dg_whp") && ((staff && staff.active) || ["lead", "warehouse"].includes(reg) || tre)) mods.push({ k: "m_dg_s", href: "../dg-saic/", ic: "DG", role: t("r_staff") });
   if (reg) mods.push({ k: "m_reg", href: "../", ic: "F", role: t("r_" + reg) });
-  if (reg || ex === "pdg" || ex === "dg_saic") mods.push({ k: "m_rec", href: "../reception/", ic: "R", role: t(["lead", "warehouse"].includes(reg) ? "r_" + reg : "r_viewer") });
+  if (reg || has("pdg") || has("dg_saic") || has("dg_whp")) mods.push({ k: "m_rec", href: "../reception/", ic: "R", role: t(["lead", "warehouse"].includes(reg) ? "r_" + reg : "r_viewer") });
   if (tre) mods.push({ k: "m_tre", href: "../tresorerie/", ic: "T", role: t("r_" + tre.role) });
   S.mods = mods;
   render();
