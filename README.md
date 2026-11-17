@@ -110,3 +110,24 @@ Receptions of cocoa at the warehouse: quantities, weighted average price, zones 
 - **Who records:** the registry's Warehouse Manager and Traceability Lead. Everyone else with a registry role, and the PDG, reads.
 - **Checked by the database:** every farmer and plot named in a reception must exist in the registry; amount, bonus and loss are calculated from quantity, price and quantity received; receptions are never deleted; every change goes to `reception_log`.
 - **Setup:** Supabase → SQL Editor → run `supabase/reception.sql` (after `schema.sql`, `treasury.sql` and `pdg.sql`). It imports the 86 lines and 6 sales of the 2026/2027 inventory account once.
+
+---
+
+# SAIC — DG SAIC dashboard (`/dg-saic`)
+
+Dashboard for the Managing Director of SAIC, who runs **SAIC Cacao** and **SAIC Industries**.
+
+- **DG SAIC** (`exec_members.role = 'dg_saic'`): overview of every SAIC department (cash boxes, cocoa reception, traceability, requests by department), read-only views of the treasury, reception and registry, the treasury fund requests waiting for her sign-off, and her requests to the PDG.
+- **Staff → DG:** SAIC staff send requests to the DG from the same page. The DG approves, rejects (reason required), asks for information (question required) or **forwards to the PDG**: a PDG request is created from it (attachments copied) and the original shows the PDG's decision.
+- **Who can send requests:** people the DG adds on the **Team** page (entity + department), and anyone who already has a registry or treasury role (filed under SAIC Cacao).
+- **Enforced by the database:** submitted requests can't be edited, only the DG decides, only the sender answers a question, every step is kept in the request's history. Attachments are in the private `dg-files` bucket, one folder per sender.
+
+## Setup
+1. Supabase → SQL Editor → paste all of `supabase/dg_saic.sql` → Run (after `schema.sql`, `treasury.sql`, `pdg.sql` and `reception.sql`). It adds three example requests marked "Example".
+2. Make sure the DG SAIC has her role (replace the email):
+   ```sql
+   insert into public.exec_members (user_id, role)
+   select id, 'dg_saic' from auth.users where email = 'dg.saic@example.com'
+   on conflict (user_id) do update set role = excluded.role;
+   ```
+3. The DG opens `/dg-saic` → **Team** and adds SAIC Cacao and SAIC Industries staff (their accounts are first created in Authentication → Users).
