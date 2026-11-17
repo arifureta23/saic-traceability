@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction Générale SAIC</title>
+<meta name="theme-color" content="#1f5c47">
+<link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
+<link rel="apple-touch-icon" href="../icons/saic-apple-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: same shell as the SAIC apps and the PDG dashboard — left rail + work area. */
+
+/* Layout: same shell as the SAIC farmer registry — left rail + work area; cash box page = tiles, balance chart | categories, table. */
+:root{
+  --paper:#f3f5f2; --surface:#ffffff; --ink:#1b2420; --muted:#5d6a63; --line:#d9dfd9;
+  --accent:#1f5c47; --accent-soft:#e2eee8; --pod:#a8641a; --pod-soft:#f6ead9;
+  --ok:#237a4b; --ok-bg:#e1f2e7; --warn:#9a6400; --warn-bg:#fbf0d9; --bad:#b3362c; --bad-bg:#fbe4e1;
+  --font-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --radius:8px; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#121614; --surface:#1a201d; --ink:#e6ebe7; --muted:#9aa79f; --line:#2c3531;
+    --accent:#6cc39c; --accent-soft:#1e3229; --pod:#e0a35a; --pod-soft:#33270f;
+    --ok:#6fd39a; --ok-bg:#16301f; --warn:#e6b45a; --warn-bg:#33270f; --bad:#f08a7f; --bad-bg:#3a1c19;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121614; --surface:#1a201d; --ink:#e6ebe7; --muted:#9aa79f; --line:#2c3531;
+  --accent:#6cc39c; --accent-soft:#1e3229; --pod:#e0a35a; --pod-soft:#33270f;
+  --ok:#6fd39a; --ok-bg:#16301f; --warn:#e6b45a; --warn-bg:#33270f; --bad:#f08a7f; --bad-bg:#3a1c19;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--font-body)}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:24px;font-weight:700} h2{font-size:18px;font-weight:600}
+h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p{margin:0}
+.mono{font-family:var(--font-mono);font-size:.9em} .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:var(--muted)} .small{font-size:13px}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100%}
+.rail{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;position:sticky;top:0;height:100vh}
+.brand{display:flex;flex-direction:column;gap:6px;padding:0 6px;text-decoration:none;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.logo{display:block;width:180px;max-width:100%;height:auto}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;text-decoration:none;color:var(--ink);font-weight:500}
+.nav a:hover{background:var(--paper)} .nav a.on{background:var(--accent-soft);color:var(--accent)}
+.nav .badge{background:var(--warn-bg);color:var(--warn);border-radius:999px;font-size:11px;padding:0 7px;font-weight:600}
+.rail-foot{margin-top:auto;font-size:12px;color:var(--muted);padding:0 6px;display:flex;flex-direction:column;gap:8px}
+.rail-foot select{font-size:13px;padding:5px 8px}
+.main{padding:24px 28px 60px;min-width:0;display:flex;flex-direction:column;gap:20px}
+.topline{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.topline p{margin-top:4px;color:var(--muted)}
+.notice{padding:10px 14px;border-radius:var(--radius);background:var(--accent-soft);color:var(--accent);font-size:14px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:6px;cursor:pointer;font-weight:500;text-decoration:none;color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn.danger{color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.tile .v{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:13px;font-weight:500;color:var(--muted)}
+.tile .l{font-size:13px;color:var(--muted)} .tile .s{font-size:12px;color:var(--muted)}
+.v.ok{color:var(--ok)} .v.bad{color:var(--bad)} .v.warn{color:var(--warn)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.grid-wide{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+
+/* cash box summary cards */
+.box{display:flex;flex-direction:column;gap:12px}
+.box-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.box-head .code{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.bal{font-size:32px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.bal small{font-size:15px;color:var(--muted);font-weight:500}
+.gauge{position:relative;height:10px;border-radius:5px;background:var(--paper);overflow:visible}
+.gauge span{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--accent)}
+.gauge span.over{background:var(--bad)} .gauge span.low{background:var(--warn)}
+.gauge i{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.gauge-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.kv3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;font-size:13px}
+.kv3 b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.neutral{background:var(--accent-soft);color:var(--muted)}
+
+.issues{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.issues li{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:7px 10px;border-radius:6px;border-left:3px solid}
+.issues li.bad{background:var(--bad-bg);border-color:var(--bad)} .issues li.warn{background:var(--warn-bg);border-color:var(--warn)} .issues li.ok{background:var(--ok-bg);border-color:var(--ok)}
+.issues li .who{font-size:12px;color:var(--muted);display:block}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:grid;grid-template-columns:minmax(110px,38%) 1fr auto;gap:10px;align-items:center;font-size:13px}
+.bar-row .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:12px;background:var(--paper);border-radius:0 4px 4px 0;position:relative}
+.bar-fill{height:100%;background:var(--accent);border-radius:0 4px 4px 0;min-width:2px}
+.bar-fill.pod{background:var(--pod)}
+.bar-row .val{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar-row .val small{color:var(--muted);margin-left:6px}
+.bar-row:hover .bar-fill{filter:brightness(1.12)}
+
+/* chart */
+.chart-wrap{position:relative}
+svg.chart{width:100%;display:block}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{fill:var(--muted);font-size:13px;font-family:var(--font-body)}
+.chart .line{fill:none;stroke:var(--accent);stroke-width:2}
+.chart .area{fill:var(--accent);fill-opacity:.08}
+.chart .ceil{stroke:var(--bad);stroke-width:1.5;stroke-dasharray:5 4}
+.chart .ceil-l{fill:var(--bad);font-size:13px;font-weight:600}
+.chart .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.chart .xh{stroke:var(--muted);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:6px 9px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-110%);z-index:5}
+
+/* table */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar input[type=search]{flex:1 1 220px;min-width:0}
+input[type=text],input[type=search],input[type=date],input[type=number],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;width:100%}
+.toolbar select{width:auto}
+textarea{min-height:70px;resize:vertical}
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.r,th.r{text-align:right}
+td.mono{white-space:nowrap;font-size:12px}
+td.in{color:var(--ok)}
+tr.flag-bad td:first-child{box-shadow:inset 3px 0 0 var(--bad)} tr.flag-warn td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+.flagtxt{font-size:12px;display:block;margin-top:2px} .flagtxt.bad{color:var(--bad)} .flagtxt.warn{color:var(--warn)}
+tfoot td{font-weight:600;border-top:1px solid var(--line)}
+
+/* requests */
+.req{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px}
+.req .amt{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.steps{display:flex;gap:4px;flex-wrap:wrap;grid-column:1/-1}
+.step{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+.step.done{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.step.now{background:var(--warn-bg);color:var(--warn);border-color:transparent;font-weight:600}
+.step.no{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.req .acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:600;background:var(--pod-soft);color:var(--pod);text-transform:uppercase;letter-spacing:.04em}
+.recon{display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-size:14px;align-items:center}
+.recon .num{text-align:right}
+.recon input{width:160px;text-align:right}
+
+.scrim{position:fixed;inset:0;background:rgba(10,15,12,.45);display:flex;justify-content:flex-end;z-index:20}
+.drawer{background:var(--surface);width:min(620px,100%);height:100%;overflow:auto;display:flex;flex-direction:column}
+.drawer form{display:flex;flex-direction:column;min-height:100%}
+.drawer header{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:2}
+.drawer header p{margin-top:2px;color:var(--muted);font-size:13px}
+.drawer .body{padding:18px 22px;display:flex;flex-direction:column;gap:16px;flex:1}
+.drawer footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 22px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0} .f.full{grid-column:1/-1}
+.f label{font-size:13px;font-weight:500}
+.hint{font-size:12px;color:var(--muted)}
+.err{color:var(--bad);font-size:13px}
+.att-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.att-list li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:6px}
+.att-links{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;margin-top:3px}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.suggest{background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:10px 12px;font-size:13px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;font-size:14px;z-index:40}
+
+@media (max-width:1050px){ .grid2,.grid-wide{grid-template-columns:1fr} }
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .rail{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px 16px;gap:12px;border-right:none;border-bottom:1px solid var(--line)}
+  .logo{width:120px} .brand span{display:none}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .rail-foot{margin-top:0;flex-direction:row;flex-wrap:wrap;align-items:center}
+  .main{padding:18px 16px 50px}
+  .fgrid{grid-template-columns:1fr}
+  .kv3{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* PDG dashboard additions — same shell as the SAIC apps; overview = KPI row, department cards grid, approvals | attention. */
+.dept-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.dept-grid{grid-template-columns:1fr}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.b-ok{background:var(--ok)} .b-pend{background:var(--muted);opacity:.45} .b-bad{background:var(--bad)}
+.dept{display:flex;flex-direction:column;gap:12px}
+.dept .ent{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dept .big{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.dept .big small{font-size:14px;color:var(--muted);font-weight:500}
+.dept .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.who-row{display:grid;grid-template-columns:1fr auto auto;gap:6px 12px;font-size:14px;align-items:center}
+.who-row .n{font-variant-numeric:tabular-nums;text-align:right}
+.ent-chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px;letter-spacing:.04em}
+.ent-chip.WHP{background:var(--accent-soft);color:var(--accent)} .ent-chip.SAIC{background:var(--pod-soft);color:var(--pod)}
+.prio{font-size:11px;font-weight:700;color:var(--bad);text-transform:uppercase;letter-spacing:.05em}
+.apps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.app-tile{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;background:var(--surface)}
+.app-tile:hover{border-color:var(--accent)}
+.app-tile b{font-size:16px} .app-tile span{font-size:13px;color:var(--muted)}
+.app-tile.soon{border-style:dashed;color:var(--muted)}
+.thread{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.thread li{border-left:2px solid var(--line);padding-left:10px}
+.thread .when{color:var(--muted)}
+.req.clickable{cursor:pointer} .req.clickable:hover{border-color:var(--accent)}
+.dkv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px;font-size:14px}
+.dkv dt{color:var(--muted);font-size:12px} .dkv dd{margin:0;font-weight:500}
+.dtext{white-space:pre-wrap;line-height:1.6;background:var(--paper);border-radius:6px;padding:12px 14px;font-size:14px}
+.files{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.file{border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;background:var(--surface);text-decoration:none;color:var(--ink)}
+.file .thumb{height:110px;background:var(--paper);display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700;font-size:18px;letter-spacing:.05em}
+.file .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.file .fn{font-size:12px;padding:6px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file:hover{border-color:var(--accent)}
+.statusbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--paper)}
+.statusbar span{display:block;height:100%}
+/* DG SAIC additions: SAIC palette (green / cocoa), SAIC Industries chip */
+.rail{border-top:4px solid var(--pod)}
+.ent-chip.IND{background:var(--accent-soft);color:var(--accent)}
+.soon-card{border-style:dashed}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <a class="brand" href="#overview" aria-label="SAIC"><img class="logo" id="brandLogo" alt="SAIC"><span id="brandSub"></span></a>
+    <nav class="nav" id="nav"></nav>
+    <div class="rail-foot" id="railFoot"></div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+<div id="modal"></div>
+<div id="toastHost"></div>
+
+<script type="module">
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../js/config.js";
+import { LOGO } from "../js/logo.js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm";
+document.getElementById("brandLogo").src = LOGO;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+let CASH = { cacao: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] }, admin: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] } };
+let FARMERS = [];
+let RECEP = { recs: [], sold: 0 };
+const APP_BASE = "..";
+const CEILINGS = { cacao: 20000000, admin: 500000 };
+
+const STR = {
+  fr: {
+    sub: "Groupe Wenkam Holdings Plus", nav_overview: "Vue du groupe", nav_approvals: "Approbations", nav_treasury: "SAIC · Trésorerie", nav_trace: "SAIC · Traçabilité", nav_apps: "Applications",
+    signin: "Connexion", signin_sub: "Tableau de bord du groupe WHP", email: "E-mail", password: "Mot de passe", signin_btn: "Se connecter", bad_login: "E-mail ou mot de passe incorrect.", signout: "Se déconnecter",
+    forgot: "Mot de passe oublié ?", reset_sent: "Si un compte existe pour cet e-mail, un lien de réinitialisation a été envoyé.", enter_email: "Saisissez d'abord votre e-mail.",
+    no_access: "Ce tableau de bord est réservé au PDG et aux directions de WHP et de la SAIC. Demandez l'accès à l'administrateur.", loading: "Chargement…", load_err: "Chargement impossible : {m}", save_err: "Enregistrement impossible : {m}", r_none: "",
+    d_from: "Soumise par", d_ent: "Société", d_type: "Type", d_amount: "Montant", d_urgency: "Urgence", d_due: "Décision souhaitée avant le", d_created: "Soumise le", d_ref: "Référence", d_details: "Détails et justification", d_files: "Pièces jointes", d_history: "Historique", d_nofiles: "Aucune pièce jointe.", d_open: "Ouvrir", d_none: "—", view: "Voir le détail", f_normal2: "Normale",
+    d_recep: "Réception cacao", rc_bought: "achetés", rc_avg: "prix moyen", rc_traced: "tracés jusqu'au producteur", rc_stock: "stock", app_recep: "Réception cacao", app_recep_d: "Réceptions, prix, zones, livraisons par producteur",
+    nav_recep: "SAIC · Réception cacao", k_rq: "Cacao acheté", k_rq_sub: "{n} réceptions · {z} zones", k_rp: "Prix moyen d'achat", k_rp_sub: "min. {a} · max. {b} F/kg",
+    rp_title: "SAIC · Réception cacao", rp_sub: "Vue en lecture seule des réceptions de cacao au magasin : quantités, prix, zones d'origine et traçabilité.", rp_value: "Valeur des achats", rp_traced: "Tracé jusqu'au producteur", rp_stock: "Stock en magasin", rp_trend: "Prix moyen par semaine (F/kg)", rp_zones: "Quantités par zone", rp_buyers: "Quantités par acheteur", rp_months: "Par mois", rp_month: "Mois", rp_kg: "kg achetés", rp_avg: "prix moyen", rp_n: "réceptions",
+    viewing_as: "Rôle (démo)", lang: "English", draft: "Brouillon : chiffres de trésorerie importés de vos fichiers Excel ; la traçabilité montre les producteurs d'exemple. Les demandes au PDG sont enregistrées et partagées.",
+    r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
+    rl_dg_whp: "Directeur Général, WHP", rl_daf_whp: "Directeur Administratif et Financier, WHP", rl_dg_saic: "Directeur Général, SAIC",
+    ov_title: "Tableau de bord du groupe", ov_sub: "La situation de chaque département de Wenkam Holdings Plus et de la SAIC, et ce qui attend votre décision.",
+    k_pending: "À approuver", k_urgent: "dont {n} urgente(s)", k_cash: "Trésorerie SAIC disponible", k_cash_sub: "Caisse cacao + caisse administration", k_cocoa: "Achats de cacao", k_cocoa_sub: "{p}", k_farmers: "Producteurs vérifiés", k_farmers_sub: "{v} sur {n} enregistrés", k_alerts: "Points d'attention", k_alerts_sub: "Trésorerie et traçabilité",
+    depts: "Départements", open_app: "Ouvrir l'application", open_detail: "Voir le détail",
+    d_cacao: "Caisse Achat Cacao", d_admin: "Caisse Administration", d_trace: "Traçabilité cacao", d_requests: "Demandes des directions",
+    closing: "Solde", of_ceiling: "du plafond", ceiling: "Plafond", inflows: "Entrées", outflows: "Sorties", period: "Période", balance: "Solde", bal_chart: "Évolution du solde",
+    st_ok: "Bonne santé", st_watch: "À surveiller", st_bad: "Action requise",
+    purchases: "Achats de cacao", opex: "Frais opérationnels", top_cats: "Principales dépenses", by_cat: "Dépenses par catégorie", by_buyer: "Achats par acheteur",
+    farmers: "producteurs", plots: "parcelles", ha: "ha déclarés", verified: "Vérifiés", pending: "À vérifier", hold: "En attente", geo: "{p} % des parcelles géolocalisées",
+    req_pending: "en attente", req_info: "info demandée", req_approved: "approuvées", req_rejected: "rejetées",
+    attention: "Points d'attention", approvals_preview: "En attente de votre décision", see_all: "Tout voir", none_pending: "Rien n'attend votre décision.",
+    a_title: "Approbations", a_sub: "Demandes soumises au PDG par le DG WHP, le DAF WHP et le DG SAIC.", a_sub_mine: "Vos demandes au PDG et leur suivi.",
+    new_req: "Nouvelle demande au PDG", f_all: "Toutes", f_pending: "En attente", f_info: "Info demandée", f_approved: "Approuvées", f_rejected: "Rejetées", f_from: "Toutes les directions", f_ent: "Toutes les sociétés",
+    s_pending: "En attente", s_info: "Info demandée", s_approved: "Approuvée", s_rejected: "Rejetée",
+    t_depense: "Dépense", t_budget: "Budget", t_contrat: "Contrat", t_investissement: "Investissement", t_recrutement: "Recrutement", t_autre: "Autre",
+    urgent: "Urgent", due: "Échéance {d}", amount: "Montant", no_amount: "Sans montant",
+    approve: "Approuver", reject: "Rejeter", ask_info: "Demander des informations", reply: "Répondre", comment: "Commentaire (facultatif)", reason: "Motif du rejet", question: "Votre question", answer: "Votre réponse", confirm: "Confirmer", cancel: "Annuler", close: "Fermer",
+    h_submitted: "Soumise", h_approved: "Approuvée", h_rejected: "Rejetée", h_info: "Information demandée", h_reply: "Réponse",
+    f_title: "Objet", f_ent2: "Société", f_type: "Type", f_amount: "Montant (FCFA)", f_urgency: "Urgence", f_normal: "Normale", f_urgent: "Urgente", f_due: "Décision souhaitée avant le", f_details: "Détails et justification", submit: "Soumettre au PDG",
+    need_fields: "Saisissez l'objet et les détails.", submitted: "Demande {id} soumise au PDG", saved: "Enregistré", only_submitters: "Seuls le DG WHP, le DAF WHP et le DG SAIC soumettent des demandes au PDG.",
+    no_req: "Aucune demande.", mine_only: "Le PDG voit toutes les demandes ; chaque direction voit les siennes.",
+    att: "Pièces jointes", att_add: "Joindre des fichiers", att_hint: "Photos ou PDF, 20 Mo max. par fichier.", att_off: "L'ajout de fichiers n'est pas disponible dans cet affichage.", att_remove: "Retirer", att_type: "Photos (JPG, PNG) et PDF uniquement.", att_fail: "« {n} » n'a pas pu être envoyé : {m}", uploading: "Envoi…",
+    tr_title: "SAIC · Trésorerie", tr_sub: "Vue en lecture seule des deux caisses de la SAIC. Les approbations de la trésorerie restent au DG SAIC et à la DAF.",
+    tc_title: "SAIC · Traçabilité cacao", tc_sub: "Registre des producteurs et des parcelles (formulaires F01), en lecture seule.",
+    apps_title: "Applications", apps_sub: "Les outils déjà en ligne, et ceux à venir. Chaque tableau de bord ajouté apparaîtra ici et dans la vue du groupe.",
+    app_trace: "Registre des producteurs", app_trace_d: "Producteurs, parcelles, cartographie, F01", app_treso: "Trésorerie SAIC", app_treso_d: "Caisses, dépenses, demandes de fonds", soon: "À venir", app_soon_d: "Prochain tableau de bord",
+    al_over: "{c} : solde au-dessus du plafond le {d} ({v}).", al_low: "{c} : solde de {v}, réapprovisionnement à prévoir.", al_dup: "Doublon possible : {a} payé par les deux caisses (roll-up, flyers, polos).", al_hold: "{n} producteur(s) en attente : leur cacao ne peut pas être libéré.", al_noref: "{n} paiement(s) de la caisse cacao sans numéro de fiche.", al_big: "{n} dépense(s) de plus de 150 000 F à la caisse administration (approbation DG SAIC requise).",
+    example: "Exemple", cover: "≈ {n} jours de couverture", ops: "{n} opérations"
+  },
+  en: {
+    sub: "Wenkam Holdings Plus group", nav_overview: "Group overview", nav_approvals: "Approvals", nav_treasury: "SAIC · Treasury", nav_trace: "SAIC · Traceability", nav_apps: "Applications",
+    signin: "Sign in", signin_sub: "WHP group dashboard", email: "Email", password: "Password", signin_btn: "Sign in", bad_login: "Email or password is incorrect.", signout: "Sign out",
+    forgot: "Forgot password?", reset_sent: "If this email has an account, a reset link has been sent.", enter_email: "Enter your email first.",
+    no_access: "This dashboard is for the PDG and the WHP and SAIC management. Ask the administrator for access.", loading: "Loading…", load_err: "Couldn't load: {m}", save_err: "Couldn't save: {m}", r_none: "",
+    d_from: "Submitted by", d_ent: "Company", d_type: "Type", d_amount: "Amount", d_urgency: "Urgency", d_due: "Decision needed by", d_created: "Submitted on", d_ref: "Reference", d_details: "Details and justification", d_files: "Attachments", d_history: "History", d_nofiles: "No attachments.", d_open: "Open", d_none: "—", view: "See details", f_normal2: "Normal",
+    d_recep: "Cocoa reception", rc_bought: "bought", rc_avg: "average price", rc_traced: "traced to the farmer", rc_stock: "stock", app_recep: "Cocoa reception", app_recep_d: "Receptions, prices, zones, deliveries by farmer",
+    nav_recep: "SAIC · Cocoa reception", k_rq: "Cocoa bought", k_rq_sub: "{n} receptions · {z} zones", k_rp: "Average purchase price", k_rp_sub: "min {a} · max {b} F/kg",
+    rp_title: "SAIC · Cocoa reception", rp_sub: "Read-only view of cocoa received at the warehouse: quantities, prices, zones of origin and traceability.", rp_value: "Purchase value", rp_traced: "Traced to the farmer", rp_stock: "Warehouse stock", rp_trend: "Average price per week (F/kg)", rp_zones: "Quantities by zone", rp_buyers: "Quantities by buyer", rp_months: "By month", rp_month: "Month", rp_kg: "kg bought", rp_avg: "average price", rp_n: "receptions",
+    viewing_as: "Role (demo)", lang: "Français", draft: "Draft: treasury figures imported from your Excel files; traceability shows the example farmers. Requests to the PDG are saved and shared.",
+    r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
+    rl_dg_whp: "Managing Director, WHP", rl_daf_whp: "Finance Director, WHP", rl_dg_saic: "Managing Director, SAIC",
+    ov_title: "Group dashboard", ov_sub: "How each department of Wenkam Holdings Plus and SAIC is doing, and what is waiting for your decision.",
+    k_pending: "To approve", k_urgent: "{n} urgent", k_cash: "SAIC cash available", k_cash_sub: "Cocoa + administration cash boxes", k_cocoa: "Cocoa purchases", k_cocoa_sub: "{p}", k_farmers: "Verified farmers", k_farmers_sub: "{v} of {n} registered", k_alerts: "Points to watch", k_alerts_sub: "Treasury and traceability",
+    depts: "Departments", open_app: "Open the app", open_detail: "See details",
+    d_cacao: "Cocoa purchase cash box", d_admin: "Administration cash box", d_trace: "Cocoa traceability", d_requests: "Requests from management",
+    closing: "Balance", of_ceiling: "of ceiling", ceiling: "Ceiling", inflows: "Cash in", outflows: "Cash out", period: "Period", balance: "Balance", bal_chart: "Balance over time",
+    st_ok: "Healthy", st_watch: "Watch", st_bad: "Action needed",
+    purchases: "Cocoa purchases", opex: "Operating costs", top_cats: "Top spending", by_cat: "Spending by category", by_buyer: "Purchases by buyer",
+    farmers: "farmers", plots: "plots", ha: "ha declared", verified: "Verified", pending: "Pending review", hold: "On hold", geo: "{p} % of plots geolocated",
+    req_pending: "pending", req_info: "info requested", req_approved: "approved", req_rejected: "rejected",
+    attention: "Points to watch", approvals_preview: "Waiting for your decision", see_all: "See all", none_pending: "Nothing is waiting for your decision.",
+    a_title: "Approvals", a_sub: "Requests submitted to the PDG by the DG WHP, the DAF WHP and the DG SAIC.", a_sub_mine: "Your requests to the PDG and where they stand.",
+    new_req: "New request to the PDG", f_all: "All", f_pending: "Pending", f_info: "Info requested", f_approved: "Approved", f_rejected: "Rejected", f_from: "All departments", f_ent: "All companies",
+    s_pending: "Pending", s_info: "Info requested", s_approved: "Approved", s_rejected: "Rejected",
+    t_depense: "Expense", t_budget: "Budget", t_contrat: "Contract", t_investissement: "Investment", t_recrutement: "Hiring", t_autre: "Other",
+    urgent: "Urgent", due: "Due {d}", amount: "Amount", no_amount: "No amount",
+    approve: "Approve", reject: "Reject", ask_info: "Ask for information", reply: "Reply", comment: "Comment (optional)", reason: "Reason for rejection", question: "Your question", answer: "Your answer", confirm: "Confirm", cancel: "Cancel", close: "Close",
+    h_submitted: "Submitted", h_approved: "Approved", h_rejected: "Rejected", h_info: "Information requested", h_reply: "Reply",
+    f_title: "Subject", f_ent2: "Company", f_type: "Type", f_amount: "Amount (FCFA)", f_urgency: "Urgency", f_normal: "Normal", f_urgent: "Urgent", f_due: "Decision needed by", f_details: "Details and justification", submit: "Submit to the PDG",
+    need_fields: "Enter a subject and details.", submitted: "Request {id} sent to the PDG", saved: "Saved", only_submitters: "Only the DG WHP, the DAF WHP and the DG SAIC submit requests to the PDG.",
+    no_req: "No requests.", mine_only: "The PDG sees every request; each department sees its own.",
+    att: "Attachments", att_add: "Attach files", att_hint: "Photos or PDFs, 20 MB max per file.", att_off: "Attaching files isn't available in this view.", att_remove: "Remove", att_type: "Photos (JPG, PNG) and PDFs only.", att_fail: "Couldn't upload “{n}”: {m}", uploading: "Uploading…",
+    tr_title: "SAIC · Treasury", tr_sub: "Read-only view of SAIC's two cash boxes. Treasury approvals stay with the DG SAIC and the DAF.",
+    tc_title: "SAIC · Cocoa traceability", tc_sub: "Farmer and plot registry (F01 forms), read only.",
+    apps_title: "Applications", apps_sub: "The tools already online, and those to come. Every new dashboard will appear here and in the group overview.",
+    app_trace: "Farmer registry", app_trace_d: "Farmers, plots, mapping, F01", app_treso: "SAIC treasury", app_treso_d: "Cash boxes, expenses, fund requests", soon: "Coming", app_soon_d: "Next dashboard",
+    al_over: "{c}: balance above the ceiling on {d} ({v}).", al_low: "{c}: balance {v}, plan a top-up.", al_dup: "Possible double payment: {a} paid from both cash boxes (roll-up, flyers, polos).", al_hold: "{n} farmer(s) on hold: their cocoa can't be released.", al_noref: "{n} cocoa cash box payment(s) without a form number.", al_big: "{n} admin expense(s) above 150,000 F (needs DG SAIC approval).",
+    example: "Example", cover: "≈ {n} days of cover", ops: "{n} transactions"
+  }
+};
+
+const S = { lang: (() => { try { const l = localStorage.getItem("saic-lang"); if (l === "en" || l === "fr") return l; } catch (e) {} return (navigator.language || "fr").slice(0, 2) === "en" ? "en" : "fr"; })(), role: null, me: null, ready: false, loadError: "", requests: [], dg: [], fund: [], team: [], people: [], staff: { entity: "cacao", department: "" }, flt: { st: "pending", ent: "", dept: "" } };
+const t = (k, p = {}) => String((STR[S.lang][k] ?? STR.fr[k] ?? k)).replace(/\{(\w+)\}/g, (_, x) => p[x] ?? "");
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const loc = () => S.lang === "fr" ? "fr-FR" : "en-GB";
+const fc = n => Math.round(n).toLocaleString(loc()).replace(/ /g, " ") + " F";
+const fcs = n => { const a = Math.abs(n); return a >= 1e6 ? (n / 1e6).toLocaleString(loc(), { maximumFractionDigits: 1 }) + " M" : a >= 1e3 ? Math.round(n / 1e3).toLocaleString(loc()) + " k" : Math.round(n).toLocaleString(loc()); };
+const dfmt = iso => new Date(iso.slice(0, 10) + "T12:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short" });
+const dfull = iso => new Date(iso.slice(0, 10) + "T12:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" });
+const dtime = iso => new Date(iso).toLocaleString(loc(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+function toast(m) { $("#toastHost").innerHTML = `<div class="toast" role="status">${esc(m)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => $("#toastHost").innerHTML = "", 3000); }
+const statusPill = s => `<span class="pill ${s === "ok" ? "ok" : s === "watch" ? "warn" : "bad"}">${esc(t("st_" + s))}</span>`;
+
+/* ---------- treasury summary (same rules as the SAIC treasury app) ---------- */
+function cashBox(key) {
+  const d = CASH[key], ceiling = CEILINGS[key];
+  let bal = d.opening; const days = [];
+  for (const r of d.rows) { bal += r.in - r.out; if (days.length && days[days.length - 1].date === r.date) days[days.length - 1].bal = bal; else days.push({ date: r.date, bal }); }
+  const totIn = d.rows.reduce((a, r) => a + r.in, 0), totOut = d.rows.reduce((a, r) => a + r.out, 0), closing = d.opening + totIn - totOut;
+  const cats = {}; for (const r of d.rows) if (r.out) { const c = r.cat.trim().replace(/\s+/g, " "); cats[c] = (cats[c] || 0) + r.out; }
+  const over = days.filter(x => x.bal > ceiling), maxDay = days.reduce((m, x) => x.bal > m.bal ? x : m, { bal: d.opening, date: d.from });
+  const span = Math.max(1, (new Date(d.to) - new Date(d.from)) / 864e5 + 1), burn = totOut / span;
+  const status = closing > ceiling ? "bad" : closing < ceiling * 0.1 ? "bad" : over.length ? "watch" : "ok";
+  return { key, d, c: { ceiling }, days, totIn, totOut, closing, cats: Object.entries(cats).sort((a, b) => b[1] - a[1]), over, maxDay, burn, status };
+}
+let CB = {};
+const normName = n => String(n || "").toUpperCase().split(/[\s-]+/).filter(Boolean).sort().join(" ");
+let cocoa; const computeCocoa = () => {
+  const pur = CASH.cacao.rows.filter(r => r.out && /achat de cacao/i.test(r.cat));
+  const total = pur.reduce((a, r) => a + r.out, 0), opex = CASH.cacao.rows.filter(r => r.out && !/achat de cacao/i.test(r.cat)).reduce((a, r) => a + r.out, 0);
+  const by = {}, names = {}; for (const r of pur) { const k = normName(r.party); names[k] ||= r.party; by[k] = (by[k] || 0) + r.out; }
+  return { total, opex, n: pur.length, byBuyer: Object.entries(by).sort((a, b) => b[1] - a[1]).map(([k, v]) => [names[k], v]) };
+};
+
+/* ---------- traceability summary ---------- */
+let trace; const computeTrace = () => {
+  const st = f => f.decision === "Approved" ? "verified" : (!f.idNumber || f.plots.some(p => !p.defoDate || !p.defoEvidence)) ? "hold" : "pending";
+  const list = FARMERS.map(f => ({ f, s: st(f) }));
+  const plots = FARMERS.flatMap(f => f.plots);
+  const geo = plots.filter(p => (p.lat && p.lon) || (p.polygon && p.polygon.length > 2)).length;
+  const ha = plots.reduce((a, p) => a + (Number(p.area) || 0), 0);
+  const c = s => list.filter(x => x.s === s).length;
+  return { list, n: FARMERS.length, verified: c("verified"), pending: c("pending"), hold: c("hold"), plots: plots.length, geo, ha };
+};
+function recompute() { CB = { cacao: cashBox("cacao"), admin: cashBox("admin") }; cocoa = computeCocoa(); trace = computeTrace(); }
+
+/* ---------- alerts ---------- */
+function alerts() {
+  const out = [];
+  for (const k of ["cacao", "admin"]) { const a = CB[k], nm = t("d_" + k);
+    if (a.over.length) out.push({ lv: "warn", m: t("al_over", { c: nm, d: dfull(a.maxDay.date), v: fc(a.maxDay.bal) }), href: "#treasury" });
+    if (a.closing < a.c.ceiling * 0.1) out.push({ lv: "bad", m: t("al_low", { c: nm, v: fc(a.closing) }), href: "#treasury" }); }
+  const dup = CASH.cacao.rows.filter(r => r.out >= 50000 && CASH.admin.rows.some(o => o.out === r.out));
+  for (const r of dup) out.push({ lv: "warn", m: t("al_dup", { a: fc(r.out) }), href: "#treasury" });
+  const noref = CASH.cacao.rows.filter(r => r.out && !r.ref).length; if (noref) out.push({ lv: "warn", m: t("al_noref", { n: noref }), href: "#treasury" });
+  const big = CASH.admin.rows.filter(r => r.out > 150000).length; if (big) out.push({ lv: "warn", m: t("al_big", { n: big }), href: "#treasury" });
+  if (trace.hold) out.push({ lv: "bad", m: t("al_hold", { n: trace.hold }), href: "#trace" });
+  return out.sort((a, b) => a.lv === b.lv ? 0 : a.lv === "bad" ? -1 : 1);
+}
+
+/* ---------- charts ---------- */
+function balanceChart(a) {
+  const W = 760, H = 280, L = 64, R = 16, T = 18, B = 30;
+  const pts = [{ date: a.d.from, bal: a.d.opening }, ...a.days];
+  const t0 = new Date(a.d.from).getTime(), t1 = new Date(a.d.to).getTime();
+  const X = iso => L + (new Date(iso).getTime() - t0) / Math.max(1, t1 - t0) * (W - L - R);
+  const maxV = Math.max(a.c.ceiling, ...pts.map(p => p.bal)) * 1.08;
+  const Y = v => T + (1 - v / maxV) * (H - T - B);
+  const ticks = []; const stepRaw = maxV / 4, mag = Math.pow(10, Math.floor(Math.log10(stepRaw))); const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= stepRaw);
+  for (let v = 0; v <= maxV; v += step) ticks.push(v);
+  let path = "", px = null;
+  for (const p of pts) { const x = X(p.date), y = Y(p.bal); path += px === null ? `M${x},${y}` : `H${x}V${y}`; px = x; }
+  path += `H${X(a.d.to)}`;
+  const area = path + `V${Y(0)}H${L}Z`;
+  const xt = []; const d0 = new Date(a.d.from), d1 = new Date(a.d.to); const nd = Math.round((d1 - d0) / 864e5); const every = nd > 20 ? 7 : nd > 10 ? 3 : 1;
+  for (let i = 0; i <= nd; i += every) { const dd = new Date(d0.getTime() + i * 864e5).toISOString().slice(0, 10); xt.push(dd); }
+  const last = pts[pts.length - 1];
+  return `<div class="chart-wrap" data-chart="${a.key}"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t("bal_chart"))}">
+    ${ticks.map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${fcs(v)}</text>`).join("")}
+    ${xt.map(dd => `<text class="axis" x="${X(dd)}" y="${H - 8}" text-anchor="middle">${dfmt(dd)}</text>`).join("")}
+    <path class="area" d="${area}"/><path class="line" d="${path}"/>
+    <line class="ceil" x1="${L}" x2="${W - R}" y1="${Y(a.c.ceiling)}" y2="${Y(a.c.ceiling)}"/>
+    <text class="ceil-l" x="${W - R}" y="${Y(a.c.ceiling) - 6}" text-anchor="end">${esc(t("ceiling"))} ${fcs(a.c.ceiling)}</text>
+    <circle class="dot" cx="${X(a.d.to)}" cy="${Y(last.bal)}" r="5"/>
+    <line class="xh" id="xh-${a.key}" y1="${T}" y2="${H - B}" x1="-10" x2="-10"/>
+    <rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" data-hit="${a.key}"/>
+  </svg><div class="tip" id="tip-${a.key}" hidden></div></div>`;
+}
+function bindChart(a) {
+  const wrap = document.querySelector(`[data-chart="${a.key}"]`); if (!wrap) return;
+  const svg = wrap.querySelector("svg"), hit = wrap.querySelector("[data-hit]"), tip = wrap.querySelector(".tip"), xh = wrap.querySelector(".xh");
+  const W = 760, L = 64, R = 16, t0 = new Date(a.d.from).getTime(), t1 = new Date(a.d.to).getTime();
+  const pts = [{ date: a.d.from, bal: a.d.opening }, ...a.days];
+  const move = e => {
+    const r = svg.getBoundingClientRect(), vx = (e.clientX - r.left) / r.width * W;
+    const tt = t0 + (vx - L) / (W - L - R) * (t1 - t0);
+    let p = pts[0]; for (const q of pts) if (new Date(q.date).getTime() <= tt + 432e5) p = q;
+    const day = new Date(Math.min(Math.max(tt, t0), t1)).toISOString().slice(0, 10);
+    xh.setAttribute("x1", vx); xh.setAttribute("x2", vx);
+    tip.hidden = false; tip.style.left = (e.clientX - wrap.getBoundingClientRect().left) + "px"; tip.style.top = (e.clientY - wrap.getBoundingClientRect().top) + "px";
+    tip.textContent = `${dfull(day)} · ${t("balance")} ${fc(p.bal)}`;
+  };
+  hit.addEventListener("pointermove", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; xh.setAttribute("x1", -10); xh.setAttribute("x2", -10); });
+}
+function bars(list, total, opt = {}) {
+  const max = Math.max(...list.map(x => x[1]), 1);
+  return `<div class="bars">${list.map(([k, v]) => `<div class="bar-row" title="${esc(opt.label ? opt.label(k) : k)} : ${fc(v)}"><span class="lab">${esc(opt.label ? opt.label(k) : k)}</span><span class="bar-track"><span class="bar-fill ${opt.cls || ""}" style="width:${v / max * 100}%"></span></span><span class="val">${fcs(v)}<small>${Math.round(v / total * 100)} %</small></span></div>`).join("")}</div>`;
+}
+
+
+
+
+/* ---------- department cards (same as the PDG dashboard) ---------- */
+function deptCash(k) {
+  const a = CB[k], pct = a.closing / a.c.ceiling;
+  return `<div class="card dept">
+    <div class="box-head"><div><div class="ent">SAIC</div><h2>${esc(t("d_" + k))}</h2></div>${statusPill(a.status)}</div>
+    <div><div class="big">${fc(a.closing)}</div><div class="small muted">${Math.round(pct * 100)} % ${esc(t("of_ceiling"))} (${fcs(a.c.ceiling)}) · ${esc(t("cover", { n: Math.max(0, Math.round(a.closing / Math.max(a.burn, 1))) }))}</div></div>
+    <div class="gauge"><span class="${a.status === "bad" ? "over" : a.status === "watch" ? "low" : ""}" style="width:${Math.min(pct, 1.25) / 1.25 * 100}%"></span><i style="left:80%"></i></div>
+    <div class="kv3"><div><span class="muted">${esc(t("inflows"))}</span><b>${fcs(a.totIn)}</b></div><div><span class="muted">${esc(t("outflows"))}</span><b>${fcs(a.totOut)}</b></div><div><span class="muted">${esc(t("period"))}</span><b>${dfmt(a.d.from)} – ${dfmt(a.d.to)}</b></div></div>
+    ${bars(a.cats.slice(0, 3), a.totOut)}
+    <div class="foot"><a href="#treasury">${esc(t("open_detail"))}</a><a class="btn small" href="${APP_BASE}/tresorerie/">${esc(t("open_app"))}</a></div></div>`;
+}
+function deptTrace() {
+  const s = trace, st = s.hold ? (s.hold / s.n > 0.2 ? "bad" : "watch") : "ok", w = x => x / Math.max(s.n, 1) * 100;
+  return `<div class="card dept">
+    <div class="box-head"><div><div class="ent">SAIC</div><h2>${esc(t("d_trace"))}</h2></div>${statusPill(st)}</div>
+    <div><div class="big">${s.n} <small>${esc(t("farmers"))}</small></div><div class="small muted">${s.plots} ${esc(t("plots"))} · ${s.ha.toLocaleString(loc(), { maximumFractionDigits: 1 })} ${esc(t("ha"))} · ${esc(t("geo", { p: Math.round(s.geo / Math.max(s.plots, 1) * 100) }))}</div></div>
+    <div class="statusbar" role="img" aria-label="${s.verified} / ${s.pending} / ${s.hold}"><span style="width:${w(s.verified)}%;background:var(--ok)"></span><span style="width:${w(s.pending)}%;background:var(--muted);opacity:.45"></span><span style="width:${w(s.hold)}%;background:var(--bad)"></span></div>
+    <div class="legend"><span><i class="b-ok"></i>${esc(t("verified"))} ${s.verified}</span><span><i class="b-pend"></i>${esc(t("pending"))} ${s.pending}</span><span><i class="b-bad"></i>${esc(t("hold"))} ${s.hold}</span></div>
+    <div class="foot"><a href="#trace">${esc(t("open_detail"))}</a><a class="btn small" href="${APP_BASE}/">${esc(t("open_app"))}</a></div></div>`;
+}
+function deptRecep() {
+  const r = RECEP.recs, qty = r.reduce((a, x) => a + x.qty, 0), amt = r.reduce((a, x) => a + x.amount, 0), traced = r.reduce((a, x) => a + (x.lines || []).reduce((s, l) => s + (Number(l.kg) || 0), 0), 0);
+  const pct = qty ? traced / qty : 0, stock = qty - RECEP.sold, st = pct < 0.5 ? "bad" : pct < 0.9 ? "watch" : "ok";
+  const zones = {}; for (const x of r) zones[x.zone] = (zones[x.zone] || 0) + x.qty;
+  const top = Object.entries(zones).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  return `<div class="card dept">
+    <div class="box-head"><div><div class="ent">SAIC</div><h2>${esc(t("d_recep"))}</h2></div>${statusPill(st)}</div>
+    <div><div class="big">${(qty / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} t <small>${esc(t("rc_bought"))}</small></div>
+      <div class="small muted">${qty ? Math.round(amt / qty).toLocaleString(loc()) : 0} F/kg ${esc(t("rc_avg"))} · ${Math.round(pct * 100)} % ${esc(t("rc_traced"))} · ${Math.round(stock).toLocaleString(loc())} kg ${esc(t("rc_stock"))}</div></div>
+    <div class="bars">${top.map(([z, v]) => `<div class="bar-row"><span class="lab">${esc(z)}</span><span class="bar-track"><span class="bar-fill" style="width:${v / (top[0] ? top[0][1] : 1) * 100}%"></span></span><span class="val">${(v / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} t<small>${Math.round(v / (qty || 1) * 100)} %</small></span></div>`).join("")}</div>
+    <div class="foot"><span></span><a class="btn small" href="${APP_BASE}/reception/">${esc(t("open_app"))}</a></div></div>`;
+}
+
+/* ---------- treasury (read-only) ---------- */
+function viewTreasury() {
+  const box = a => `<div class="card stack">
+    <div class="box-head"><div><h2>${esc(t("d_" + a.key))}</h2><span class="code">${a.key === "cacao" ? "COC" : "CAD"} · ${esc(t("period"))} ${dfmt(a.d.from)} – ${dfull(a.d.to)}</span></div>${statusPill(a.status)}</div>
+    <div class="kv3"><div><span class="muted">${esc(t("closing"))}</span><b>${fc(a.closing)}</b></div><div><span class="muted">${esc(t("inflows"))}</span><b>${fcs(a.totIn)}</b></div><div><span class="muted">${esc(t("outflows"))}</span><b>${fcs(a.totOut)}</b></div></div>
+    <h3>${esc(t("bal_chart"))}</h3>${balanceChart(a)}
+    <h3>${esc(t("by_cat"))}</h3>${bars(a.cats, a.totOut)}</div>`;
+  return `<div class="topline"><div><h1>${esc(t("tr_title"))}</h1><p>${esc(t("tr_sub"))}</p></div><a class="btn" href="${APP_BASE}/tresorerie/">${esc(t("open_app"))}</a></div>
+  <div class="tiles">
+    <div class="tile"><span class="l">${esc(t("purchases"))}</span><span class="v">${fcs(cocoa.total)}</span><span class="s">${esc(t("ops", { n: cocoa.n }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("opex"))}</span><span class="v">${fcs(cocoa.opex)}</span><span class="s">${(cocoa.opex / cocoa.total * 100).toLocaleString(loc(), { maximumFractionDigits: 1 })} %</span></div>
+    <div class="tile"><span class="l">${esc(t("k_cash"))}</span><span class="v">${fcs(CB.cacao.closing + CB.admin.closing)}</span><span class="s">${esc(t("k_cash_sub"))}</span></div>
+  </div>
+  <div class="grid2">${box(CB.cacao)}${box(CB.admin)}</div>
+  <div class="grid2"><div class="card stack"><h3>${esc(t("by_buyer"))}</h3>${bars(cocoa.byBuyer, cocoa.total, { cls: "pod" })}</div>
+    <div class="card stack"><h3>${esc(t("attention"))}</h3><ul class="issues">${alerts().filter(a => a.href === "#treasury").map(a => `<li class="${a.lv}">${esc(a.m)}</li>`).join("")}</ul></div></div>`;
+}
+
+/* ---------- traceability (read-only) ---------- */
+function viewTrace() {
+  const s = trace;
+  return `<div class="topline"><div><h1>${esc(t("tc_title"))}</h1><p>${esc(t("tc_sub"))}</p></div><a class="btn" href="${APP_BASE}/">${esc(t("open_app"))}</a></div>
+  <div class="tiles">
+    <div class="tile"><span class="l">${esc(t("farmers"))}</span><span class="v">${s.n}</span></div>
+    <div class="tile"><span class="l">${esc(t("verified"))}</span><span class="v ok">${s.verified}</span></div>
+    <div class="tile"><span class="l">${esc(t("pending"))}</span><span class="v">${s.pending}</span></div>
+    <div class="tile"><span class="l">${esc(t("hold"))}</span><span class="v bad">${s.hold}</span></div>
+    <div class="tile"><span class="l">${esc(t("plots"))}</span><span class="v">${s.plots}</span><span class="s">${esc(t("geo", { p: Math.round(s.geo / Math.max(s.plots, 1) * 100) }))}</span></div>
+  </div>
+  <div class="table-wrap"><table><thead><tr><th>ID</th><th>${esc(t("farmers"))}</th><th>Village</th><th class="r">${esc(t("plots"))}</th><th class="r">ha</th><th></th></tr></thead><tbody>
+  ${s.list.map(({ f, s: st }) => `<tr><td class="mono">${esc(f.id)}</td><td>${esc(f.name)}</td><td>${esc(f.village)}</td><td class="r num">${f.plots.length}</td><td class="r num">${f.plots.reduce((a, p) => a + (Number(p.area) || 0), 0).toLocaleString(loc(), { maximumFractionDigits: 2 })}</td>
+    <td><span class="pill ${st === "verified" ? "ok" : st === "hold" ? "bad" : "neutral"}">${esc(t(st))}</span></td></tr>`).join("")}</tbody></table></div>`;
+}
+
+/* ---------- cocoa reception (read only) ---------- */
+const fn = (n, d = 0) => Number(n).toLocaleString(loc(), { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\u202f/g, "\u00a0");
+const fkg = n => fn(n) + "\u00a0kg";
+const weekKey = iso => { const d = new Date(iso + "T12:00:00"); const day = (d.getDay() + 6) % 7; d.setDate(d.getDate() - day); return d.toISOString().slice(0, 10); };
+function recStats() {
+  const r = RECEP.recs, qty = r.reduce((a, x) => a + x.qty, 0), amount = r.reduce((a, x) => a + x.amount, 0);
+  const traced = r.reduce((a, x) => a + (x.lines || []).reduce((s, l) => s + (Number(l.kg) || 0), 0), 0);
+  const prices = r.map(x => x.qty ? x.amount / x.qty : 0).filter(Boolean);
+  const group = key => { const g = {}; for (const x of r) { const k = key(x); (g[k] ||= { kg: 0, amount: 0, n: 0 }); g[k].kg += x.qty; g[k].amount += x.amount; g[k].n++; } return Object.entries(g).sort((a, b) => b[1].kg - a[1].kg); };
+  const weeks = group(x => weekKey(x.date)).sort((a, b) => a[0].localeCompare(b[0])).map(([w, v]) => ({ w, avg: v.amount / v.kg, kg: v.kg }));
+  return { n: r.length, qty, amount, avg: qty ? amount / qty : 0, min: prices.length ? Math.min(...prices) : 0, max: prices.length ? Math.max(...prices) : 0, traced, stock: qty - RECEP.sold,
+    zones: group(x => x.zone), buyers: group(x => x.buyer || "—"), months: group(x => x.date.slice(0, 7)).sort((a, b) => a[0].localeCompare(b[0])), weeks };
+}
+const tBars = (list, total, cls = "") => { const max = Math.max(...list.map(x => x[1].kg), 1); return `<div class="bars">${list.map(([k, v]) => `<div class="bar-row" title="${esc(k)} : ${fkg(v.kg)}"><span class="lab">${esc(k)}</span><span class="bar-track"><span class="bar-fill ${cls}" style="width:${v.kg / max * 100}%"></span></span><span class="val">${(v.kg / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} t<small>${Math.round(v.kg / (total || 1) * 100)} %</small></span></div>`).join("")}</div>`; };
+function priceChart(weeks, avg) {
+  const W = 760, H = 260, L = 56, R = 16, T = 16, B = 30;
+  if (!weeks.length) return "";
+  const vals = weeks.map(w => w.avg), lo = Math.floor((Math.min(...vals, avg) - 60) / 100) * 100, hi = Math.ceil((Math.max(...vals, avg) + 60) / 100) * 100;
+  const X = i => L + (weeks.length === 1 ? (W - L - R) / 2 : i / (weeks.length - 1) * (W - L - R)), Y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const ticks = []; for (let v = lo; v <= hi; v += 100) ticks.push(v);
+  const path = weeks.map((w, i) => `${i ? "L" : "M"}${X(i)},${Y(w.avg)}`).join("");
+  const every = Math.max(1, Math.ceil(weeks.length / 8));
+  return `<div class="chart-wrap"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t("price_trend"))}">
+    ${ticks.map(v => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text class="axis" x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${fn(v)}</text>`).join("")}
+    ${weeks.map((w, i) => i % every === 0 ? `<text class="axis" x="${X(i)}" y="${H - 8}" text-anchor="${i === weeks.length - 1 ? "end" : i === 0 ? "start" : "middle"}">${dfmt(w.w)}</text>` : "").join("")}
+    <line class="ceil" style="stroke:var(--pod)" x1="${L}" x2="${W - R}" y1="${Y(avg)}" y2="${Y(avg)}"/><text class="ceil-l" style="fill:var(--pod)" x="${W - R}" y="${Y(avg) - 6}" text-anchor="end">${esc(S.lang === "fr" ? "moyenne" : "average")} ${fn(avg)}</text>
+    <path class="line" d="${path}"/>
+    ${weeks.map((w, i) => `<circle class="dot" cx="${X(i)}" cy="${Y(w.avg)}" r="4"><title>${dfull(w.w)} : ${fn(w.avg)} F/kg · ${fkg(w.kg)}</title></circle>`).join("")}
+  </svg></div>`;
+}
+
+
+function viewRecep() {
+  const s = recStats();
+  return `<div class="topline"><div><h1>${esc(t("rp_title"))}</h1><p>${esc(t("rp_sub"))}</p></div><a class="btn" href="${APP_BASE}/reception/">${esc(t("open_app"))}</a></div>
+  <div class="tiles">
+    <div class="tile"><span class="l">${esc(t("k_rq"))}</span><span class="v">${(s.qty / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} <small>t</small></span><span class="s">${esc(t("k_rq_sub", { n: s.n, z: s.zones.length }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("k_rp"))}</span><span class="v">${fn(s.avg)} <small>F/kg</small></span><span class="s">${esc(t("k_rp_sub", { a: fn(s.min), b: fn(s.max) }))}</span></div>
+    <div class="tile"><span class="l">${esc(t("rp_value"))}</span><span class="v">${fcs(s.amount)}</span><span class="s">${fc(s.amount)}</span></div>
+    <div class="tile"><span class="l">${esc(t("rp_traced"))}</span><span class="v ${s.traced / (s.qty || 1) < 0.5 ? "bad" : "ok"}">${Math.round(s.traced / (s.qty || 1) * 100)} %</span><span class="s">${fkg(s.traced)}</span></div>
+    <div class="tile"><span class="l">${esc(t("rp_stock"))}</span><span class="v">${fkg(s.stock)}</span><span class="s">${fcs(s.stock * s.avg)}</span></div>
+  </div>
+  <div class="grid-wide"><div class="card stack"><h3>${esc(t("rp_trend"))}</h3>${priceChart(s.weeks, s.avg)}</div>
+    <div class="card stack"><h3>${esc(t("rp_zones"))}</h3>${tBars(s.zones.slice(0, 10), s.qty)}</div></div>
+  <div class="grid2"><div class="card stack"><h3>${esc(t("rp_buyers"))}</h3>${tBars(s.buyers.slice(0, 8), s.qty, "pod")}</div>
+    <div class="card stack"><h3>${esc(t("rp_months"))}</h3><div class="table-wrap"><table><thead><tr><th>${esc(t("rp_month"))}</th><th class="r">${esc(t("rp_kg"))}</th><th class="r">${esc(t("rp_avg"))}</th><th class="r">${esc(t("rp_n"))}</th></tr></thead>
+      <tbody>${s.months.map(([m, v]) => `<tr><td>${new Date(m + "-15").toLocaleDateString(loc(), { month: "long", year: "numeric" })}</td><td class="r num">${fn(v.kg)}</td><td class="r num">${fn(v.amount / v.kg)} F</td><td class="r num">${v.n}</td></tr>`).join("")}</tbody></table></div></div></div>`;
+}
+
+/* ====================== DG SAIC dashboard ====================== */
+const ENTS = ["cacao", "industries"];
+const DG_TYPES = ["depense", "achat", "budget", "contrat", "recrutement", "conge", "maintenance", "autre"];
+const PDG_TYPES = ["depense", "budget", "contrat", "investissement", "recrutement", "autre"];
+const TO_PDG_TYPE = { depense: "depense", achat: "depense", maintenance: "depense", budget: "budget", contrat: "contrat", recrutement: "recrutement", conge: "autre", autre: "autre" };
+const DEPTS = { cacao: ["Achats", "Magasin", "Traçabilité", "Comptabilité", "Logistique", "Qualité", "Administration"], industries: ["Production", "Maintenance", "Commercial", "Logistique", "Qualité", "Comptabilité", "Administration"] };
+
+const DSTR = {
+  fr: {
+    sub: "Direction Générale · SAIC", nav_overview: "Vue d'ensemble", nav_inbox: "Demandes reçues", nav_pdg: "Mes demandes au PDG", nav_team: "Équipe", nav_mine: "Mes demandes à la DG",
+    signin_sub: "Tableau de bord de la Direction Générale SAIC",
+    no_access: "Ce tableau de bord est réservé à la DG SAIC et au personnel de SAIC Cacao et SAIC Industries. Demandez l'accès à la DG.",
+    hello: "Bonjour, {n}", ov_sub2: "SAIC Cacao et SAIC Industries : la situation de chaque département, les demandes qui vous attendent et le suivi de vos demandes au PDG.",
+    e_cacao: "SAIC Cacao", e_industries: "SAIC Industries",
+    k_inbox: "Demandes à traiter", k_inbox_sub: "dont {n} urgente(s)", k_treso: "Visas trésorerie", k_treso_sub: "Demandes de fonds exceptionnelles", k_topdg: "Au PDG", k_topdg_sub: "{p} en attente · {i} question(s)",
+    waiting: "En attente de votre décision", none_waiting: "Aucune demande n'attend votre décision.",
+    s_escalated: "Transmise au PDG", f_escalated: "Transmises au PDG", h_escalated: "Transmise au PDG",
+    r_staff: "Personnel", r_dg_saic: "DG SAIC", rl_dg_saic: "Directrice Générale, SAIC",
+    in_title: "Demandes reçues", in_sub: "Demandes du personnel de SAIC Cacao et SAIC Industries. Vous pouvez approuver, rejeter, demander des informations ou transmettre au PDG.",
+    f_ents: "Toutes les entités", f_depts: "Tous les départements",
+    forward: "Transmettre au PDG", fw_title: "Transmettre au PDG", fw_sub: "Une demande au PDG est créée à partir de celle-ci. Les pièces jointes sont copiées.", fw_note: "Votre avis pour le PDG", fw_done: "Demande transmise au PDG ({id})", fw_origin: "Demande d'origine {id} — {n}, {e} · {d}", fw_opinion: "Avis de la DG SAIC",
+    pdg_status: "PDG : {s}",
+    tq_title: "Trésorerie : demandes de fonds à viser", tq_sub: "Ces demandes exceptionnelles ont été visées par la DAF et attendent la DG. La décision se prend dans l'application Trésorerie.", tq_open: "Viser dans la Trésorerie", tq_none: "Aucune demande de fonds n'attend votre visa.",
+    caisse_cacao: "Caisse cacao", caisse_admin: "Caisse administration",
+    p_title: "Mes demandes au PDG", p_sub: "Vos demandes au PDG de Wenkam Holdings Plus, et celles que vous lui avez transmises.",
+    m_title: "Mes demandes à la DG", m_sub: "Vos demandes à la Directrice Générale de la SAIC et leur suivi.", new_dg: "Nouvelle demande à la DG", submit_dg: "Envoyer à la DG", submitted_dg: "Demande {id} envoyée à la DG",
+    f_entity: "Entité", f_dept: "Département", d_dept: "Département", d_entity: "Entité",
+    t_achat: "Achat", t_conge: "Congé / absence", t_maintenance: "Maintenance / réparation",
+    dept_req: "Demandes de {e}", dept_req_sub: "Par département", no_dept: "Aucune demande pour l'instant.",
+    ind_title: "Tableaux de bord SAIC Industries", ind_text: "Les applications de SAIC Industries (production, stocks, ventes) apparaîtront ici dès qu'elles seront en ligne. En attendant, le personnel d'Industries vous envoie ses demandes depuis cette page.",
+    pdg_card: "Demandes au PDG", pdg_card_sub: "Suivi de vos demandes",
+    team_title: "Équipe", team_sub: "Le personnel qui peut vous envoyer des demandes, par entité et département. Les comptes sont créés dans Supabase (Authentication → Users).", team_note: "Les personnes qui ont déjà un rôle dans le Registre ou la Trésorerie peuvent aussi envoyer des demandes (rattachées à SAIC Cacao).",
+    add_member: "Ajouter une personne", person: "Personne", f_title2: "Fonction", active: "Actif", inactive: "Inactif", edit: "Modifier", save: "Enregistrer", deactivate: "Désactiver", reactivate: "Réactiver", choose: "Choisir…", no_team: "Personne n'a encore été ajouté.",
+    al_info_pdg: "Le PDG vous pose une question : « {t} ».", al_treso: "{n} demande(s) de fonds attendent votre visa dans la Trésorerie.", al_urgent: "{n} demande(s) urgente(s) du personnel en attente.",
+    apps_sub2: "Les applications de la SAIC. Chaque nouveau tableau de bord apparaîtra ici.", app_pdg: "Tableau de bord PDG", app_pdg_d: "Groupe WHP (accès PDG)", app_ind: "SAIC Industries", app_ind_d: "Production, stocks, ventes",
+    from: "De", need_dept: "Choisissez l'entité et saisissez l'objet et les détails."
+  },
+  en: {
+    sub: "General Management · SAIC", nav_overview: "Overview", nav_inbox: "Requests received", nav_pdg: "My requests to the PDG", nav_team: "Team", nav_mine: "My requests to the DG",
+    signin_sub: "SAIC General Management dashboard",
+    no_access: "This dashboard is for the DG SAIC and the staff of SAIC Cacao and SAIC Industries. Ask the DG for access.",
+    hello: "Hello, {n}", ov_sub2: "SAIC Cacao and SAIC Industries: how each department is doing, the requests waiting for you, and where your requests to the PDG stand.",
+    e_cacao: "SAIC Cacao", e_industries: "SAIC Industries",
+    k_inbox: "Requests to handle", k_inbox_sub: "{n} urgent", k_treso: "Treasury sign-offs", k_treso_sub: "Exceptional fund requests", k_topdg: "With the PDG", k_topdg_sub: "{p} pending · {i} question(s)",
+    waiting: "Waiting for your decision", none_waiting: "No request is waiting for your decision.",
+    s_escalated: "Forwarded to the PDG", f_escalated: "Forwarded to the PDG", h_escalated: "Forwarded to the PDG",
+    r_staff: "Staff", r_dg_saic: "DG SAIC", rl_dg_saic: "Managing Director, SAIC",
+    in_title: "Requests received", in_sub: "Requests from SAIC Cacao and SAIC Industries staff. You can approve, reject, ask for information or forward to the PDG.",
+    f_ents: "All entities", f_depts: "All departments",
+    forward: "Forward to the PDG", fw_title: "Forward to the PDG", fw_sub: "A request to the PDG is created from this one. Attachments are copied.", fw_note: "Your opinion for the PDG", fw_done: "Request forwarded to the PDG ({id})", fw_origin: "Original request {id} — {n}, {e} · {d}", fw_opinion: "DG SAIC's opinion",
+    pdg_status: "PDG: {s}",
+    tq_title: "Treasury: fund requests to sign off", tq_sub: "These exceptional requests were approved by the DAF and are waiting for the DG. The decision is made in the Treasury app.", tq_open: "Sign off in the Treasury", tq_none: "No fund request is waiting for your sign-off.",
+    caisse_cacao: "Cocoa cash box", caisse_admin: "Administration cash box",
+    p_title: "My requests to the PDG", p_sub: "Your requests to the PDG of Wenkam Holdings Plus, including those you forwarded.",
+    m_title: "My requests to the DG", m_sub: "Your requests to SAIC's Managing Director and where they stand.", new_dg: "New request to the DG", submit_dg: "Send to the DG", submitted_dg: "Request {id} sent to the DG",
+    f_entity: "Entity", f_dept: "Department", d_dept: "Department", d_entity: "Entity",
+    t_achat: "Purchase", t_conge: "Leave / absence", t_maintenance: "Maintenance / repair",
+    dept_req: "Requests from {e}", dept_req_sub: "By department", no_dept: "No requests yet.",
+    ind_title: "SAIC Industries dashboards", ind_text: "SAIC Industries' apps (production, stock, sales) will appear here as soon as they are online. Meanwhile, Industries staff send you their requests from this page.",
+    pdg_card: "Requests to the PDG", pdg_card_sub: "Where your requests stand",
+    team_title: "Team", team_sub: "The staff who can send you requests, by entity and department. Accounts are created in Supabase (Authentication → Users).", team_note: "People who already have a role in the Registry or the Treasury can also send requests (filed under SAIC Cacao).",
+    add_member: "Add a person", person: "Person", f_title2: "Job title", active: "Active", inactive: "Inactive", edit: "Edit", save: "Save", deactivate: "Deactivate", reactivate: "Reactivate", choose: "Choose…", no_team: "Nobody has been added yet.",
+    al_info_pdg: "The PDG has a question for you: “{t}”.", al_treso: "{n} fund request(s) waiting for your sign-off in the Treasury.", al_urgent: "{n} urgent staff request(s) pending.",
+    apps_sub2: "SAIC's apps. Every new dashboard will appear here.", app_pdg: "PDG dashboard", app_pdg_d: "WHP group (PDG access)", app_ind: "SAIC Industries", app_ind_d: "Production, stock, sales",
+    from: "From", need_dept: "Choose the entity and enter a subject and details."
+  }
+};
+Object.assign(STR.fr, DSTR.fr); Object.assign(STR.en, DSTR.en);
+
+const isDG = () => S.role === "dg";
+const entName = e => t("e_" + e);
+const pdgById = id => S.requests.find(r => r.id === id);
+const myPdg = () => S.requests.filter(r => r.from === "dg_saic");
+const dgPending = () => S.dg.filter(r => r.status === "pending");
+const tresoWaiting = () => S.fund.filter(f => { if (["funded", "rejected"].includes(f.status)) return false; const flow = f.flow || ["daf"]; const i = f.status === "submitted" ? 0 : Math.max(0, flow.indexOf(f.status) + 1); return flow[i] === "dg"; });
+const stCls = s => s === "approved" ? "ok" : s === "rejected" ? "bad" : s === "escalated" ? "neutral" : "warn";
+
+/* ---------- shell ---------- */
+const route = () => location.hash.replace(/^#/, "") || (isDG() ? "overview" : "mine");
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+function shell() {
+  document.documentElement.lang = S.lang;
+  $("#brandSub").textContent = t("sub");
+  const r = route();
+  const items = !S.role ? [] : isDG()
+    ? [["overview", t("nav_overview")], ["inbox", t("nav_inbox"), dgPending().length + tresoWaiting().length], ["pdg", t("nav_pdg"), myPdg().filter(x => x.status === "info").length], ["recep", t("nav_recep")], ["treasury", t("nav_treasury")], ["trace", t("nav_trace")], ["team", t("nav_team")], ["apps", t("nav_apps")]]
+    : [["mine", t("nav_mine"), S.dg.filter(x => x.status === "info").length], ["apps", t("nav_apps")]];
+  $("#nav").innerHTML = items.map(([k, l, c]) => `<a href="#${k}" class="${r === k ? "on" : ""}">${esc(l)}${c ? `<span class="badge">${c}</span>` : ""}</a>`).join("");
+  $("#railFoot").innerHTML = `${S.me ? `<span>${esc(S.me.name)}${S.role ? `<br>${esc(isDG() ? t("rl_dg_saic") : `${t("r_staff")} · ${entName(S.staff.entity)}${S.staff.department ? " · " + S.staff.department : ""}`)}` : ""}</span>` : ""}
+    <div class="row"><button class="btn small" id="langBtn">${esc(t("lang"))}</button>${S.me ? `<button class="btn small" id="outBtn">${esc(t("signout"))}</button>` : ""}</div>`;
+  const ob = $("#outBtn"); if (ob) ob.onclick = async () => { await sb.auth.signOut(); S.me = null; S.role = null; render(); };
+  try { localStorage.setItem("saic-lang", S.lang); } catch (e) {}
+  $("#langBtn").onclick = () => { S.lang = S.lang === "fr" ? "en" : "fr"; render(); };
+}
+function render() {
+  shell();
+  const r = route(), m = $("#main");
+  if (!S.ready) { m.innerHTML = `<div class="card">${esc(t("loading"))}</div>`; return; }
+  if (!S.me) { m.innerHTML = viewLogin(); bindLogin(); return; }
+  if (!S.role) { m.innerHTML = `<div class="notice">${esc(t("no_access"))}</div>`; return; }
+  if (S.loadError) { m.innerHTML = `<div class="notice" style="background:var(--bad-bg);color:var(--bad)">${esc(t("load_err", { m: S.loadError }))}</div>`; return; }
+  if (!isDG() && !["mine", "apps"].includes(r)) { location.hash = "mine"; return; }
+  if (r === "mine") { m.innerHTML = viewMine(); bindFilters(); return; }
+  if (r === "inbox") { m.innerHTML = viewInbox(); bindFilters(); return; }
+  if (r === "pdg") { m.innerHTML = viewPdg(); bindFilters(); return; }
+  if (r === "treasury") { m.innerHTML = viewTreasury(); bindChart(CB.cacao); bindChart(CB.admin); return; }
+  if (r === "recep") { m.innerHTML = viewRecep(); return; }
+  if (r === "trace") { m.innerHTML = viewTrace(); return; }
+  if (r === "team") { m.innerHTML = viewTeam(); bindTeam(); return; }
+  if (r === "apps") { m.innerHTML = viewApps(); return; }
+  m.innerHTML = viewOverview();
+}
+
+/* ---------- overview ---------- */
+function dgAlerts() {
+  const out = [];
+  const urg = dgPending().filter(r => r.urgency === "urgent").length; if (urg) out.push({ lv: "bad", m: t("al_urgent", { n: urg }), href: "#inbox" });
+  for (const r of myPdg().filter(x => x.status === "info")) { const h = (r.history || []).slice(-1)[0]; out.push({ lv: "warn", m: t("al_info_pdg", { t: h && h.note ? h.note : r.title }), href: "#pdg" }); }
+  const tw = tresoWaiting().length; if (tw) out.push({ lv: "warn", m: t("al_treso", { n: tw }), href: "#inbox" });
+  return out.concat(alerts());
+}
+function deptRequestsFor(ent) {
+  const l = S.dg.filter(r => r.entity === ent), by = {};
+  for (const r of l) { const d = r.department || "—"; (by[d] ||= { pending: 0, info: 0, done: 0 }); if (r.status === "pending") by[d].pending++; else if (r.status === "info") by[d].info++; else by[d].done++; }
+  const rows = Object.entries(by).sort((a, b) => b[1].pending - a[1].pending || a[0].localeCompare(b[0]));
+  const pend = l.filter(r => r.status === "pending");
+  return `<div class="card dept">
+    <div class="box-head"><div><div class="ent">${esc(entName(ent))}</div><h2>${esc(t("dept_req", { e: entName(ent) }))}</h2></div>${statusPill(pend.some(r => r.urgency === "urgent") ? "bad" : pend.length ? "watch" : "ok")}</div>
+    ${rows.length ? `<div class="who-row">${rows.map(([d, c]) => `<span>${esc(d)}</span><span class="n"><b>${c.pending}</b> ${esc(t("req_pending"))}</span><span class="n muted">${c.info ? `${c.info} ${esc(t("req_info"))} · ` : ""}${c.done} ${esc(S.lang === "fr" ? "traitée(s)" : "handled")}</span>`).join("")}</div>` : `<p class="muted">${esc(t("no_dept"))}</p>`}
+    <div class="foot"><a href="#inbox" data-goent="${ent}">${esc(t("see_all"))}</a></div></div>`;
+}
+function pdgCard() {
+  const l = myPdg(), c = s => l.filter(r => r.status === s).length;
+  return `<div class="card dept">
+    <div class="box-head"><div><div class="ent">WHP</div><h2>${esc(t("pdg_card"))}</h2></div>${statusPill(c("info") ? "bad" : c("pending") ? "watch" : "ok")}</div>
+    <div class="who-row"><span>${esc(t("s_pending"))}</span><span class="n"><b>${c("pending")}</b></span><span></span><span>${esc(t("s_info"))}</span><span class="n"><b>${c("info")}</b></span><span></span><span>${esc(t("s_approved"))}</span><span class="n">${c("approved")}</span><span></span><span>${esc(t("s_rejected"))}</span><span class="n">${c("rejected")}</span><span></span></div>
+    <div class="foot"><a href="#pdg">${esc(t("see_all"))}</a><button class="btn small primary" data-act="newpdg">${esc(t("new_req"))}</button></div></div>`;
+}
+function viewOverview() {
+  const pend = dgPending(), urg = pend.filter(r => r.urgency === "urgent").length, al = dgAlerts(), rs = recStats(), mp = myPdg();
+  return `<div class="topline"><div><h1>${esc(t("hello", { n: S.me.name }))}</h1><p>${esc(t("ov_sub2"))}</p></div><span class="muted">${new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
+  <div class="tiles">
+    <a class="tile" href="#inbox" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_inbox"))}</span><span class="v ${pend.length ? "warn" : "ok"}">${pend.length}</span><span class="s">${esc(t("k_inbox_sub", { n: urg }))}</span></a>
+    <a class="tile" href="#inbox" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_treso"))}</span><span class="v ${tresoWaiting().length ? "warn" : "ok"}">${tresoWaiting().length}</span><span class="s">${esc(t("k_treso_sub"))}</span></a>
+    <a class="tile" href="#pdg" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_topdg"))}</span><span class="v">${mp.filter(r => r.status === "pending" || r.status === "info").length}</span><span class="s">${esc(t("k_topdg_sub", { p: mp.filter(r => r.status === "pending").length, i: mp.filter(r => r.status === "info").length }))}</span></a>
+    <div class="tile"><span class="l">${esc(t("k_cash"))}</span><span class="v">${fcs(CB.cacao.closing + CB.admin.closing)}</span><span class="s">${esc(t("k_cash_sub"))}</span></div>
+    <a class="tile" href="#recep" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_rq"))}</span><span class="v">${(rs.qty / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} <small>t</small></span><span class="s">${esc(t("k_rp"))} ${fn(rs.avg)} F/kg</span></a>
+    <a class="tile" href="#trace" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_farmers"))}</span><span class="v">${trace.verified}</span><span class="s">${esc(t("k_farmers_sub", { v: trace.verified, n: trace.n }))}</span></a>
+  </div>
+  <div class="grid-wide">
+    <div class="card stack"><div class="topline"><h3>${esc(t("waiting"))}</h3><a href="#inbox">${esc(t("see_all"))}</a></div>
+      ${pend.length ? pend.slice(0, 4).map(r => dgCard(r, true)).join("") : `<p class="muted">${esc(t("none_waiting"))}</p>`}</div>
+    <div class="card stack"><h3>${esc(t("attention"))}</h3><ul class="issues">${al.map(a => `<li class="${a.lv}"><a href="${a.href}" style="color:inherit;text-decoration:none">${esc(a.m)}</a></li>`).join("") || `<li class="ok">${esc(t("st_ok"))}</li>`}</ul></div>
+  </div>
+  <h2>${esc(t("e_cacao"))}</h2>
+  <div class="dept-grid">${deptCash("cacao")}${deptCash("admin")}${deptRecep()}${deptTrace()}${deptRequestsFor("cacao")}${pdgCard()}</div>
+  <h2>${esc(t("e_industries"))}</h2>
+  <div class="dept-grid">${deptRequestsFor("industries")}<div class="card dept soon-card"><div class="box-head"><div><div class="ent">${esc(t("e_industries"))}</div><h2>${esc(t("ind_title"))}</h2></div><span class="pill neutral">${esc(t("soon"))}</span></div><p class="muted">${esc(t("ind_text"))}</p></div></div>`;
+}
+
+/* ---------- request cards (staff → DG) ---------- */
+function dgCard(r, compact) {
+  const canDecide = isDG() && r.status === "pending", canReply = !isDG() && r.status === "info" && r.fromUser === S.me.id;
+  const p = r.pdgRef ? pdgById(r.pdgRef) : null, last = (r.history || [])[r.history.length - 1];
+  return `<div class="req clickable" data-dgopen="${esc(r.id)}" tabindex="0" role="button" aria-label="${esc(t("view"))} : ${esc(r.title)}">
+    <div><div class="row"><span class="ent-chip ${r.entity === "cacao" ? "SAIC" : "IND"}">${esc(entName(r.entity))}</span><b>${esc(r.title)}</b>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}<span class="pill ${stCls(r.status)}">${esc(t("s_" + r.status))}</span>${p ? `<span class="pill ${stCls(p.status)}">${esc(t("pdg_status", { s: t("s_" + p.status) }))}</span>` : ""}${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
+      <div class="small muted" style="margin-top:4px">${esc(r.fromName || "—")}${r.department ? " · " + esc(r.department) : ""} · ${esc(t("t_" + r.type))} · ${dfull(r.created)}${r.due ? " · " + esc(t("due", { d: dfull(r.due) })) : ""}</div>
+      ${compact && last && last.note ? `<div class="small" style="margin-top:4px">${esc(last.note)}</div>` : ""}</div>
+    <div class="amt">${r.amount ? fc(r.amount) : `<span class="small muted">${esc(t("no_amount"))}</span>`}</div>
+    ${canDecide || canReply ? `<div class="acts">${canDecide ? `<button class="btn primary small" data-dgact="approve" data-id="${esc(r.id)}">${esc(t("approve"))}</button><button class="btn small" data-dgact="forward" data-id="${esc(r.id)}">${esc(t("forward"))}</button><button class="btn small" data-dgact="info" data-id="${esc(r.id)}">${esc(t("ask_info"))}</button><button class="btn small danger" data-dgact="reject" data-id="${esc(r.id)}">${esc(t("reject"))}</button>` : `<button class="btn primary small" data-dgact="reply" data-id="${esc(r.id)}">${esc(t("reply"))}</button>`}</div>` : ""}
+  </div>`;
+}
+/* requests DG → PDG (same table and rules as the PDG dashboard) */
+function pdgCardRow(r) {
+  const canReply = r.status === "info", last = (r.history || [])[r.history.length - 1];
+  return `<div class="req clickable" data-open="${esc(r.id)}" tabindex="0" role="button" aria-label="${esc(t("view"))} : ${esc(r.title)}">
+    <div><div class="row"><span class="ent-chip ${r.ent}">${r.ent}</span><b>${esc(r.title)}</b>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}<span class="pill ${stCls(r.status)}">${esc(t("s_" + r.status))}</span>${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
+      <div class="small muted" style="margin-top:4px">${esc(t("t_" + r.type))} · ${dfull(r.created)}${r.due ? " · " + esc(t("due", { d: dfull(r.due) })) : ""}</div>
+      ${last && last.note ? `<div class="small" style="margin-top:4px">${esc(t("h_" + last.action))} : ${esc(last.note)}</div>` : ""}</div>
+    <div class="amt">${r.amount ? fc(r.amount) : `<span class="small muted">${esc(t("no_amount"))}</span>`}</div>
+    ${canReply ? `<div class="acts"><button class="btn primary small" data-act="reply" data-id="${esc(r.id)}">${esc(t("reply"))}</button></div>` : ""}
+  </div>`;
+}
+
+/* ---------- filters ---------- */
+const statusBtns = (list, withEsc) => [["pending", t("f_pending")], ["info", t("f_info")], ...(withEsc ? [["escalated", t("f_escalated")]] : []), ["approved", t("f_approved")], ["rejected", t("f_rejected")], ["", t("f_all")]]
+  .map(([k, l]) => `<button class="btn small ${S.flt.st === k ? "primary" : ""}" data-st="${k}">${esc(l)}${k ? ` (${list.filter(r => r.status === k).length})` : ""}</button>`).join("");
+function bindFilters() {
+  document.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { S.flt.st = b.dataset.st; render(); });
+  const fe = $("#fEnt"); if (fe) fe.onchange = e => { S.flt.ent = e.target.value; S.flt.dept = ""; render(); };
+  const fd = $("#fDept"); if (fd) fd.onchange = e => { S.flt.dept = e.target.value; render(); };
+}
+const sortReq = (a, b) => (b.urgency === "urgent") - (a.urgency === "urgent") || b.created.localeCompare(a.created);
+
+/* ---------- inbox (DG) ---------- */
+function viewInbox() {
+  const f = S.flt, all = S.dg.filter(r => (!f.ent || r.entity === f.ent));
+  const depts = [...new Set(all.map(r => r.department).filter(Boolean))].sort();
+  const list = all.filter(r => (!f.st || r.status === f.st) && (!f.dept || r.department === f.dept)).sort(sortReq);
+  const tw = tresoWaiting();
+  return `<div class="topline"><div><h1>${esc(t("in_title"))}</h1><p>${esc(t("in_sub"))}</p></div></div>
+  <div class="toolbar">${statusBtns(all, true)}
+    <select id="fEnt" aria-label="${esc(t("f_ents"))}"><option value="">${esc(t("f_ents"))}</option>${ENTS.map(k => `<option value="${k}" ${f.ent === k ? "selected" : ""}>${esc(entName(k))}</option>`).join("")}</select>
+    <select id="fDept" aria-label="${esc(t("f_depts"))}"><option value="">${esc(t("f_depts"))}</option>${depts.map(d => `<option ${f.dept === d ? "selected" : ""}>${esc(d)}</option>`).join("")}</select></div>
+  <div class="stack">${list.length ? list.map(r => dgCard(r, true)).join("") : `<div class="card muted">${esc(t("no_req"))}</div>`}</div>
+  <div class="card stack"><div class="topline"><div><h2>${esc(t("tq_title"))}</h2><p class="small">${esc(t("tq_sub"))}</p></div><a class="btn" href="${APP_BASE}/tresorerie/">${esc(t("tq_open"))}</a></div>
+    ${tw.length ? `<div class="table-wrap"><table><thead><tr><th>${esc(t("d_ref"))}</th><th>${esc(S.lang === "fr" ? "Caisse" : "Cash box")}</th><th>${esc(t("d_details"))}</th><th class="r">${esc(t("d_amount"))}</th><th>${esc(t("d_created"))}</th></tr></thead><tbody>
+      ${tw.map(x => `<tr><td class="mono">${esc(x.id)}</td><td>${esc(t("caisse_" + x.caisse))}</td><td>${esc(x.reason)}</td><td class="r num">${fc(x.amount)}</td><td>${dfull(x.created_at)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">${esc(t("tq_none"))}</p>`}</div>`;
+}
+
+/* ---------- my requests to the PDG (DG) ---------- */
+function viewPdg() {
+  const all = myPdg(), list = all.filter(r => !S.flt.st || r.status === S.flt.st).sort(sortReq);
+  return `<div class="topline"><div><h1>${esc(t("p_title"))}</h1><p>${esc(t("p_sub"))}</p></div><button class="btn primary" data-act="newpdg">${esc(t("new_req"))}</button></div>
+  <div class="toolbar">${statusBtns(all, false)}</div>
+  <div class="stack">${list.length ? list.map(pdgCardRow).join("") : `<div class="card muted">${esc(t("no_req"))}</div>`}</div>`;
+}
+
+/* ---------- my requests to the DG (staff) ---------- */
+function viewMine() {
+  const all = S.dg.filter(r => r.fromUser === S.me.id), list = all.filter(r => !S.flt.st || r.status === S.flt.st).sort(sortReq);
+  return `<div class="topline"><div><h1>${esc(t("m_title"))}</h1><p>${esc(t("m_sub"))}</p></div><button class="btn primary" data-act="newdg">${esc(t("new_dg"))}</button></div>
+  <div class="toolbar">${statusBtns(all, true)}</div>
+  <div class="stack">${list.length ? list.map(r => dgCard(r, true)).join("") : `<div class="card muted">${esc(t("no_req"))}</div>`}</div>`;
+}
+
+/* ---------- team (DG) ---------- */
+function viewTeam() {
+  const staff = S.team.slice().sort((a, b) => a.entity.localeCompare(b.entity) || a.department.localeCompare(b.department) || a.name.localeCompare(b.name));
+  const free = S.people.filter(p => p.id !== S.me.id && !S.team.some(s => s.user_id === p.id));
+  const sel = (id, ent) => `<select id="${id}">${ENTS.map(k => `<option value="${k}" ${k === ent ? "selected" : ""}>${esc(entName(k))}</option>`).join("")}</select>`;
+  return `<div class="topline"><div><h1>${esc(t("team_title"))}</h1><p>${esc(t("team_sub"))}</p></div></div>
+  <div class="card stack"><h3>${esc(t("add_member"))}</h3>
+    <form id="tf" class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end">
+      <div class="f"><label for="tp">${esc(t("person"))}</label><select id="tp"><option value="">${esc(t("choose"))}</option>${free.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></div>
+      <div class="f"><label for="te">${esc(t("f_entity"))}</label>${sel("te", "cacao")}</div>
+      <div class="f"><label for="td">${esc(t("f_dept"))}</label><input id="td" type="text" list="deptList"></div>
+      <div class="f"><label for="tt">${esc(t("f_title2"))}</label><input id="tt" type="text"></div>
+      <button class="btn primary" type="submit">${esc(t("add_member"))}</button></form>
+    <span class="err" id="tfErr"></span><p class="small muted">${esc(t("team_note"))}</p></div>
+  ${staff.length ? `<div class="table-wrap"><table><thead><tr><th>${esc(t("person"))}</th><th>${esc(t("f_entity"))}</th><th>${esc(t("f_dept"))}</th><th>${esc(t("f_title2"))}</th><th></th><th></th></tr></thead><tbody>
+    ${staff.map(s => `<tr data-uid="${s.user_id}"><td>${esc(s.name)}</td><td>${sel("e-" + s.user_id, s.entity)}</td><td><input type="text" list="deptList" id="d-${s.user_id}" value="${esc(s.department)}"></td><td><input type="text" id="t-${s.user_id}" value="${esc(s.title)}"></td>
+      <td><span class="pill ${s.active ? "ok" : "neutral"}">${esc(t(s.active ? "active" : "inactive"))}</span></td>
+      <td class="r"><div class="row" style="justify-content:flex-end"><button class="btn small" data-tsave="${s.user_id}">${esc(t("save"))}</button><button class="btn small" data-ttoggle="${s.user_id}">${esc(t(s.active ? "deactivate" : "reactivate"))}</button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="card muted">${esc(t("no_team"))}</div>`}
+  <datalist id="deptList">${[...new Set([...DEPTS.cacao, ...DEPTS.industries])].map(d => `<option value="${esc(d)}">`).join("")}</datalist>`;
+}
+function bindTeam() {
+  $("#tf").onsubmit = async e => { e.preventDefault(); const uid = $("#tp").value; if (!uid) { $("#tfErr").textContent = t("choose"); return; }
+    const { error } = await sb.from("saic_staff").insert({ user_id: uid, entity: $("#te").value, department: $("#td").value.trim(), title: $("#tt").value.trim() });
+    if (error) { $("#tfErr").textContent = t("save_err", { m: error.message }); return; } toast(t("saved")); await loadData(); };
+  document.querySelectorAll("[data-tsave]").forEach(b => b.onclick = async () => { const u = b.dataset.tsave;
+    const { error } = await sb.from("saic_staff").update({ entity: $("#e-" + u).value, department: $("#d-" + u).value.trim(), title: $("#t-" + u).value.trim(), updated_at: new Date().toISOString() }).eq("user_id", u);
+    if (error) toast(t("save_err", { m: error.message })); else { toast(t("saved")); await loadData(); } });
+  document.querySelectorAll("[data-ttoggle]").forEach(b => b.onclick = async () => { const u = b.dataset.ttoggle, s = S.team.find(x => x.user_id === u);
+    const { error } = await sb.from("saic_staff").update({ active: !s.active, updated_at: new Date().toISOString() }).eq("user_id", u);
+    if (error) toast(t("save_err", { m: error.message })); else { toast(t("saved")); await loadData(); } });
+}
+
+/* ---------- applications ---------- */
+function viewApps() {
+  return `<div class="topline"><div><h1>${esc(t("apps_title"))}</h1><p>${esc(t("apps_sub2"))}</p></div></div>
+  <div class="apps">
+    <a class="app-tile" href="${APP_BASE}/"><span class="ent-chip SAIC" style="align-self:flex-start">SAIC Cacao</span><b>${esc(t("app_trace"))}</b><span>${esc(t("app_trace_d"))}</span></a>
+    <a class="app-tile" href="${APP_BASE}/tresorerie/"><span class="ent-chip SAIC" style="align-self:flex-start">SAIC Cacao</span><b>${esc(t("app_treso"))}</b><span>${esc(t("app_treso_d"))}</span></a>
+    <a class="app-tile" href="${APP_BASE}/reception/"><span class="ent-chip SAIC" style="align-self:flex-start">SAIC Cacao</span><b>${esc(t("app_recep"))}</b><span>${esc(t("app_recep_d"))}</span></a>
+    <div class="app-tile soon"><span class="ent-chip IND" style="align-self:flex-start">SAIC Industries</span><b>${esc(t("app_ind"))}</b><span>${esc(t("app_ind_d"))} · ${esc(t("soon"))}</span></div>
+  </div>`;
+}
+
+/* ---------- attachments ---------- */
+let attNew = [];
+async function signed(bucket, path) { const { data, error } = await sb.storage.from(bucket).createSignedUrl(path, 600); if (error || !data) { toast(t("save_err", { m: error ? error.message : "?" })); return null; } return data.signedUrl; }
+function attachField() {
+  attNew = [];
+  return `<div class="f full"><span style="font-size:13px;font-weight:500">${esc(t("att"))}</span>
+    <label class="btn small" style="align-self:flex-start"><input type="file" id="attIn" class="vh" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf">${esc(t("att_add"))}</label><span class="hint">${esc(t("att_hint"))}</span>
+    <ul class="att-list" id="attList"></ul></div>`;
+}
+function bindAttach() {
+  const draw = () => { const l = $("#attList"); if (!l) return; l.innerHTML = attNew.map((f, i) => `<li><span>${esc(f.name)}</span><button type="button" class="btn small" data-attn="${i}">${esc(t("att_remove"))}</button></li>`).join("");
+    l.querySelectorAll("[data-attn]").forEach(b => b.onclick = () => { attNew.splice(+b.dataset.attn, 1); draw(); }); };
+  const inp = $("#attIn"); if (inp) inp.onchange = () => { for (const f of inp.files) attNew.push(f); inp.value = ""; draw(); };
+}
+function toJpeg(file, max = 2000, q = 0.85) {
+  return new Promise((res, rej) => { const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => { const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob(b => b ? res(b) : rej(new Error("image")), "image/jpeg", q); };
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error(t("att_type"))); }; img.src = u; });
+}
+async function uploadAttachments(bucket, errEl) {
+  const out = [], folder = bucket === "dg-files" ? S.me.id : new Date().toISOString().slice(0, 7);
+  for (const f of attNew) {
+    try {
+      let blob = f, type = f.type, name = f.name;
+      if (/^image\//.test(f.type) || /\.(heic|heif)$/i.test(f.name)) { if (f.size > 1.5e6 || !/^image\/(jpeg|png|webp)$/.test(f.type)) { blob = await toJpeg(f); type = "image/jpeg"; name = name.replace(/\.\w+$/, "") + ".jpg"; } }
+      else if (f.type !== "application/pdf") throw new Error(t("att_type"));
+      if (blob.size > 20e6) throw new Error(t("att_hint"));
+      errEl.textContent = t("uploading");
+      const path = `${folder}/${crypto.randomUUID()}-${name.replace(/[^\w.\-]+/g, "_")}`;
+      const { error } = await sb.storage.from(bucket).upload(path, blob, { contentType: type, upsert: false });
+      if (error) throw new Error(error.message);
+      out.push({ path, name, type, size: blob.size });
+    } catch (e) { throw new Error(t("att_fail", { n: f.name, m: e.message || e.code })); }
+  }
+  errEl.textContent = "";
+  return out;
+}
+async function copyFilesToPdg(files) {   // forwarding: the PDG can't read the DG's bucket, so the files are copied
+  const out = [];
+  for (const f of files || []) {
+    const { data, error } = await sb.storage.from("dg-files").download(f.path); if (error) throw new Error(error.message);
+    const path = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}-${f.name.replace(/[^\w.\-]+/g, "_")}`;
+    const up = await sb.storage.from("pdg-files").upload(path, data, { contentType: f.type, upsert: false }); if (up.error) throw new Error(up.error.message);
+    out.push({ ...f, path });
+  }
+  return out;
+}
+
+/* ---------- detail drawers ---------- */
+function closeModal() { $("#modal").innerHTML = ""; }
+function modal(html) {
+  $("#modal").innerHTML = `<div class="scrim"><div class="drawer" role="dialog" aria-modal="true">${html}</div></div>`;
+  $("#modal .scrim").onclick = e => { if (e.target.classList.contains("scrim")) closeModal(); };
+  $("#modal").querySelectorAll("[data-close]").forEach(b => b.onclick = closeModal);
+}
+function filesBlock(files, bucket) {
+  return `<div class="stack"><h3>${esc(t("d_files"))} (${files.length})</h3>
+    ${files.length ? `<div class="files">${files.map((f, i) => `<a class="file" href="#" data-fb="${bucket}" data-fp="${esc(f.path)}"><span class="thumb">${/^image\//.test(f.type || "") ? `<img alt="" data-thumbp="${esc(f.path)}" data-thumbb="${bucket}">` : esc(((f.name || "").split(".").pop() || "DOC").toUpperCase())}</span><span class="fn">${esc(f.name)}</span></a>`).join("")}</div>` : `<p class="muted">${esc(t("d_nofiles"))}</p>`}</div>`;
+}
+function hydrateFiles() {
+  document.querySelectorAll("[data-fp]").forEach(a => a.onclick = async e => { e.preventDefault(); const w = window.open("", "_blank"); const u = await signed(a.dataset.fb, a.dataset.fp); if (!u) { if (w) w.close(); return; } if (w) w.location = u; else location.href = u; });
+  document.querySelectorAll("[data-thumbp]").forEach(async img => { const u = await signed(img.dataset.thumbb, img.dataset.thumbp); if (u) img.src = u; });
+}
+const histName = h => h.role === "dg_saic" ? t("r_dg_saic") : h.role === "staff" ? (h.name || t("r_staff")) : t("r_" + h.role);
+function openDg(id) {
+  const r = S.dg.find(x => x.id === id); if (!r) return;
+  const canDecide = isDG() && r.status === "pending", canReply = !isDG() && r.status === "info" && r.fromUser === S.me.id, p = r.pdgRef ? pdgById(r.pdgRef) : null;
+  modal(`<div style="display:flex;flex-direction:column;min-height:100%">
+    <header><div><div class="row"><span class="ent-chip ${r.entity === "cacao" ? "SAIC" : "IND"}">${esc(entName(r.entity))}</span><span class="pill ${stCls(r.status)}">${esc(t("s_" + r.status))}</span>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
+      <h2 style="margin-top:8px">${esc(r.title)}</h2></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body">
+      <dl class="dkv">
+        <div><dt>${esc(t("from"))}</dt><dd>${esc(r.fromName || "—")}</dd></div>
+        <div><dt>${esc(t("d_amount"))}</dt><dd style="font-size:20px">${r.amount ? fc(r.amount) : esc(t("no_amount"))}</dd></div>
+        <div><dt>${esc(t("d_entity"))}</dt><dd>${esc(entName(r.entity))}</dd></div>
+        <div><dt>${esc(t("d_dept"))}</dt><dd>${esc(r.department || "—")}</dd></div>
+        <div><dt>${esc(t("d_type"))}</dt><dd>${esc(t("t_" + r.type))}</dd></div>
+        <div><dt>${esc(t("d_urgency"))}</dt><dd>${esc(r.urgency === "urgent" ? t("urgent") : t("f_normal2"))}</dd></div>
+        <div><dt>${esc(t("d_due"))}</dt><dd>${r.due ? dfull(r.due) : esc(t("d_none"))}</dd></div>
+        <div><dt>${esc(t("d_ref"))}</dt><dd class="mono">${esc(r.id)}</dd></div>
+        ${p ? `<div><dt>PDG</dt><dd><span class="pill ${stCls(p.status)}">${esc(t("s_" + p.status))}</span> <span class="mono small">${esc(p.id)}</span></dd></div>` : ""}
+      </dl>
+      <div class="stack"><h3>${esc(t("d_details"))}</h3><div class="dtext">${esc(r.details)}</div></div>
+      ${filesBlock(r.files || [], "dg-files")}
+      <div class="stack"><h3>${esc(t("d_history"))}</h3>
+        <ul class="thread">${(r.history || []).map(h => `<li><span class="when">${dtime(h.at)} · ${esc(histName(h))}</span> — <b>${esc(t("h_" + h.action))}</b>${h.note ? `<br>${esc(h.note)}` : ""}</li>`).join("")}
+        ${p ? (p.history || []).slice(1).map(h => `<li><span class="when">${dtime(h.at)} · ${esc(t("r_" + h.role))}</span> — <b>${esc(t("h_" + h.action))}</b>${h.note ? `<br>${esc(h.note)}` : ""}</li>`).join("") : ""}</ul></div>
+    </div>
+    ${canDecide || canReply ? `<footer><span></span><div class="row">${canDecide ? `<button class="btn small danger" data-dgact="reject" data-id="${esc(r.id)}">${esc(t("reject"))}</button><button class="btn small" data-dgact="info" data-id="${esc(r.id)}">${esc(t("ask_info"))}</button><button class="btn small" data-dgact="forward" data-id="${esc(r.id)}">${esc(t("forward"))}</button><button class="btn primary" data-dgact="approve" data-id="${esc(r.id)}">${esc(t("approve"))}</button>` : `<button class="btn primary" data-dgact="reply" data-id="${esc(r.id)}">${esc(t("reply"))}</button>`}</div></footer>` : ""}
+  </div>`);
+  hydrateFiles();
+}
+function openPdg(id) {
+  const r = pdgById(id); if (!r) return;
+  modal(`<div style="display:flex;flex-direction:column;min-height:100%">
+    <header><div><div class="row"><span class="ent-chip ${r.ent}">${r.ent}</span><span class="pill ${stCls(r.status)}">${esc(t("s_" + r.status))}</span>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
+      <h2 style="margin-top:8px">${esc(r.title)}</h2></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body">
+      <dl class="dkv">
+        <div><dt>${esc(t("d_amount"))}</dt><dd style="font-size:20px">${r.amount ? fc(r.amount) : esc(t("no_amount"))}</dd></div>
+        <div><dt>${esc(t("d_type"))}</dt><dd>${esc(t("t_" + r.type))}</dd></div>
+        <div><dt>${esc(t("d_urgency"))}</dt><dd>${esc(r.urgency === "urgent" ? t("urgent") : t("f_normal2"))}</dd></div>
+        <div><dt>${esc(t("d_due"))}</dt><dd>${r.due ? dfull(r.due) : esc(t("d_none"))}</dd></div>
+        <div><dt>${esc(t("d_created"))}</dt><dd>${dtime(r.created)}</dd></div>
+        <div><dt>${esc(t("d_ref"))}</dt><dd class="mono">${esc(r.id)}</dd></div>
+      </dl>
+      <div class="stack"><h3>${esc(t("d_details"))}</h3><div class="dtext">${esc(r.details)}</div></div>
+      ${filesBlock(r.files || [], "pdg-files")}
+      <div class="stack"><h3>${esc(t("d_history"))}</h3>
+        <ul class="thread">${(r.history || []).map(h => `<li><span class="when">${dtime(h.at)} · ${esc(t("r_" + h.role))}</span> — <b>${esc(t("h_" + h.action))}</b>${h.note ? `<br>${esc(h.note)}` : ""}</li>`).join("")}</ul></div>
+    </div>
+    ${r.status === "info" ? `<footer><span></span><div class="row"><button class="btn primary" data-act="reply" data-id="${esc(r.id)}">${esc(t("reply"))}</button></div></footer>` : ""}
+  </div>`);
+  hydrateFiles();
+}
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-act]") || e.target.closest("[data-dgact]") || e.target.closest("a[href]:not([href='#'])")) return;
+  const d = e.target.closest("[data-dgopen]"); if (d) { e.preventDefault(); openDg(d.dataset.dgopen); return; }
+  const o = e.target.closest("[data-open]"); if (o) { e.preventDefault(); openPdg(o.dataset.open); }
+});
+document.addEventListener("click", e => { const g = e.target.closest("[data-goent]"); if (g) { S.flt.ent = g.dataset.goent; S.flt.dept = ""; } });
+document.addEventListener("keydown", e => { const o = e.target.closest && e.target.closest(".req"); if (o && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); o.dataset.dgopen ? openDg(o.dataset.dgopen) : openPdg(o.dataset.open); } });
+
+/* ---------- forms ---------- */
+function newRequestForm(kind) {   // kind: "dg" (staff → DG) or "pdg" (DG → PDG)
+  const toDg = kind === "dg", types = toDg ? DG_TYPES : PDG_TYPES, ent = toDg ? S.staff.entity : "SAIC";
+  modal(`<form id="nf" novalidate>
+    <header><div><h2>${esc(t(toDg ? "new_dg" : "new_req"))}</h2><p>${esc(toDg ? S.me.name : t("rl_dg_saic"))}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body"><div class="fgrid">
+      <div class="f full"><label for="nt">${esc(t("f_title"))}</label><input id="nt" type="text"></div>
+      ${toDg ? `<div class="f"><label for="ne">${esc(t("f_entity"))}</label><select id="ne" ${S.staff.fixed ? "disabled" : ""}>${ENTS.map(k => `<option value="${k}" ${k === ent ? "selected" : ""}>${esc(entName(k))}</option>`).join("")}</select></div>
+        <div class="f"><label for="ndp">${esc(t("f_dept"))}</label><input id="ndp" type="text" list="deptList2" value="${esc(S.staff.department || "")}"><datalist id="deptList2">${DEPTS[ent].map(d => `<option value="${esc(d)}">`).join("")}</datalist></div>`
+      : `<div class="f"><label for="ne">${esc(t("f_ent2"))}</label><select id="ne"><option>SAIC</option><option>WHP</option></select></div>`}
+      <div class="f"><label for="ny">${esc(t("f_type"))}</label><select id="ny">${types.map(k => `<option value="${k}">${esc(t("t_" + k))}</option>`).join("")}</select></div>
+      <div class="f"><label for="na">${esc(t("f_amount"))}</label><input id="na" type="number" min="0" step="1000" inputmode="numeric"></div>
+      <div class="f"><label for="nu">${esc(t("f_urgency"))}</label><select id="nu"><option value="normal">${esc(t("f_normal"))}</option><option value="urgent">${esc(t("f_urgent"))}</option></select></div>
+      <div class="f"><label for="nd">${esc(t("f_due"))}</label><input id="nd" type="date"></div>
+      <div class="f full"><label for="nx">${esc(t("f_details"))}</label><textarea id="nx" style="min-height:120px"></textarea></div>
+      ${attachField()}
+    </div></div>
+    <footer><span class="err" id="nfErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t(toDg ? "submit_dg" : "submit"))}</button></div></footer></form>`);
+  bindAttach();
+  $("#nf").onsubmit = async e => {
+    e.preventDefault();
+    const title = $("#nt").value.trim(), details = $("#nx").value.trim();
+    if (!title || !details) { $("#nfErr").textContent = t(toDg ? "need_dept" : "need_fields"); return; }
+    const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+    let files; try { files = attNew.length ? await uploadAttachments(toDg ? "dg-files" : "pdg-files", $("#nfErr")) : []; } catch (x) { $("#nfErr").textContent = x.message; btn.disabled = false; return; }
+    const now = new Date().toISOString(), id = `${toDg ? "DG" : "PDG"}-${now.slice(0, 4)}-${String(Date.now()).slice(-6)}`;
+    const base = { id, type: $("#ny").value, title, amount: Number($("#na").value) || 0, urgency: $("#nu").value, due: $("#nd").value || null, details, files };
+    const { error } = toDg ? await sb.from("dg_requests").insert({ ...base, entity: $("#ne").value, department: $("#ndp").value.trim() })
+                           : await sb.from("pdg_requests").insert({ ...base, from_role: "dg_saic", ent: $("#ne").value });
+    if (error) { $("#nfErr").textContent = t("save_err", { m: error.message }); btn.disabled = false; return; }
+    closeModal(); toast(t(toDg ? "submitted_dg" : "submitted", { id })); await loadData();
+  };
+}
+function forwardForm(id) {
+  const r = S.dg.find(x => x.id === id);
+  modal(`<form id="ff"><header><div><h2>${esc(t("fw_title"))}</h2><p>${esc(t("fw_sub"))}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body"><div class="fgrid">
+      <div class="f full"><label for="ft">${esc(t("f_title"))}</label><input id="ft" type="text" value="${esc(`[${entName(r.entity)}${r.department ? " · " + r.department : ""}] ${r.title}`)}"></div>
+      <div class="f"><label for="fy">${esc(t("f_type"))}</label><select id="fy">${PDG_TYPES.map(k => `<option value="${k}" ${TO_PDG_TYPE[r.type] === k ? "selected" : ""}>${esc(t("t_" + k))}</option>`).join("")}</select></div>
+      <div class="f"><label for="fa">${esc(t("f_amount"))}</label><input id="fa" type="number" min="0" step="1000" value="${r.amount || ""}"></div>
+      <div class="f"><label for="fu">${esc(t("f_urgency"))}</label><select id="fu"><option value="normal">${esc(t("f_normal"))}</option><option value="urgent" ${r.urgency === "urgent" ? "selected" : ""}>${esc(t("f_urgent"))}</option></select></div>
+      <div class="f"><label for="fd">${esc(t("f_due"))}</label><input id="fd" type="date" value="${esc(r.due || "")}"></div>
+      <div class="f full"><label for="fo">${esc(t("fw_note"))}</label><textarea id="fo"></textarea></div>
+    </div><p class="small muted">${esc(t("d_files"))} : ${(r.files || []).length}</p></div>
+    <footer><span class="err" id="ffErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("forward"))}</button></div></footer></form>`);
+  $("#ff").onsubmit = async e => {
+    e.preventDefault(); const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+    try {
+      $("#ffErr").textContent = (r.files || []).length ? t("uploading") : "";
+      const files = await copyFilesToPdg(r.files);
+      const opinion = $("#fo").value.trim(), pid = `PDG-${new Date().toISOString().slice(0, 4)}-${String(Date.now()).slice(-6)}`;
+      const details = `${r.details}\n\n— ${t("fw_origin", { id: r.id, n: r.fromName || "—", e: entName(r.entity), d: r.department || "—" })}${opinion ? `\n— ${t("fw_opinion")} : ${opinion}` : ""}`;
+      let x = await sb.from("pdg_requests").insert({ id: pid, from_role: "dg_saic", ent: "SAIC", type: $("#fy").value, title: $("#ft").value.trim() || r.title, amount: Number($("#fa").value) || 0, urgency: $("#fu").value, due: $("#fd").value || null, details, files });
+      if (x.error) throw new Error(x.error.message);
+      x = await sb.from("dg_requests").update({ status: "escalated", pdg_ref: pid, last_note: opinion || null }).eq("id", r.id);
+      if (x.error) throw new Error(x.error.message);
+      closeModal(); toast(t("fw_done", { id: pid })); await loadData();
+    } catch (x) { $("#ffErr").textContent = t("save_err", { m: x.message }); btn.disabled = false; }
+  };
+}
+function stepForm(table, id, action) {
+  const list = table === "dg_requests" ? S.dg : S.requests, r = list.find(x => x.id === id);
+  const cfg = { approve: [t("approve"), t("comment"), false, "approved"], reject: [t("reject"), t("reason"), true, "rejected"], info: [t("ask_info"), t("question"), true, "info"], reply: [t("reply"), t("answer"), true, "pending"] }[action];
+  modal(`<form id="af"><header><div><h2>${esc(cfg[0])}</h2><p>${esc(r.title)}${r.amount ? " · " + fc(r.amount) : ""}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body"><div class="f"><label for="ax">${esc(cfg[1])}</label><textarea id="ax"></textarea></div></div>
+    <footer><span class="err" id="afErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("confirm"))}</button></div></footer></form>`);
+  $("#ax").focus();
+  $("#af").onsubmit = async e => { e.preventDefault(); const note = $("#ax").value.trim(); if (cfg[2] && !note) { $("#afErr").textContent = cfg[1]; return; }
+    const { error } = await sb.from(table).update({ status: cfg[3], last_note: note || null }).eq("id", id);
+    if (error) { $("#afErr").textContent = t("save_err", { m: error.message }); return; }
+    closeModal(); toast(t("saved")); await loadData(); };
+}
+document.addEventListener("click", e => {
+  const a = e.target.closest("[data-act]");
+  if (a) { if (a.dataset.act === "newpdg") newRequestForm("pdg"); else if (a.dataset.act === "newdg") newRequestForm("dg"); else if (a.dataset.act === "reply") stepForm("pdg_requests", a.dataset.id, "reply"); return; }
+  const d = e.target.closest("[data-dgact]");
+  if (d) { if (d.dataset.dgact === "forward") forwardForm(d.dataset.id); else stepForm("dg_requests", d.dataset.id, d.dataset.dgact); }
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+/* ---------- login ---------- */
+function viewLogin() {
+  return `<div class="card stack" style="max-width:400px;margin:8vh auto 0;width:100%">
+    <div><img src="${LOGO}" alt="SAIC" style="width:220px;max-width:100%;display:block;margin:0 auto 10px"><h1 style="margin-top:8px">${esc(t("signin"))}</h1><p class="muted">${esc(t("signin_sub"))}</p></div>
+    <form id="lf" class="stack" novalidate>
+      <div class="f"><label for="lem">${esc(t("email"))}</label><input id="lem" type="email" autocomplete="username" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
+      <div class="f"><label for="lpw">${esc(t("password"))}</label><input id="lpw" type="password" autocomplete="current-password" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
+      <span class="err" id="lErr"></span><button class="btn primary" type="submit" id="lBtn">${esc(t("signin_btn"))}</button><a href="#" id="lForgot">${esc(t("forgot"))}</a></form></div>`;
+}
+function bindLogin() {
+  $("#lf").onsubmit = async e => { e.preventDefault(); $("#lBtn").disabled = true; $("#lErr").textContent = "";
+    const { error } = await sb.auth.signInWithPassword({ email: $("#lem").value.trim(), password: $("#lpw").value });
+    if (error) { $("#lErr").textContent = /invalid/i.test(error.message) ? t("bad_login") : error.message; $("#lBtn").disabled = false; return; }
+    await boot(); };
+  $("#lForgot").onclick = async e => { e.preventDefault(); const em = $("#lem").value.trim(); if (!em) { $("#lErr").textContent = t("enter_email"); return; }
+    await sb.auth.resetPasswordForEmail(em, { redirectTo: location.origin + "/dg-saic/" }); $("#lErr").textContent = t("reset_sent"); };
+}
+
+/* ---------- data from Supabase ---------- */
+const mapDg = r => ({ id: r.id, entity: r.entity, department: r.department || "", fromUser: r.from_user, fromName: r.from_name, type: r.type, title: r.title, amount: Number(r.amount), urgency: r.urgency, due: r.due || "",
+  details: r.details, files: r.files || [], status: r.status, pdgRef: r.pdg_ref, example: r.example, created: r.created_at, history: r.history || [] });
+async function loadData() {
+  try {
+    const must = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
+    S.dg = (await sb.from("dg_requests").select("*").order("created_at", { ascending: false }).then(must)).map(mapDg);
+    if (isDG()) {
+      const [reqs, fund, team, people, boxes, tx, farmers] = await Promise.all([
+        sb.from("pdg_requests").select("*").eq("from_role", "dg_saic").order("created_at", { ascending: false }).then(must),
+        sb.from("fund_requests").select("id, caisse, type, amount, reason, flow, status, created_at").then(r => r.error ? [] : r.data),
+        sb.from("saic_staff").select("*").then(must),
+        sb.from("profiles").select("id, full_name").then(must),
+        sb.from("cash_boxes").select("*").then(must),
+        sb.from("cash_transactions").select("caisse, kind, date, ref, party, cat, amount, seq").eq("voided", false).order("date").order("seq").limit(20000).then(must),
+        sb.from("farmers").select("id, name, village, decision, id_number, archived, plots(area, lat, lon, polygon, defo_date, defo_evidence)").eq("archived", false).limit(10000).then(must)
+      ]);
+      S.requests = reqs.map(r => ({ id: r.id, from: r.from_role, ent: r.ent, type: r.type, title: r.title, amount: Number(r.amount), urgency: r.urgency, due: r.due || "", details: r.details,
+        files: r.files || [], status: r.status, example: r.example, created: r.created_at, history: r.history || [] }));
+      S.fund = fund.map(f => ({ ...f, amount: Number(f.amount) }));
+      S.people = people.map(p => ({ id: p.id, name: p.full_name || p.id.slice(0, 8) })).sort((a, b) => a.name.localeCompare(b.name));
+      S.team = team.map(s => ({ ...s, name: (S.people.find(p => p.id === s.user_id) || {}).name || "—" }));
+      const [recs, sales] = await Promise.all([
+        sb.from("cocoa_receptions").select("date, zone, buyer, qty, amount, lines").limit(20000).then(r => r.error ? [] : r.data),
+        sb.from("cocoa_sales").select("qty").then(r => r.error ? [] : r.data)]);
+      RECEP = { recs: recs.map(x => ({ ...x, qty: Number(x.qty), amount: Number(x.amount) })), sold: sales.reduce((a, x) => a + Number(x.qty), 0) };
+      const nd = {};
+      for (const b of boxes) {
+        CEILINGS[b.id] = Number(b.ceiling);
+        const rows = tx.filter(r => r.caisse === b.id).map(r => ({ date: r.date, ref: r.ref || "", party: r.party || "", cat: r.cat, out: r.kind === "out" ? Number(r.amount) : 0, in: r.kind === "in" ? Number(r.amount) : 0 }));
+        nd[b.id] = { opening: Number(b.opening), from: b.start_date, to: rows.reduce((m, r) => r.date > m ? r.date : m, b.start_date), rows };
+      }
+      CASH = { ...CASH, ...nd };
+      FARMERS = farmers.map(f => ({ id: f.id, name: f.name, village: f.village || "", decision: f.decision || "", idNumber: f.id_number || "",
+        plots: (f.plots || []).map(p => ({ area: p.area, lat: p.lat, lon: p.lon, polygon: p.polygon, defoDate: p.defo_date, defoEvidence: p.defo_evidence })) }));
+    }
+    S.loadError = "";
+  } catch (e) { S.loadError = e.message; }
+  recompute(); render();
+}
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { S.me = null; S.ready = true; render(); return; }
+  const user = session.user;
+  const [{ data: prof }, { data: mem }, { data: st }, { data: tm }] = await Promise.all([
+    sb.from("profiles").select("full_name, role").eq("id", user.id).maybeSingle(),
+    sb.from("exec_members").select("role").eq("user_id", user.id).maybeSingle(),
+    sb.from("saic_staff").select("entity, department, title, active").eq("user_id", user.id).maybeSingle(),
+    sb.from("treasury_members").select("role").eq("user_id", user.id).maybeSingle()]);
+  S.me = { id: user.id, name: (prof && prof.full_name) || user.email };
+  if (mem && mem.role === "dg_saic") S.role = "dg";
+  else if (st && st.active) { S.role = "staff"; S.staff = { entity: st.entity, department: st.department, title: st.title, fixed: true }; }
+  else if ((prof && ["lead", "warehouse"].includes(prof.role)) || tm) { S.role = "staff"; S.staff = { entity: "cacao", department: prof && prof.role === "lead" ? "Traçabilité" : prof && prof.role === "warehouse" ? "Magasin" : tm ? "Comptabilité" : "", fixed: true }; }
+  else S.role = null;
+  S.ready = true;
+  if (S.role === "staff" && !["mine", "apps"].includes(route())) location.hash = "mine";
+  if (S.role) await loadData(); else render();
+}
+recompute(); render(); boot();
+
+</script>
+</body>
+</html>
