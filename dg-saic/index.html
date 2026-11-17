@@ -236,6 +236,8 @@ label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .rail{border-top:4px solid var(--pod)}
 .ent-chip.IND{background:var(--accent-soft);color:var(--accent)}
 .soon-card{border-style:dashed}
+.logo.whp{width:120px;margin:0 auto}
+@media (max-width:760px){.logo.whp{width:56px}}
 
 </style>
 </head>
@@ -255,7 +257,9 @@ label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../js/config.js";
 import { LOGO } from "../js/logo.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm";
-document.getElementById("brandLogo").src = LOGO;
+const BRAND = location.pathname.startsWith("/dg-whp") ? "../icons/whp-logo.png" : LOGO;
+document.getElementById("brandLogo").src = BRAND;
+if (BRAND !== LOGO) document.getElementById("brandLogo").classList.add("whp");
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
 let CASH = { cacao: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] }, admin: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] } };
 let FARMERS = [];
@@ -576,11 +580,15 @@ function viewRecep() {
 }
 
 /* ====================== DG SAIC dashboard ====================== */
-const ENTS = ["cacao", "industries"];
+/* One page for two offices: /dg-saic (DG SAIC: SAIC Cacao + SAIC Industries) and /dg-whp (DG WHP: WHP head office). */
+const OFFICE = location.pathname.startsWith("/dg-whp") ? "dg_whp" : "dg_saic";
+const WHP = OFFICE === "dg_whp";
+const ENTS = WHP ? ["whp"] : ["cacao", "industries"];
+const chipCls = e => e === "cacao" ? "SAIC" : e === "industries" ? "IND" : "WHP";
 const DG_TYPES = ["depense", "achat", "budget", "contrat", "recrutement", "conge", "maintenance", "autre"];
 const PDG_TYPES = ["depense", "budget", "contrat", "investissement", "recrutement", "autre"];
 const TO_PDG_TYPE = { depense: "depense", achat: "depense", maintenance: "depense", budget: "budget", contrat: "contrat", recrutement: "recrutement", conge: "autre", autre: "autre" };
-const DEPTS = { cacao: ["Achats", "Magasin", "Traçabilité", "Comptabilité", "Logistique", "Qualité", "Administration"], industries: ["Production", "Maintenance", "Commercial", "Logistique", "Qualité", "Comptabilité", "Administration"] };
+const DEPTS = { cacao: ["Achats", "Magasin", "Traçabilité", "Comptabilité", "Logistique", "Qualité", "Administration"], whp: ["Direction Générale", "Finance", "Ressources humaines", "Juridique", "Audit interne", "Communication", "Achats groupe", "Informatique"], industries: ["Production", "Maintenance", "Commercial", "Logistique", "Qualité", "Comptabilité", "Administration"] };
 
 const DSTR = {
   fr: {
@@ -588,7 +596,7 @@ const DSTR = {
     signin_sub: "Tableau de bord de la Direction Générale SAIC",
     no_access: "Ce tableau de bord est réservé à la DG SAIC et au personnel de SAIC Cacao et SAIC Industries. Demandez l'accès à la DG.",
     hello: "Bonjour, {n}", ov_sub2: "SAIC Cacao et SAIC Industries : la situation de chaque département, les demandes qui vous attendent et le suivi de vos demandes au PDG.",
-    e_cacao: "SAIC Cacao", e_industries: "SAIC Industries",
+    e_cacao: "SAIC Cacao", e_industries: "SAIC Industries", e_whp: "WHP · Siège", r_dg_whp: "DG WHP", rl_dg_whp: "Directeur Général, WHP", sec_saic: "Filiale SAIC", sec_saic_sub: "Performance de la SAIC, en lecture seule.",
     k_inbox: "Demandes à traiter", k_inbox_sub: "dont {n} urgente(s)", k_treso: "Visas trésorerie", k_treso_sub: "Demandes de fonds exceptionnelles", k_topdg: "Au PDG", k_topdg_sub: "{p} en attente · {i} question(s)",
     waiting: "En attente de votre décision", none_waiting: "Aucune demande n'attend votre décision.",
     s_escalated: "Transmise au PDG", f_escalated: "Transmises au PDG", h_escalated: "Transmise au PDG",
@@ -617,7 +625,7 @@ const DSTR = {
     signin_sub: "SAIC General Management dashboard",
     no_access: "This dashboard is for the DG SAIC and the staff of SAIC Cacao and SAIC Industries. Ask the DG for access.",
     hello: "Hello, {n}", ov_sub2: "SAIC Cacao and SAIC Industries: how each department is doing, the requests waiting for you, and where your requests to the PDG stand.",
-    e_cacao: "SAIC Cacao", e_industries: "SAIC Industries",
+    e_cacao: "SAIC Cacao", e_industries: "SAIC Industries", e_whp: "WHP · Head office", r_dg_whp: "DG WHP", rl_dg_whp: "Managing Director, WHP", sec_saic: "SAIC subsidiary", sec_saic_sub: "SAIC's performance, read only.",
     k_inbox: "Requests to handle", k_inbox_sub: "{n} urgent", k_treso: "Treasury sign-offs", k_treso_sub: "Exceptional fund requests", k_topdg: "With the PDG", k_topdg_sub: "{p} pending · {i} question(s)",
     waiting: "Waiting for your decision", none_waiting: "No request is waiting for your decision.",
     s_escalated: "Forwarded to the PDG", f_escalated: "Forwarded to the PDG", h_escalated: "Forwarded to the PDG",
@@ -642,14 +650,27 @@ const DSTR = {
     from: "From", need_dept: "Choose the entity and enter a subject and details."
   }
 };
+const WSTR = {
+  fr: { sub: "Direction Générale · WHP", signin_sub: "Tableau de bord du Directeur Général de WHP", no_access: "Ce tableau de bord est réservé au DG de WHP et au personnel du siège WHP. Demandez l'accès au DG.",
+    ov_sub2: "Wenkam Holdings Plus : les demandes du siège, la performance de la filiale SAIC et le suivi de vos demandes au PDG.",
+    in_sub: "Demandes du personnel du siège WHP. Vous pouvez approuver, rejeter, demander des informations ou transmettre au PDG.",
+    nav_mine: "Mes demandes au DG", m_title: "Mes demandes au DG WHP", m_sub: "Vos demandes au Directeur Général de WHP et leur suivi.", new_dg: "Nouvelle demande au DG", submit_dg: "Envoyer au DG", submitted_dg: "Demande {id} envoyée au DG",
+    fw_opinion: "Avis du DG WHP", team_note: "Ajoutez ici le personnel du siège WHP qui peut vous envoyer des demandes." },
+  en: { sub: "General Management · WHP", signin_sub: "WHP Managing Director's dashboard", no_access: "This dashboard is for the DG of WHP and WHP head-office staff. Ask the DG for access.",
+    ov_sub2: "Wenkam Holdings Plus: head-office requests, the SAIC subsidiary's performance, and where your requests to the PDG stand.",
+    in_sub: "Requests from WHP head-office staff. You can approve, reject, ask for information or forward to the PDG.",
+    nav_mine: "My requests to the DG", m_title: "My requests to the DG WHP", m_sub: "Your requests to WHP's Managing Director and where they stand.", new_dg: "New request to the DG", submit_dg: "Send to the DG", submitted_dg: "Request {id} sent to the DG",
+    fw_opinion: "DG WHP's opinion", team_note: "Add the WHP head-office staff who can send you requests." }
+};
 Object.assign(STR.fr, DSTR.fr); Object.assign(STR.en, DSTR.en);
+if (WHP) { Object.assign(STR.fr, WSTR.fr); Object.assign(STR.en, WSTR.en); document.title = "Direction Générale WHP"; }
 
 const isDG = () => S.role === "dg";
 const entName = e => t("e_" + e);
 const pdgById = id => S.requests.find(r => r.id === id);
-const myPdg = () => S.requests.filter(r => r.from === "dg_saic");
+const myPdg = () => S.requests.filter(r => r.from === OFFICE);
 const dgPending = () => S.dg.filter(r => r.status === "pending");
-const tresoWaiting = () => S.fund.filter(f => { if (["funded", "rejected"].includes(f.status)) return false; const flow = f.flow || ["daf"]; const i = f.status === "submitted" ? 0 : Math.max(0, flow.indexOf(f.status) + 1); return flow[i] === "dg"; });
+const tresoWaiting = () => WHP ? [] : S.fund.filter(f => { if (["funded", "rejected"].includes(f.status)) return false; const flow = f.flow || ["daf"]; const i = f.status === "submitted" ? 0 : Math.max(0, flow.indexOf(f.status) + 1); return flow[i] === "dg"; });
 const stCls = s => s === "approved" ? "ok" : s === "rejected" ? "bad" : s === "escalated" ? "neutral" : "warn";
 
 /* ---------- shell ---------- */
@@ -663,7 +684,7 @@ function shell() {
     ? [["overview", t("nav_overview")], ["inbox", t("nav_inbox"), dgPending().length + tresoWaiting().length], ["pdg", t("nav_pdg"), myPdg().filter(x => x.status === "info").length], ["recep", t("nav_recep")], ["treasury", t("nav_treasury")], ["trace", t("nav_trace")], ["team", t("nav_team")], ["apps", t("nav_apps")]]
     : [["mine", t("nav_mine"), S.dg.filter(x => x.status === "info").length], ["apps", t("nav_apps")]];
   $("#nav").innerHTML = items.map(([k, l, c]) => `<a href="#${k}" class="${r === k ? "on" : ""}">${esc(l)}${c ? `<span class="badge">${c}</span>` : ""}</a>`).join("");
-  $("#railFoot").innerHTML = `${S.me ? `<span>${esc(S.me.name)}${S.role ? `<br>${esc(isDG() ? t("rl_dg_saic") : `${t("r_staff")} · ${entName(S.staff.entity)}${S.staff.department ? " · " + S.staff.department : ""}`)}` : ""}</span>` : ""}
+  $("#railFoot").innerHTML = `${S.me ? `<span>${esc(S.me.name)}${S.role ? `<br>${esc(isDG() ? t("rl_" + OFFICE) : `${t("r_staff")} · ${entName(S.staff.entity)}${S.staff.department ? " · " + S.staff.department : ""}`)}` : ""}</span>` : ""}
     <div class="row"><button class="btn small" id="langBtn">${esc(t("lang"))}</button>${S.me ? `<button class="btn small" id="outBtn">${esc(t("signout"))}</button>` : ""}</div>`;
   const ob = $("#outBtn"); if (ob) ob.onclick = async () => { await sb.auth.signOut(); S.me = null; S.role = null; render(); };
   try { localStorage.setItem("saic-lang", S.lang); } catch (e) {}
@@ -718,7 +739,7 @@ function viewOverview() {
   return `<div class="topline"><div><h1>${esc(t("hello", { n: S.me.name }))}</h1><p>${esc(t("ov_sub2"))}</p></div><span class="muted">${new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
   <div class="tiles">
     <a class="tile" href="#inbox" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_inbox"))}</span><span class="v ${pend.length ? "warn" : "ok"}">${pend.length}</span><span class="s">${esc(t("k_inbox_sub", { n: urg }))}</span></a>
-    <a class="tile" href="#inbox" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_treso"))}</span><span class="v ${tresoWaiting().length ? "warn" : "ok"}">${tresoWaiting().length}</span><span class="s">${esc(t("k_treso_sub"))}</span></a>
+    ${WHP ? "" : `<a class="tile" href="#inbox" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_treso"))}</span><span class="v ${tresoWaiting().length ? "warn" : "ok"}">${tresoWaiting().length}</span><span class="s">${esc(t("k_treso_sub"))}</span></a>`}
     <a class="tile" href="#pdg" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_topdg"))}</span><span class="v">${mp.filter(r => r.status === "pending" || r.status === "info").length}</span><span class="s">${esc(t("k_topdg_sub", { p: mp.filter(r => r.status === "pending").length, i: mp.filter(r => r.status === "info").length }))}</span></a>
     <div class="tile"><span class="l">${esc(t("k_cash"))}</span><span class="v">${fcs(CB.cacao.closing + CB.admin.closing)}</span><span class="s">${esc(t("k_cash_sub"))}</span></div>
     <a class="tile" href="#recep" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_rq"))}</span><span class="v">${(rs.qty / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} <small>t</small></span><span class="s">${esc(t("k_rp"))} ${fn(rs.avg)} F/kg</span></a>
@@ -729,10 +750,13 @@ function viewOverview() {
       ${pend.length ? pend.slice(0, 4).map(r => dgCard(r, true)).join("") : `<p class="muted">${esc(t("none_waiting"))}</p>`}</div>
     <div class="card stack"><h3>${esc(t("attention"))}</h3><ul class="issues">${al.map(a => `<li class="${a.lv}"><a href="${a.href}" style="color:inherit;text-decoration:none">${esc(a.m)}</a></li>`).join("") || `<li class="ok">${esc(t("st_ok"))}</li>`}</ul></div>
   </div>
-  <h2>${esc(t("e_cacao"))}</h2>
+  ${WHP ? `<h2>${esc(t("e_whp"))}</h2>
+  <div class="dept-grid">${deptRequestsFor("whp")}${pdgCard()}</div>
+  <div><h2>${esc(t("sec_saic"))}</h2><p class="small muted" style="margin-top:4px">${esc(t("sec_saic_sub"))}</p></div>
+  <div class="dept-grid">${deptCash("cacao")}${deptCash("admin")}${deptRecep()}${deptTrace()}</div>` : `<h2>${esc(t("e_cacao"))}</h2>
   <div class="dept-grid">${deptCash("cacao")}${deptCash("admin")}${deptRecep()}${deptTrace()}${deptRequestsFor("cacao")}${pdgCard()}</div>
   <h2>${esc(t("e_industries"))}</h2>
-  <div class="dept-grid">${deptRequestsFor("industries")}<div class="card dept soon-card"><div class="box-head"><div><div class="ent">${esc(t("e_industries"))}</div><h2>${esc(t("ind_title"))}</h2></div><span class="pill neutral">${esc(t("soon"))}</span></div><p class="muted">${esc(t("ind_text"))}</p></div></div>`;
+  <div class="dept-grid">${deptRequestsFor("industries")}<div class="card dept soon-card"><div class="box-head"><div><div class="ent">${esc(t("e_industries"))}</div><h2>${esc(t("ind_title"))}</h2></div><span class="pill neutral">${esc(t("soon"))}</span></div><p class="muted">${esc(t("ind_text"))}</p></div></div>`}`;
 }
 
 /* ---------- request cards (staff → DG) ---------- */
@@ -740,7 +764,7 @@ function dgCard(r, compact) {
   const canDecide = isDG() && r.status === "pending", canReply = !isDG() && r.status === "info" && r.fromUser === S.me.id;
   const p = r.pdgRef ? pdgById(r.pdgRef) : null, last = (r.history || [])[r.history.length - 1];
   return `<div class="req clickable" data-dgopen="${esc(r.id)}" tabindex="0" role="button" aria-label="${esc(t("view"))} : ${esc(r.title)}">
-    <div><div class="row"><span class="ent-chip ${r.entity === "cacao" ? "SAIC" : "IND"}">${esc(entName(r.entity))}</span><b>${esc(r.title)}</b>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}<span class="pill ${stCls(r.status)}">${esc(t("s_" + r.status))}</span>${p ? `<span class="pill ${stCls(p.status)}">${esc(t("pdg_status", { s: t("s_" + p.status) }))}</span>` : ""}${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
+    <div><div class="row"><span class="ent-chip ${chipCls(r.entity)}">${esc(entName(r.entity))}</span><b>${esc(r.title)}</b>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}<span class="pill ${stCls(r.status)}">${esc(t("s_" + r.status))}</span>${p ? `<span class="pill ${stCls(p.status)}">${esc(t("pdg_status", { s: t("s_" + p.status) }))}</span>` : ""}${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
       <div class="small muted" style="margin-top:4px">${esc(r.fromName || "—")}${r.department ? " · " + esc(r.department) : ""} · ${esc(t("t_" + r.type))} · ${dfull(r.created)}${r.due ? " · " + esc(t("due", { d: dfull(r.due) })) : ""}</div>
       ${compact && last && last.note ? `<div class="small" style="margin-top:4px">${esc(last.note)}</div>` : ""}</div>
     <div class="amt">${r.amount ? fc(r.amount) : `<span class="small muted">${esc(t("no_amount"))}</span>`}</div>
@@ -780,9 +804,9 @@ function viewInbox() {
     <select id="fEnt" aria-label="${esc(t("f_ents"))}"><option value="">${esc(t("f_ents"))}</option>${ENTS.map(k => `<option value="${k}" ${f.ent === k ? "selected" : ""}>${esc(entName(k))}</option>`).join("")}</select>
     <select id="fDept" aria-label="${esc(t("f_depts"))}"><option value="">${esc(t("f_depts"))}</option>${depts.map(d => `<option ${f.dept === d ? "selected" : ""}>${esc(d)}</option>`).join("")}</select></div>
   <div class="stack">${list.length ? list.map(r => dgCard(r, true)).join("") : `<div class="card muted">${esc(t("no_req"))}</div>`}</div>
-  <div class="card stack"><div class="topline"><div><h2>${esc(t("tq_title"))}</h2><p class="small">${esc(t("tq_sub"))}</p></div><a class="btn" href="${APP_BASE}/tresorerie/">${esc(t("tq_open"))}</a></div>
+  ${WHP ? "" : `<div class="card stack"><div class="topline"><div><h2>${esc(t("tq_title"))}</h2><p class="small">${esc(t("tq_sub"))}</p></div><a class="btn" href="${APP_BASE}/tresorerie/">${esc(t("tq_open"))}</a></div>
     ${tw.length ? `<div class="table-wrap"><table><thead><tr><th>${esc(t("d_ref"))}</th><th>${esc(S.lang === "fr" ? "Caisse" : "Cash box")}</th><th>${esc(t("d_details"))}</th><th class="r">${esc(t("d_amount"))}</th><th>${esc(t("d_created"))}</th></tr></thead><tbody>
-      ${tw.map(x => `<tr><td class="mono">${esc(x.id)}</td><td>${esc(t("caisse_" + x.caisse))}</td><td>${esc(x.reason)}</td><td class="r num">${fc(x.amount)}</td><td>${dfull(x.created_at)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">${esc(t("tq_none"))}</p>`}</div>`;
+      ${tw.map(x => `<tr><td class="mono">${esc(x.id)}</td><td>${esc(t("caisse_" + x.caisse))}</td><td>${esc(x.reason)}</td><td class="r num">${fc(x.amount)}</td><td>${dfull(x.created_at)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">${esc(t("tq_none"))}</p>`}</div>`}`;
 }
 
 /* ---------- my requests to the PDG (DG) ---------- */
@@ -810,7 +834,7 @@ function viewTeam() {
   <div class="card stack"><h3>${esc(t("add_member"))}</h3>
     <form id="tf" class="fgrid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end">
       <div class="f"><label for="tp">${esc(t("person"))}</label><select id="tp"><option value="">${esc(t("choose"))}</option>${free.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></div>
-      <div class="f"><label for="te">${esc(t("f_entity"))}</label>${sel("te", "cacao")}</div>
+      <div class="f"><label for="te">${esc(t("f_entity"))}</label>${sel("te", ENTS[0])}</div>
       <div class="f"><label for="td">${esc(t("f_dept"))}</label><input id="td" type="text" list="deptList"></div>
       <div class="f"><label for="tt">${esc(t("f_title2"))}</label><input id="tt" type="text"></div>
       <button class="btn primary" type="submit">${esc(t("add_member"))}</button></form>
@@ -819,7 +843,7 @@ function viewTeam() {
     ${staff.map(s => `<tr data-uid="${s.user_id}"><td>${esc(s.name)}</td><td>${sel("e-" + s.user_id, s.entity)}</td><td><input type="text" list="deptList" id="d-${s.user_id}" value="${esc(s.department)}"></td><td><input type="text" id="t-${s.user_id}" value="${esc(s.title)}"></td>
       <td><span class="pill ${s.active ? "ok" : "neutral"}">${esc(t(s.active ? "active" : "inactive"))}</span></td>
       <td class="r"><div class="row" style="justify-content:flex-end"><button class="btn small" data-tsave="${s.user_id}">${esc(t("save"))}</button><button class="btn small" data-ttoggle="${s.user_id}">${esc(t(s.active ? "deactivate" : "reactivate"))}</button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="card muted">${esc(t("no_team"))}</div>`}
-  <datalist id="deptList">${[...new Set([...DEPTS.cacao, ...DEPTS.industries])].map(d => `<option value="${esc(d)}">`).join("")}</datalist>`;
+  <datalist id="deptList">${[...new Set(ENTS.flatMap(e => DEPTS[e]))].map(d => `<option value="${esc(d)}">`).join("")}</datalist>`;
 }
 function bindTeam() {
   $("#tf").onsubmit = async e => { e.preventDefault(); const uid = $("#tp").value; if (!uid) { $("#tfErr").textContent = t("choose"); return; }
@@ -908,12 +932,12 @@ function hydrateFiles() {
   document.querySelectorAll("[data-fp]").forEach(a => a.onclick = async e => { e.preventDefault(); const w = window.open("", "_blank"); const u = await signed(a.dataset.fb, a.dataset.fp); if (!u) { if (w) w.close(); return; } if (w) w.location = u; else location.href = u; });
   document.querySelectorAll("[data-thumbp]").forEach(async img => { const u = await signed(img.dataset.thumbb, img.dataset.thumbp); if (u) img.src = u; });
 }
-const histName = h => h.role === "dg_saic" ? t("r_dg_saic") : h.role === "staff" ? (h.name || t("r_staff")) : t("r_" + h.role);
+const histName = h => (h.role === "dg_saic" || h.role === "dg_whp") ? t("r_" + h.role) : h.role === "staff" ? (h.name || t("r_staff")) : t("r_" + h.role);
 function openDg(id) {
   const r = S.dg.find(x => x.id === id); if (!r) return;
   const canDecide = isDG() && r.status === "pending", canReply = !isDG() && r.status === "info" && r.fromUser === S.me.id, p = r.pdgRef ? pdgById(r.pdgRef) : null;
   modal(`<div style="display:flex;flex-direction:column;min-height:100%">
-    <header><div><div class="row"><span class="ent-chip ${r.entity === "cacao" ? "SAIC" : "IND"}">${esc(entName(r.entity))}</span><span class="pill ${stCls(r.status)}">${esc(t("s_" + r.status))}</span>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
+    <header><div><div class="row"><span class="ent-chip ${chipCls(r.entity)}">${esc(entName(r.entity))}</span><span class="pill ${stCls(r.status)}">${esc(t("s_" + r.status))}</span>${r.urgency === "urgent" ? `<span class="prio">${esc(t("urgent"))}</span>` : ""}${r.example ? `<span class="tag">${esc(t("example"))}</span>` : ""}</div>
       <h2 style="margin-top:8px">${esc(r.title)}</h2></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
     <div class="body">
       <dl class="dkv">
@@ -970,14 +994,14 @@ document.addEventListener("keydown", e => { const o = e.target.closest && e.targ
 
 /* ---------- forms ---------- */
 function newRequestForm(kind) {   // kind: "dg" (staff → DG) or "pdg" (DG → PDG)
-  const toDg = kind === "dg", types = toDg ? DG_TYPES : PDG_TYPES, ent = toDg ? S.staff.entity : "SAIC";
+  const toDg = kind === "dg", types = toDg ? DG_TYPES : PDG_TYPES, ent = toDg ? S.staff.entity : (WHP ? "WHP" : "SAIC");
   modal(`<form id="nf" novalidate>
-    <header><div><h2>${esc(t(toDg ? "new_dg" : "new_req"))}</h2><p>${esc(toDg ? S.me.name : t("rl_dg_saic"))}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <header><div><h2>${esc(t(toDg ? "new_dg" : "new_req"))}</h2><p>${esc(toDg ? S.me.name : t("rl_" + OFFICE))}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
     <div class="body"><div class="fgrid">
       <div class="f full"><label for="nt">${esc(t("f_title"))}</label><input id="nt" type="text"></div>
       ${toDg ? `<div class="f"><label for="ne">${esc(t("f_entity"))}</label><select id="ne" ${S.staff.fixed ? "disabled" : ""}>${ENTS.map(k => `<option value="${k}" ${k === ent ? "selected" : ""}>${esc(entName(k))}</option>`).join("")}</select></div>
         <div class="f"><label for="ndp">${esc(t("f_dept"))}</label><input id="ndp" type="text" list="deptList2" value="${esc(S.staff.department || "")}"><datalist id="deptList2">${DEPTS[ent].map(d => `<option value="${esc(d)}">`).join("")}</datalist></div>`
-      : `<div class="f"><label for="ne">${esc(t("f_ent2"))}</label><select id="ne"><option>SAIC</option><option>WHP</option></select></div>`}
+      : `<div class="f"><label for="ne">${esc(t("f_ent2"))}</label><select id="ne">${(WHP ? ["WHP", "SAIC"] : ["SAIC", "WHP"]).map(k => `<option>${k}</option>`).join("")}</select></div>`}
       <div class="f"><label for="ny">${esc(t("f_type"))}</label><select id="ny">${types.map(k => `<option value="${k}">${esc(t("t_" + k))}</option>`).join("")}</select></div>
       <div class="f"><label for="na">${esc(t("f_amount"))}</label><input id="na" type="number" min="0" step="1000" inputmode="numeric"></div>
       <div class="f"><label for="nu">${esc(t("f_urgency"))}</label><select id="nu"><option value="normal">${esc(t("f_normal"))}</option><option value="urgent">${esc(t("f_urgent"))}</option></select></div>
@@ -993,10 +1017,10 @@ function newRequestForm(kind) {   // kind: "dg" (staff → DG) or "pdg" (DG → 
     if (!title || !details) { $("#nfErr").textContent = t(toDg ? "need_dept" : "need_fields"); return; }
     const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
     let files; try { files = attNew.length ? await uploadAttachments(toDg ? "dg-files" : "pdg-files", $("#nfErr")) : []; } catch (x) { $("#nfErr").textContent = x.message; btn.disabled = false; return; }
-    const now = new Date().toISOString(), id = `${toDg ? "DG" : "PDG"}-${now.slice(0, 4)}-${String(Date.now()).slice(-6)}`;
+    const now = new Date().toISOString(), id = `${toDg ? (WHP ? "DGW" : "DG") : "PDG"}-${now.slice(0, 4)}-${String(Date.now()).slice(-6)}`;
     const base = { id, type: $("#ny").value, title, amount: Number($("#na").value) || 0, urgency: $("#nu").value, due: $("#nd").value || null, details, files };
     const { error } = toDg ? await sb.from("dg_requests").insert({ ...base, entity: $("#ne").value, department: $("#ndp").value.trim() })
-                           : await sb.from("pdg_requests").insert({ ...base, from_role: "dg_saic", ent: $("#ne").value });
+                           : await sb.from("pdg_requests").insert({ ...base, from_role: OFFICE, ent: $("#ne").value });
     if (error) { $("#nfErr").textContent = t("save_err", { m: error.message }); btn.disabled = false; return; }
     closeModal(); toast(t(toDg ? "submitted_dg" : "submitted", { id })); await loadData();
   };
@@ -1020,7 +1044,7 @@ function forwardForm(id) {
       const files = await copyFilesToPdg(r.files);
       const opinion = $("#fo").value.trim(), pid = `PDG-${new Date().toISOString().slice(0, 4)}-${String(Date.now()).slice(-6)}`;
       const details = `${r.details}\n\n— ${t("fw_origin", { id: r.id, n: r.fromName || "—", e: entName(r.entity), d: r.department || "—" })}${opinion ? `\n— ${t("fw_opinion")} : ${opinion}` : ""}`;
-      let x = await sb.from("pdg_requests").insert({ id: pid, from_role: "dg_saic", ent: "SAIC", type: $("#fy").value, title: $("#ft").value.trim() || r.title, amount: Number($("#fa").value) || 0, urgency: $("#fu").value, due: $("#fd").value || null, details, files });
+      let x = await sb.from("pdg_requests").insert({ id: pid, from_role: OFFICE, ent: WHP ? "WHP" : "SAIC", type: $("#fy").value, title: $("#ft").value.trim() || r.title, amount: Number($("#fa").value) || 0, urgency: $("#fu").value, due: $("#fd").value || null, details, files });
       if (x.error) throw new Error(x.error.message);
       x = await sb.from("dg_requests").update({ status: "escalated", pdg_ref: pid, last_note: opinion || null }).eq("id", r.id);
       if (x.error) throw new Error(x.error.message);
@@ -1051,7 +1075,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal()
 /* ---------- login ---------- */
 function viewLogin() {
   return `<div class="card stack" style="max-width:400px;margin:8vh auto 0;width:100%">
-    <div><img src="${LOGO}" alt="SAIC" style="width:220px;max-width:100%;display:block;margin:0 auto 10px"><h1 style="margin-top:8px">${esc(t("signin"))}</h1><p class="muted">${esc(t("signin_sub"))}</p></div>
+    <div><img src="${BRAND}" alt="${WHP ? "Wenkam Holdings Plus" : "SAIC"}" style="width:220px;max-width:100%;display:block;margin:0 auto 10px"><h1 style="margin-top:8px">${esc(t("signin"))}</h1><p class="muted">${esc(t("signin_sub"))}</p></div>
     <form id="lf" class="stack" novalidate>
       <div class="f"><label for="lem">${esc(t("email"))}</label><input id="lem" type="email" autocomplete="username" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
       <div class="f"><label for="lpw">${esc(t("password"))}</label><input id="lpw" type="password" autocomplete="current-password" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
@@ -1063,7 +1087,7 @@ function bindLogin() {
     if (error) { $("#lErr").textContent = /invalid/i.test(error.message) ? t("bad_login") : error.message; $("#lBtn").disabled = false; return; }
     await boot(); };
   $("#lForgot").onclick = async e => { e.preventDefault(); const em = $("#lem").value.trim(); if (!em) { $("#lErr").textContent = t("enter_email"); return; }
-    await sb.auth.resetPasswordForEmail(em, { redirectTo: location.origin + "/dg-saic/" }); $("#lErr").textContent = t("reset_sent"); };
+    await sb.auth.resetPasswordForEmail(em, { redirectTo: location.origin + (WHP ? "/dg-whp/" : "/dg-saic/") }); $("#lErr").textContent = t("reset_sent"); };
 }
 
 /* ---------- data from Supabase ---------- */
@@ -1072,10 +1096,10 @@ const mapDg = r => ({ id: r.id, entity: r.entity, department: r.department || ""
 async function loadData() {
   try {
     const must = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
-    S.dg = (await sb.from("dg_requests").select("*").order("created_at", { ascending: false }).then(must)).map(mapDg);
+    S.dg = (await sb.from("dg_requests").select("*").order("created_at", { ascending: false }).then(must)).map(mapDg).filter(r => ENTS.includes(r.entity));
     if (isDG()) {
       const [reqs, fund, team, people, boxes, tx, farmers] = await Promise.all([
-        sb.from("pdg_requests").select("*").eq("from_role", "dg_saic").order("created_at", { ascending: false }).then(must),
+        sb.from("pdg_requests").select("*").eq("from_role", OFFICE).order("created_at", { ascending: false }).then(must),
         sb.from("fund_requests").select("id, caisse, type, amount, reason, flow, status, created_at").then(r => r.error ? [] : r.data),
         sb.from("saic_staff").select("*").then(must),
         sb.from("profiles").select("id, full_name").then(must),
@@ -1116,9 +1140,9 @@ async function boot() {
     sb.from("saic_staff").select("entity, department, title, active").eq("user_id", user.id).maybeSingle(),
     sb.from("treasury_members").select("role").eq("user_id", user.id).maybeSingle()]);
   S.me = { id: user.id, name: (prof && prof.full_name) || user.email };
-  if (mem && mem.role === "dg_saic") S.role = "dg";
-  else if (st && st.active) { S.role = "staff"; S.staff = { entity: st.entity, department: st.department, title: st.title, fixed: true }; }
-  else if ((prof && ["lead", "warehouse"].includes(prof.role)) || tm) { S.role = "staff"; S.staff = { entity: "cacao", department: prof && prof.role === "lead" ? "Traçabilité" : prof && prof.role === "warehouse" ? "Magasin" : tm ? "Comptabilité" : "", fixed: true }; }
+  if (mem && mem.role === OFFICE) S.role = "dg";
+  else if (st && st.active && ENTS.includes(st.entity)) { S.role = "staff"; S.staff = { entity: st.entity, department: st.department, title: st.title, fixed: true }; }
+  else if (!WHP && !(st && st.active) && ((prof && ["lead", "warehouse"].includes(prof.role)) || tm)) { S.role = "staff"; S.staff = { entity: "cacao", department: prof && prof.role === "lead" ? "Traçabilité" : prof && prof.role === "warehouse" ? "Magasin" : tm ? "Comptabilité" : "", fixed: true }; }
   else S.role = null;
   S.ready = true;
   if (S.role === "staff" && !["mine", "apps"].includes(route())) location.hash = "mine";

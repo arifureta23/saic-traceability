@@ -262,6 +262,7 @@ let CASH = { cacao: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: []
 let FARMERS = [];
 let RECEP = { recs: [], sold: 0 };
 const APP_BASE = "..";
+const PDG_NAME = "David Takam";
 const CEILINGS = { cacao: 20000000, admin: 500000 };
 
 const SUBMITTERS = { dg_whp: { ent: "WHP" }, daf_whp: { ent: "WHP" }, dg_saic: { ent: "SAIC" } };
@@ -279,7 +280,8 @@ const STR = {
     rp_title: "SAIC · Réception cacao", rp_sub: "Vue en lecture seule des réceptions de cacao au magasin : quantités, prix, zones d'origine et traçabilité.", rp_value: "Valeur des achats", rp_traced: "Tracé jusqu'au producteur", rp_stock: "Stock en magasin", rp_trend: "Prix moyen par semaine (F/kg)", rp_zones: "Quantités par zone", rp_buyers: "Quantités par acheteur", rp_months: "Par mois", rp_month: "Mois", rp_kg: "kg achetés", rp_avg: "prix moyen", rp_n: "réceptions",
     viewing_as: "Rôle (démo)", lang: "English", draft: "Brouillon : chiffres de trésorerie importés de vos fichiers Excel ; la traçabilité montre les producteurs d'exemple. Les demandes au PDG sont enregistrées et partagées.",
     r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
-    rl_dg_whp: "Directeur Général, WHP", rl_daf_whp: "Directeur Administratif et Financier, WHP", rl_dg_saic: "Directeur Général, SAIC",
+    rl_dg_whp: "Anthony Imeni, Directeur Général WHP", rl_daf_whp: "Directeur Administratif et Financier, WHP", rl_dg_saic: "Estelle Laure Sah Pamboro, Directrice Générale SAIC",
+    pdg_hello: "Bonjour, {n}", pdg_role: "Président-Directeur Général, Wenkam Holdings Plus", pdg_intro: "Bienvenue sur le tableau de bord du groupe. Vous suivez ici, en un coup d'œil, la trésorerie, les achats de cacao et la traçabilité de la SAIC, et vous décidez des demandes que vous adressent le DG WHP, le DAF WHP et la DG SAIC.",
     ov_title: "Tableau de bord du groupe", ov_sub: "La situation de chaque département de Wenkam Holdings Plus et de la SAIC, et ce qui attend votre décision.",
     k_pending: "À approuver", k_urgent: "dont {n} urgente(s)", k_cash: "Trésorerie SAIC disponible", k_cash_sub: "Caisse cacao + caisse administration", k_cocoa: "Achats de cacao", k_cocoa_sub: "{p}", k_farmers: "Producteurs vérifiés", k_farmers_sub: "{v} sur {n} enregistrés", k_alerts: "Points d'attention", k_alerts_sub: "Trésorerie et traçabilité",
     depts: "Départements", open_app: "Ouvrir l'application", open_detail: "Voir le détail",
@@ -319,7 +321,8 @@ const STR = {
     rp_title: "SAIC · Cocoa reception", rp_sub: "Read-only view of cocoa received at the warehouse: quantities, prices, zones of origin and traceability.", rp_value: "Purchase value", rp_traced: "Traced to the farmer", rp_stock: "Warehouse stock", rp_trend: "Average price per week (F/kg)", rp_zones: "Quantities by zone", rp_buyers: "Quantities by buyer", rp_months: "By month", rp_month: "Month", rp_kg: "kg bought", rp_avg: "average price", rp_n: "receptions",
     viewing_as: "Role (demo)", lang: "Français", draft: "Draft: treasury figures imported from your Excel files; traceability shows the example farmers. Requests to the PDG are saved and shared.",
     r_pdg: "PDG", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_dg_saic: "DG SAIC",
-    rl_dg_whp: "Managing Director, WHP", rl_daf_whp: "Finance Director, WHP", rl_dg_saic: "Managing Director, SAIC",
+    rl_dg_whp: "Anthony Imeni, Managing Director WHP", rl_daf_whp: "Finance Director, WHP", rl_dg_saic: "Estelle Laure Sah Pamboro, Managing Director SAIC",
+    pdg_hello: "Hello, {n}", pdg_role: "Chairman and CEO, Wenkam Holdings Plus", pdg_intro: "Welcome to the group dashboard. Here you follow SAIC's treasury, cocoa purchases and traceability at a glance, and decide on the requests sent to you by the DG WHP, the DAF WHP and the DG SAIC.",
     ov_title: "Group dashboard", ov_sub: "How each department of Wenkam Holdings Plus and SAIC is doing, and what is waiting for your decision.",
     k_pending: "To approve", k_urgent: "{n} urgent", k_cash: "SAIC cash available", k_cash_sub: "Cocoa + administration cash boxes", k_cocoa: "Cocoa purchases", k_cocoa_sub: "{p}", k_farmers: "Verified farmers", k_farmers_sub: "{v} of {n} registered", k_alerts: "Points to watch", k_alerts_sub: "Treasury and traceability",
     depts: "Departments", open_app: "Open the app", open_detail: "See details",
@@ -475,7 +478,7 @@ function shell() {
     ? [["overview", t("nav_overview")], ["approvals", t("nav_approvals"), n], ["recep", t("nav_recep")], ["treasury", t("nav_treasury")], ["trace", t("nav_trace")], ["apps", t("nav_apps")]]
     : [["approvals", t("nav_approvals"), n], ["apps", t("nav_apps")]];
   $("#nav").innerHTML = items.map(([k, l, c]) => `<a href="#${k}" class="${r === k ? "on" : ""}">${esc(l)}${c ? `<span class="badge">${c}</span>` : ""}</a>`).join("");
-  $("#railFoot").innerHTML = `${S.me ? `<span>${esc(S.me.name)}${S.role ? `<br>${esc(t("r_" + S.role))}` : ""}</span>` : ""}
+  $("#railFoot").innerHTML = `${S.me ? `<span>${esc(S.role === "pdg" ? PDG_NAME : S.me.name)}${S.role ? `<br>${esc(t("r_" + S.role))}` : ""}</span>` : ""}
     <div class="row"><button class="btn small" id="langBtn">${esc(t("lang"))}</button>${S.me ? `<button class="btn small" id="outBtn">${esc(t("signout"))}</button>` : ""}</div>`;
   const ob = $("#outBtn"); if (ob) ob.onclick = async () => { await sb.auth.signOut(); S.me = null; S.role = null; render(); };
   try { localStorage.setItem("saic-lang", S.lang); } catch (e) {}
@@ -539,7 +542,7 @@ function deptRequests() {
 }
 function viewOverview() {
   const pend = pendingForPdg(), urg = pend.filter(r => r.urgency === "urgent").length, al = alerts(), rs = recStats();
-  return `<div class="topline"><div><h1>${esc(t("ov_title"))}</h1><p>${esc(t("ov_sub"))}</p></div><span class="muted">${new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
+  return `<div class="topline"><div><h1>${esc(t("pdg_hello", { n: PDG_NAME }))}</h1><p style="font-weight:600;color:var(--accent)">${esc(t("pdg_role"))}</p><p>${esc(t("pdg_intro"))}</p></div><span class="muted">${new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
   <div class="tiles">
     <a class="tile" href="#approvals" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_pending"))}</span><span class="v ${pend.length ? "warn" : "ok"}">${pend.length}</span><span class="s">${esc(t("k_urgent", { n: urg }))}</span></a>
     <div class="tile"><span class="l">${esc(t("k_cash"))}</span><span class="v">${fcs(CB.cacao.closing + CB.admin.closing)}</span><span class="s">${esc(t("k_cash_sub"))}</span></div>

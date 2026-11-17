@@ -63,6 +63,7 @@ const STR = {
     dl_t: "Application pour ordinateur", dl_d: "Installez SAIC Suite sur votre ordinateur Windows : une icône sur le bureau, une fenêtre dédiée, les mises à jour automatiques.", dl_b: "Télécharger pour Windows", dl_n: "Au premier lancement, Windows peut afficher « Windows a protégé votre ordinateur » : cliquez sur « Informations complémentaires » puis « Exécuter quand même ».",
     m_reg: "Registre des producteurs", m_reg_d: "Producteurs, parcelles, cartographie, F01", m_tre: "Trésorerie", m_tre_d: "Caisses, dépenses, demandes de fonds", m_rec: "Réception cacao", m_rec_d: "Réceptions, prix, zones, livraisons par producteur",
     m_dg: "Direction Générale SAIC", m_dg_d: "Tableau de bord de la DG, SAIC Cacao et SAIC Industries", m_dg_s: "Demandes à la DG", m_dg_s_d: "Envoyer une demande à la Directrice Générale et suivre la réponse",
+    m_dgw: "Direction Générale WHP", m_dgw_d: "Tableau de bord du DG de WHP, siège et filiale SAIC", m_dgw_s: "Demandes au DG WHP", m_dgw_s_d: "Envoyer une demande au Directeur Général de WHP et suivre la réponse",
     m_pdg: "Tableau de bord PDG", m_pdg_d: "Groupe Wenkam Holdings Plus, approbations", m_pdg_s: "Demandes au PDG", m_pdg_s_d: "Envoyer une demande au PDG et suivre la réponse",
     r_lead: "Responsable traçabilité", r_warehouse: "Magasinier", r_viewer: "Lecture", r_comptable: "Comptable", r_daf: "DAF", r_dg: "DG", r_tresorier: "Trésorier", r_pdg: "PDG", r_dg_saic: "DG SAIC", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_staff: "Personnel" },
   en: { title: "SAIC Suite", hello: "Hello, {n}", sub: "Your SAIC and Wenkam Holdings Plus apps.", none: "No app is open for your account yet. Ask the administrator for access.",
@@ -71,6 +72,7 @@ const STR = {
     dl_t: "Desktop app", dl_d: "Install SAIC Suite on your Windows computer: a desktop icon, its own window, automatic updates.", dl_b: "Download for Windows", dl_n: "On first launch Windows may show “Windows protected your PC”: click “More info”, then “Run anyway”.",
     m_reg: "Farmer registry", m_reg_d: "Farmers, plots, mapping, F01", m_tre: "Treasury", m_tre_d: "Cash boxes, expenses, fund requests", m_rec: "Cocoa reception", m_rec_d: "Receptions, prices, zones, deliveries by farmer",
     m_dg: "SAIC General Management", m_dg_d: "DG dashboard for SAIC Cacao and SAIC Industries", m_dg_s: "Requests to the DG", m_dg_s_d: "Send a request to the Managing Director and follow the answer",
+    m_dgw: "WHP General Management", m_dgw_d: "WHP DG dashboard: head office and the SAIC subsidiary", m_dgw_s: "Requests to the DG WHP", m_dgw_s_d: "Send a request to WHP's Managing Director and follow the answer",
     m_pdg: "PDG dashboard", m_pdg_d: "Wenkam Holdings Plus group, approvals", m_pdg_s: "Requests to the PDG", m_pdg_s_d: "Send a request to the PDG and follow the answer",
     r_lead: "Traceability lead", r_warehouse: "Warehouse manager", r_viewer: "Read only", r_comptable: "Accountant", r_daf: "DAF", r_dg: "DG", r_tresorier: "Treasurer", r_pdg: "PDG", r_dg_saic: "DG SAIC", r_dg_whp: "DG WHP", r_daf_whp: "DAF WHP", r_staff: "Staff" }
 };
@@ -120,8 +122,11 @@ async function boot() {
   const mods = [], reg = prof && prof.role, ex = exe && exe.role;
   if (ex === "pdg") mods.push({ k: "m_pdg", href: "../pdg/", ic: "W", whp: true, role: t("r_pdg") });
   else if (ex) mods.push({ k: "m_pdg_s", href: "../pdg/", ic: "W", whp: true, role: t("r_" + ex) });
+  const whpStaff = staff && staff.active && staff.entity === "whp";
+  if (ex === "dg_whp") mods.push({ k: "m_dgw", href: "../dg-whp/", ic: "DG", whp: true, role: t("r_dg_whp") });
+  else if (whpStaff) mods.push({ k: "m_dgw_s", href: "../dg-whp/", ic: "DG", whp: true, role: t("r_staff") });
   if (ex === "dg_saic") mods.push({ k: "m_dg", href: "../dg-saic/", ic: "DG", role: t("r_dg_saic") });
-  else if ((staff && staff.active) || ["lead", "warehouse"].includes(reg) || tre) mods.push({ k: "m_dg_s", href: "../dg-saic/", ic: "DG", role: t("r_staff") });
+  else if (!whpStaff && ((staff && staff.active) || ["lead", "warehouse"].includes(reg) || tre)) mods.push({ k: "m_dg_s", href: "../dg-saic/", ic: "DG", role: t("r_staff") });
   if (reg) mods.push({ k: "m_reg", href: "../", ic: "F", role: t("r_" + reg) });
   if (reg || ex === "pdg" || ex === "dg_saic") mods.push({ k: "m_rec", href: "../reception/", ic: "R", role: t(["lead", "warehouse"].includes(reg) ? "r_" + reg : "r_viewer") });
   if (tre) mods.push({ k: "m_tre", href: "../tresorerie/", ic: "T", role: t("r_" + tre.role) });

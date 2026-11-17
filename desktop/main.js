@@ -59,6 +59,7 @@ function buildMenu() {
       { label: "Trésorerie", click: go("/tresorerie/") },
       { label: "Réception cacao", click: go("/reception/") },
       { label: "Direction Générale SAIC", click: go("/dg-saic/") },
+      { label: "Direction Générale WHP", click: go("/dg-whp/") },
       { label: "Tableau de bord PDG", click: go("/pdg/") },
       { type: "separator" },
       { role: "quit", label: "Quitter / Quit" } ] },
