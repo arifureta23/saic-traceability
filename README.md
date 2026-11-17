@@ -131,3 +131,21 @@ Dashboard for the Managing Director of SAIC, who runs **SAIC Cacao** and **SAIC 
    on conflict (user_id) do update set role = excluded.role;
    ```
 3. The DG opens `/dg-saic` → **Team** and adds SAIC Cacao and SAIC Industries staff (their accounts are first created in Authentication → Users).
+
+---
+
+# WHP — DG WHP dashboard (`/dg-whp`)
+
+Same page as `/dg-saic` (Vercel serves it at `/dg-whp` through a rewrite in `vercel.json`), for the Managing Director of Wenkam Holdings Plus.
+
+- **DG WHP** (`exec_members.role = 'dg_whp'`): requests from WHP head-office staff (approve, reject, ask for information, forward to the PDG), his own requests to the PDG, the SAIC subsidiary's performance (read only) and his Team page.
+- Each request goes to one office according to the sender's entity: `whp` → DG WHP; `cacao`, `industries` → DG SAIC. Each DG only sees and decides on their own office's requests.
+
+## Setup
+1. Supabase → SQL Editor → run `supabase/dg_whp.sql` (after `dg_saic.sql`).
+2. Give the DG WHP his role (replace the email):
+   ```sql
+   insert into public.exec_members (user_id, role)
+   select id, 'dg_whp' from auth.users where email = 'dg.whp@example.com'
+   on conflict (user_id) do update set role = excluded.role;
+   ```
