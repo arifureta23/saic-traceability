@@ -583,6 +583,8 @@ function viewRecep() {
 /* One page for two offices: /dg-saic (DG SAIC: SAIC Cacao + SAIC Industries) and /dg-whp (DG WHP: WHP head office). */
 const OFFICE = location.pathname.startsWith("/dg-whp") ? "dg_whp" : "dg_saic";
 const WHP = OFFICE === "dg_whp";
+const DG_NAMES = { dg_whp: "Anthony Imeni", dg_saic: "Estelle Laure Sah Pamboro" };   // shown for the DG of each office
+const myName = () => isDG() ? DG_NAMES[OFFICE] : S.me.name;
 const ENTS = WHP ? ["whp"] : ["cacao", "industries"];
 const chipCls = e => e === "cacao" ? "SAIC" : e === "industries" ? "IND" : "WHP";
 const DG_TYPES = ["depense", "achat", "budget", "contrat", "recrutement", "conge", "maintenance", "autre"];
@@ -684,7 +686,7 @@ function shell() {
     ? [["overview", t("nav_overview")], ["inbox", t("nav_inbox"), dgPending().length + tresoWaiting().length], ["pdg", t("nav_pdg"), myPdg().filter(x => x.status === "info").length], ["recep", t("nav_recep")], ["treasury", t("nav_treasury")], ["trace", t("nav_trace")], ["team", t("nav_team")], ["apps", t("nav_apps")]]
     : [["mine", t("nav_mine"), S.dg.filter(x => x.status === "info").length], ["apps", t("nav_apps")]];
   $("#nav").innerHTML = items.map(([k, l, c]) => `<a href="#${k}" class="${r === k ? "on" : ""}">${esc(l)}${c ? `<span class="badge">${c}</span>` : ""}</a>`).join("");
-  $("#railFoot").innerHTML = `${S.me ? `<span>${esc(S.me.name)}${S.role ? `<br>${esc(isDG() ? t("rl_" + OFFICE) : `${t("r_staff")} · ${entName(S.staff.entity)}${S.staff.department ? " · " + S.staff.department : ""}`)}` : ""}</span>` : ""}
+  $("#railFoot").innerHTML = `${S.me ? `<span>${esc(S.role ? myName() : S.me.name)}${S.role ? `<br>${esc(isDG() ? t("rl_" + OFFICE) : `${t("r_staff")} · ${entName(S.staff.entity)}${S.staff.department ? " · " + S.staff.department : ""}`)}` : ""}</span>` : ""}
     <div class="row"><button class="btn small" id="langBtn">${esc(t("lang"))}</button>${S.me ? `<button class="btn small" id="outBtn">${esc(t("signout"))}</button>` : ""}</div>`;
   const ob = $("#outBtn"); if (ob) ob.onclick = async () => { await sb.auth.signOut(); S.me = null; S.role = null; render(); };
   try { localStorage.setItem("saic-lang", S.lang); } catch (e) {}
@@ -736,7 +738,7 @@ function pdgCard() {
 }
 function viewOverview() {
   const pend = dgPending(), urg = pend.filter(r => r.urgency === "urgent").length, al = dgAlerts(), rs = recStats(), mp = myPdg();
-  return `<div class="topline"><div><h1>${esc(t("hello", { n: S.me.name }))}</h1><p>${esc(t("ov_sub2"))}</p></div><span class="muted">${new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
+  return `<div class="topline"><div><h1>${esc(t("hello", { n: myName() }))}</h1><p>${esc(t("ov_sub2"))}</p></div><span class="muted">${new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
   <div class="tiles">
     <a class="tile" href="#inbox" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_inbox"))}</span><span class="v ${pend.length ? "warn" : "ok"}">${pend.length}</span><span class="s">${esc(t("k_inbox_sub", { n: urg }))}</span></a>
     ${WHP ? "" : `<a class="tile" href="#inbox" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_treso"))}</span><span class="v ${tresoWaiting().length ? "warn" : "ok"}">${tresoWaiting().length}</span><span class="s">${esc(t("k_treso_sub"))}</span></a>`}
@@ -1136,13 +1138,13 @@ async function boot() {
   const user = session.user;
   const [{ data: prof }, { data: mem }, { data: st }, { data: tm }] = await Promise.all([
     sb.from("profiles").select("full_name, role").eq("id", user.id).maybeSingle(),
-    sb.from("exec_members").select("role").eq("user_id", user.id).maybeSingle(),
+    sb.from("exec_members").select("role").eq("user_id", user.id),
     sb.from("saic_staff").select("entity, department, title, active").eq("user_id", user.id).maybeSingle(),
     sb.from("treasury_members").select("role").eq("user_id", user.id).maybeSingle()]);
   S.me = { id: user.id, name: (prof && prof.full_name) || user.email };
-  if (mem && mem.role === OFFICE) S.role = "dg";
+  if ((mem || []).some(m => m.role === OFFICE)) S.role = "dg";
   else if (st && st.active && ENTS.includes(st.entity)) { S.role = "staff"; S.staff = { entity: st.entity, department: st.department, title: st.title, fixed: true }; }
-  else if (!WHP && !(st && st.active) && ((prof && ["lead", "warehouse"].includes(prof.role)) || tm)) { S.role = "staff"; S.staff = { entity: "cacao", department: prof && prof.role === "lead" ? "Traçabilité" : prof && prof.role === "warehouse" ? "Magasin" : tm ? "Comptabilité" : "", fixed: true }; }
+  else if (!WHP && !(st && st.active) && !(mem || []).some(m => ["dg_saic", "dg_whp"].includes(m.role)) && ((prof && ["lead", "warehouse"].includes(prof.role)) || tm)) { S.role = "staff"; S.staff = { entity: "cacao", department: prof && prof.role === "lead" ? "Traçabilité" : prof && prof.role === "warehouse" ? "Magasin" : tm ? "Comptabilité" : "", fixed: true }; }
   else S.role = null;
   S.ready = true;
   if (S.role === "staff" && !["mine", "apps"].includes(route())) location.hash = "mine";

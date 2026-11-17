@@ -149,3 +149,13 @@ Same page as `/dg-saic` (Vercel serves it at `/dg-whp` through a rewrite in `ver
    select id, 'dg_whp' from auth.users where email = 'dg.whp@example.com'
    on conflict (user_id) do update set role = excluded.role;
    ```
+
+---
+
+## Several roles on one account (test phase)
+`exec_members` now allows one account to hold several executive roles (primary key `user_id, role`): every rule checks "does this account have role X?" (`has_exec`). Each page uses the role it is for: `/pdg` the PDG role, `/dg-whp` the DG WHP role, `/dg-saic` the DG SAIC role. To add a role:
+```sql
+insert into public.exec_members (user_id, role)
+select id, 'dg_whp' from auth.users where email = 'someone@example.com'
+on conflict do nothing;
+```
