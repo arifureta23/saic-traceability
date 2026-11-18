@@ -1,0 +1,32 @@
+# Runs the database rule tests (supabase/tests) on every push and pull request.
+# The tests build a throwaway PostgreSQL database on the GitHub runner from the SQL files in this repository.
+# They never connect to the real Supabase project, and need no secrets.
+name: Database rule tests
+
+on:
+  push:
+    paths: ["supabase/**", ".github/workflows/db-tests.yml"]
+  pull_request:
+    paths: ["supabase/**", ".github/workflows/db-tests.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pgtap:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL 16 with pgTAP
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-16 postgresql-16-pgtap libtap-parser-sourcehandler-pgtap-perl
+          sudo pg_ctlcluster 16 main start
+          sudo -u postgres psql -qc "alter user postgres password 'postgres'"
+      - name: Run the rule tests
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: ./supabase/tests/run.sh

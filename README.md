@@ -159,3 +159,19 @@ insert into public.exec_members (user_id, role)
 select id, 'dg_whp' from auth.users where email = 'someone@example.com'
 on conflict do nothing;
 ```
+
+---
+
+# Database rule tests (`supabase/tests`)
+
+Automatic tests for the approval rules the database enforces. They run on GitHub on every push and pull request that touches `supabase/` (workflow **Database rule tests**), on a throwaway PostgreSQL built from the SQL files in this repository. They never connect to the real Supabase project and need no secrets.
+
+What they check: nobody approves their own request; treasury requests follow DAF (regular) or DAF then DG (exceptional), then the Treasurer; a funded request adds the top-up to the cash box; imported cash lines can't be changed or deleted; each DG only sees and decides on their own office's requests; the PDG decides on PDG requests; and every SQL file can be run twice.
+
+Tests marked **TODO** document known gaps: they are reported but do not fail the run.
+
+Run them on your own computer (needs PostgreSQL 16, `postgresql-16-pgtap` and `pg_prove`):
+```bash
+PGHOST=localhost PGUSER=postgres ./supabase/tests/run.sh
+```
+`supabase/tests/supabase_shim.sql` imitates the few Supabase pieces the SQL needs (`auth.users`, `auth.uid()`, storage tables, the `authenticated` role). Never run it on the real project.
