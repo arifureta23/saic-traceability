@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../js/theme.js"></script>
+<script src="../js/ui.js"></script>
 <title>SAIC Trésorerie</title>
 <meta name="theme-color" content="#1f5c47">
 <link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
@@ -573,8 +574,19 @@ function controlList(items, max = 99, showBox = false) {
 function viewOverview() {
   const all = [...A.cacao.controls.map(x => ({ ...x, box: "cacao" })), ...A.admin.controls.map(x => ({ ...x, box: "admin" }))];
   const pend = S.requests.filter(r => !["funded", "rejected"].includes(r.status));
-  return `<div class="topline"><div><h1>${esc(t("ov_title"))}</h1><p>${esc(t("ov_sub"))}</p></div>
-    <div class="row"><button class="btn" data-act="newReq">${esc(t("new_req"))}</button><button class="btn primary" data-act="newEntry">${esc(t("new_entry"))}</button></div></div>
+  const tt = (fr, en) => S.lang === "en" ? en : fr, bad = all.filter(x => x.lv === "bad").length, pc = a => Math.round(a.closing / a.c.ceiling * 100);
+  const lead = tt(`Caisse cacao : <b>${fc(A.cacao.closing)}</b> (${pc(A.cacao)} % du plafond), caisse administrative : <b>${fc(A.admin.closing)}</b> (${pc(A.admin)} %). `, `Cocoa cash box: <b>${fc(A.cacao.closing)}</b> (${pc(A.cacao)}% of ceiling), admin cash box: <b>${fc(A.admin.closing)}</b> (${pc(A.admin)}%). `)
+    + (pend.length ? tt(`${pend.length} demande${pend.length > 1 ? "s" : ""} de fonds en cours.`, `${pend.length} fund request${pend.length > 1 ? "s" : ""} in progress.`) : tt("Aucune demande de fonds en cours.", "No fund request in progress."))
+    + (all.length ? " " + tt(`${all.length} point${all.length > 1 ? "s" : ""} de contrôle à vérifier.`, `${all.length} control point${all.length > 1 ? "s" : ""} to check.`) : "");
+  const status = bad ? { lv: "bad", text: tt(`${bad} point${bad > 1 ? "s" : ""} à traiter`, `${bad} point${bad > 1 ? "s" : ""} need${bad > 1 ? "" : "s"} action`) } : all.length ? { lv: "watch", text: tt("À surveiller", "Worth watching") } : { lv: "ok", text: tt("Caisses en ordre", "Cash boxes in order") };
+  const series = a => a.days.map(x => x.bal).slice(-14), chg = a => { const v = series(a); return v.length > 1 ? UI.change(v[v.length - 1], v[Math.max(0, v.length - 8)]) : null; };
+  const boxKpi = (a, icon, color) => UI.kpi({ icon, color, label: t("nav_" + a.key), value: fcs(a.closing).replace(/ (M|k)$/, ""), unit: (/ M$/.test(fcs(a.closing)) ? "M " : / k$/.test(fcs(a.closing)) ? "k " : "") + "F", href: "#" + a.key,
+    deltaHtml: UI.delta(chg(a), S.lang), sub: tt(`${pc(a)} % du plafond de ${fcs(a.c.ceiling)}`, `${pc(a)}% of the ${fcs(a.c.ceiling)} ceiling`), series: series(a), hot: a.status === "bad" });
+  return UI.hero({ lang: S.lang, status, name: (S.me && S.me.name) || "", role: S.role ? t("role_" + S.role) : "", leadHtml: lead,
+      actions: `<button class="btn" data-act="newReq">${esc(t("new_req"))}</button><button class="btn primary hero-cta" data-act="newEntry">${UI.icon("tick", 2.4)}<span>${esc(t("new_entry"))}</span></button>` })
+  + `<div class="kpis">${boxKpi(A.cacao, "pod", "var(--ok)")}${boxKpi(A.admin, "cash", "var(--gold)")}
+    ${UI.kpi({ icon: "send", color: "#5aa2ff", label: t("nav_requests"), value: pend.length, href: "#requests", sub: tt("en attente de visa ou de virement", "awaiting sign-off or transfer") })}
+    ${UI.kpi({ icon: "alert", color: "var(--bad)", label: t("controls"), value: all.length, sub: tt(`${bad} critique${bad > 1 ? "s" : ""} · ${all.length - bad} à vérifier`, `${bad} critical · ${all.length - bad} to check`), hot: bad > 0 })}</div>
   <div class="grid2">${boxCard(A.cacao)}${boxCard(A.admin)}</div>
   <div class="grid-wide">
     <div class="card stack"><h3>${esc(t("controls"))} (${all.length})</h3>${controlList(all, 12, true)}</div>

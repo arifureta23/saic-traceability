@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../js/theme.js"></script>
+<script src="../js/ui.js"></script>
 <title>Direction Générale SAIC</title>
 <meta name="theme-color" content="#1f5c47">
 <link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
@@ -747,27 +748,99 @@ function pdgCard() {
     <div class="who-row"><span>${esc(t("s_pending"))}</span><span class="n"><b>${c("pending")}</b></span><span></span><span>${esc(t("s_info"))}</span><span class="n"><b>${c("info")}</b></span><span></span><span>${esc(t("s_approved"))}</span><span class="n">${c("approved")}</span><span></span><span>${esc(t("s_rejected"))}</span><span class="n">${c("rejected")}</span><span></span></div>
     <div class="foot"><a href="#pdg">${esc(t("see_all"))}</a><button class="btn small primary" data-act="newpdg">${esc(t("new_req"))}</button></div></div>`;
 }
+/* ---------- "Cacao Night" overview widgets (shared by the PDG and DG dashboards; uses js/ui.js) ---------- */
+const tt = (fr, en) => S.lang === "en" ? en : fr;
+const plural = (n, fr, frs, en, ens) => tt(n > 1 ? frs : fr, n > 1 ? ens : en);
+function ovData() {
+  const rs = recStats(), weeks = rs.weeks.slice(-12);
+  const sum = a => a.reduce((x, w) => x + w.kg, 0);
+  const last4 = sum(weeks.slice(-4)), prev4 = sum(weeks.slice(-8, -4));
+  const lastP = weeks.length ? weeks[weeks.length - 1].avg : 0, prevP = weeks.length > 1 ? weeks.slice(-5, -1).reduce((a, w) => a + w.avg, 0) / Math.min(4, weeks.length - 1) : 0;
+  /* combined SAIC cash balance over time */
+  const dates = [...new Set([...CB.cacao.days, ...CB.admin.days].map(d => d.date))].sort();
+  const at = (days, opening, d) => { let v = opening; for (const x of days) { if (x.date > d) break; v = x.bal; } return v; };
+  const cash = dates.map(d => at(CB.cacao.days, CB.cacao.d.opening, d) + at(CB.admin.days, CB.admin.d.opening, d)).slice(-12);
+  return { rs, weeks, last4, prev4, kgChange: prev4 ? UI.change(last4, prev4) : null, priceChange: prevP ? UI.change(lastP, prevP) : null, cash,
+    cashChange: cash.length > 1 ? UI.change(cash[cash.length - 1], cash[Math.max(0, cash.length - 8)]) : null };
+}
+const perDay = list => { const out = []; for (let i = 7; i >= 0; i--) { const d = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10); out.push(list.filter(r => String(r.created || "").slice(0, 10) <= d).length); } return out; };
+function ovStatus(al, okText) {
+  const bad = al.filter(a => a.lv === "bad").length, warn = al.length - bad;
+  return bad ? { lv: "bad", text: tt(`${bad} point${bad > 1 ? "s" : ""} à traiter`, `${bad} point${bad > 1 ? "s" : ""} need${bad > 1 ? "" : "s"} action`) }
+    : warn ? { lv: "watch", text: tt("À surveiller", "Worth watching") } : { lv: "ok", text: okText };
+}
+function cocoaSentence(o) {
+  if (!o.rs.qty) return "";
+  if (o.kgChange != null && o.prev4) {
+    const up = o.kgChange >= 0, p = UI.num(Math.abs(o.kgChange), S.lang);
+    return tt(`Les achats de cacao sont en ${up ? "hausse" : "baisse"} de <b>${p} %</b> sur les 4 dernières semaines (${UI.num(o.last4 / 1000, S.lang, 1)} t).`,
+      `Cocoa purchases are <b>${up ? "up" : "down"} ${p}%</b> over the last 4 weeks (${UI.num(o.last4 / 1000, S.lang, 1)} t).`);
+  }
+  return tt(`<b>${UI.num(o.rs.qty / 1000, S.lang, 1)} t</b> de cacao achetées à ${UI.num(o.rs.avg, S.lang)} F/kg en moyenne.`, `<b>${UI.num(o.rs.qty / 1000, S.lang, 1)} t</b> of cocoa bought at ${UI.num(o.rs.avg, S.lang)} F/kg on average.`);
+}
+function ovCocoaKpis(o, onlyKg) {
+  return UI.kpi({ icon: "pod", color: "var(--ok)", label: t("k_rq"), value: UI.num(o.rs.qty, S.lang), unit: "kg", href: "#recep",
+      deltaHtml: UI.delta(o.kgChange, S.lang), sub: tt(`${o.rs.n} réceptions · ${o.rs.zones.length} zones`, `${o.rs.n} receptions · ${o.rs.zones.length} zones`), series: o.weeks.map(w => w.kg) })
+    + (onlyKg ? "" : UI.kpi({ icon: "trend", color: "var(--gold)", label: t("k_rp"), value: UI.num(o.rs.avg, S.lang), unit: "F/kg", href: "#recep",
+      deltaHtml: UI.delta(o.priceChange, S.lang, true), sub: `min. ${UI.num(o.rs.min, S.lang)} · max. ${UI.num(o.rs.max, S.lang)}`, series: o.weeks.map(w => w.avg) }));
+}
+function ovCashKpi(o) {
+  const tot = CB.cacao.closing + CB.admin.closing, under = CB.cacao.closing <= CB.cacao.c.ceiling && CB.admin.closing <= CB.admin.c.ceiling;
+  return UI.kpi({ icon: "cash", color: "#5aa2ff", label: t("k_cash"), value: fcs(tot).replace(/ (M|k)$/, ""), unit: (/ M$/.test(fcs(tot)) ? "M " : / k$/.test(fcs(tot)) ? "k " : "") + "F", href: "#treasury",
+    deltaHtml: UI.delta(o.cashChange, S.lang), sub: tt(`2 caisses · ${under ? "sous plafond" : "plafond dépassé"}`, `2 cash boxes · ${under ? "under ceiling" : "over ceiling"}`), series: o.cash });
+}
+function ovCocoaCard() {
+  const o = ovData();
+  return `<div class="card ui-rise"><div class="card-h"><h3>${esc(tt("Achats de cacao", "Cocoa purchases"))}</h3><a href="#recep">${esc(tt("Détail →", "Details →"))}</a></div>${UI.cocoaChart(o.weeks, S.lang, UI.weekLabel(S.lang))}</div>`;
+}
+function ovCashCard() {
+  const row = k => { const a = CB[k]; return UI.cashRow({ name: t("d_" + k), pct: a.closing / a.c.ceiling * 100, ringSub: tt("du plafond", "of ceiling"), balance: fc(a.closing),
+    inflow: fcs(a.totIn), outflow: fcs(a.totOut), inLabel: tt("entrées", "in"), outLabel: tt("sorties", "out") }); };
+  const st = [CB.cacao.status, CB.admin.status].includes("bad") ? "bad" : [CB.cacao.status, CB.admin.status].includes("watch") ? "watch" : "ok";
+  return `<div class="card ui-rise"><div class="card-h"><h3>${esc(tt("Caisses SAIC", "SAIC cash boxes"))}</h3><span class="st ${st}">${esc(t("st_" + st))}</span></div>${row("cacao")}${row("admin")}</div>`;
+}
+function ovTraceCard() {
+  const s = trace, rs = recStats(), n = Math.max(s.n, 1), tp = rs.qty ? Math.round(rs.traced / rs.qty * 100) : 0, st = s.hold ? (s.hold / n > 0.2 ? "bad" : "watch") : "ok";
+  return `<a class="card trace-card ui-rise" href="#trace" style="text-decoration:none;color:inherit;display:block"><div class="card-h"><h3>${esc(tt("Traçabilité EUDR", "EUDR traceability"))}</h3><span class="st ${st}">${esc(t("st_" + st))}</span></div>
+    <div class="nums"><div><b>${s.n}</b><span>${esc(t("farmers"))}</span></div><div><b>${s.plots}</b><span>${esc(t("plots"))}</span></div><div><b>${tp} %</b><span>${esc(tt("du cacao tracé", "of cocoa traced"))}</span></div></div>
+    <div class="stackbar"><i style="width:${s.verified / n * 100}%;background:var(--ok)"></i><i style="width:${s.pending / n * 100}%;background:var(--gold)"></i><i style="width:${s.hold / n * 100}%;background:var(--bad)"></i></div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>${s.verified} ${esc(t("verified"))}</span><span><i style="background:var(--gold)"></i>${s.pending} ${esc(t("pending"))}</span><span><i style="background:var(--bad)"></i>${s.hold} ${esc(t("hold"))}</span></div></a>`;
+}
+const AREA = { "#treasury": ["Trésorerie SAIC", "SAIC treasury"], "#trace": ["Traçabilité", "Traceability"], "#recep": ["Réception cacao", "Cocoa reception"], "#inbox": ["Demandes", "Requests"], "#pdg": ["PDG", "PDG"] };
+function ovFeedCard(al) {
+  const items = al.slice(0, 5).map(a => ({ lv: a.lv, m: a.m, href: a.href, sub: AREA[a.href] ? tt(...AREA[a.href]) : "" }));
+  return `<div class="card ui-rise"><div class="card-h"><h3>${esc(t("attention"))}</h3></div>${UI.feed(items, tt("Rien à signaler.", "Nothing to report."))}</div>`;
+}
+const dueTxt = r => r.due ? tt("avant le ", "by ") + dfmt(r.due) : dfmt(r.created);
+function ovRows(list, attr, who, emptyText) {
+  return list.length ? `<div class="appr">${list.slice(0, 4).map(r => UI.reqRow({ openAttr: attr(r), ent: r.ent || (r.entity === "whp" ? "WHP" : "SAIC"), title: r.title, who: who(r), amount: r.amount ? fc(r.amount) : "—", due: dueTxt(r),
+    tags: [...(r.urgency === "urgent" ? [{ cls: "urgent", text: t("urgent") }] : []), ...(r.status === "info" ? [{ cls: "info", text: t("s_info") }] : []), { cls: "", text: r.ent || (r.entity === "whp" ? "WHP" : "SAIC") }, ...(r.example ? [{ cls: "ex", text: t("example") }] : [])] })).join("")}</div>`
+    : `<p class="muted">${esc(emptyText)}</p>`;
+}
+document.addEventListener("keydown", e => { const o = e.target.closest && e.target.closest(".ap"); if (o && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); o.click(); } });
+
 function viewOverview() {
-  const pend = dgPending(), urg = pend.filter(r => r.urgency === "urgent").length, al = dgAlerts(), rs = recStats(), mp = myPdg();
-  return `<div class="topline"><div><h1>${esc(t("hello", { n: myName() }))}</h1><p>${esc(t("ov_sub2"))}</p></div><span class="muted">${new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
-  <div class="tiles">
-    <a class="tile" href="#inbox" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_inbox"))}</span><span class="v ${pend.length ? "warn" : "ok"}">${pend.length}</span><span class="s">${esc(t("k_inbox_sub", { n: urg }))}</span></a>
-    ${WHP ? "" : `<a class="tile" href="#inbox" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_treso"))}</span><span class="v ${tresoWaiting().length ? "warn" : "ok"}">${tresoWaiting().length}</span><span class="s">${esc(t("k_treso_sub"))}</span></a>`}
-    <a class="tile" href="#pdg" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_topdg"))}</span><span class="v">${mp.filter(r => r.status === "pending" || r.status === "info").length}</span><span class="s">${esc(t("k_topdg_sub", { p: mp.filter(r => r.status === "pending").length, i: mp.filter(r => r.status === "info").length }))}</span></a>
-    <div class="tile"><span class="l">${esc(t("k_cash"))}</span><span class="v">${fcs(CB.cacao.closing + CB.admin.closing)}</span><span class="s">${esc(t("k_cash_sub"))}</span></div>
-    <a class="tile" href="#recep" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_rq"))}</span><span class="v">${(rs.qty / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} <small>t</small></span><span class="s">${esc(t("k_rp"))} ${fn(rs.avg)} F/kg</span></a>
-    <a class="tile" href="#trace" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_farmers"))}</span><span class="v">${trace.verified}</span><span class="s">${esc(t("k_farmers_sub", { v: trace.verified, n: trace.n }))}</span></a>
-  </div>
-  <div class="grid-wide">
-    <div class="card stack"><div class="topline"><h3>${esc(t("waiting"))}</h3><a href="#inbox">${esc(t("see_all"))}</a></div>
-      ${pend.length ? pend.slice(0, 4).map(r => dgCard(r, true)).join("") : `<p class="muted">${esc(t("none_waiting"))}</p>`}</div>
-    <div class="card stack"><h3>${esc(t("attention"))}</h3><ul class="issues">${al.map(a => `<li class="${a.lv}"><a href="${a.href}" style="color:inherit;text-decoration:none">${esc(a.m)}</a></li>`).join("") || `<li class="ok">${esc(t("st_ok"))}</li>`}</ul></div>
-  </div>
+  const pend = dgPending(), tw = tresoWaiting(), urg = pend.filter(r => r.urgency === "urgent").length, al = dgAlerts(), mp = myPdg(), o = ovData();
+  const open = mp.filter(r => r.status === "pending" || r.status === "info"), info = mp.filter(r => r.status === "info").length, n = pend.length + tw.length;
+  const lead = (n ? tt(`<b>${n} demande${n > 1 ? "s" : ""}</b> attend${n > 1 ? "ent" : ""} votre décision${urg ? `, dont ${urg} urgente${urg > 1 ? "s" : ""}` : ""}.`, `<b>${n} request${n > 1 ? "s" : ""}</b> await${n > 1 ? "" : "s"} your decision${urg ? `, ${urg} of them urgent` : ""}.`)
+      : tt("Aucune demande n'attend votre décision.", "No request is waiting for your decision."))
+    + (open.length ? " " + tt(`${open.length} de vos demandes au PDG ${open.length > 1 ? "sont" : "est"} en cours${info ? `, dont ${info} avec une question à laquelle répondre` : ""}.`, `${open.length} of your requests to the PDG ${open.length > 1 ? "are" : "is"} open${info ? `, ${info} with a question to answer` : ""}.`) : "")
+    + " " + cocoaSentence(o);
+  const role = WHP ? tt("Directeur Général, Wenkam Holdings Plus", "Managing Director, Wenkam Holdings Plus") : tt("Directrice Générale, SAIC Cacao et SAIC Industries", "Managing Director, SAIC Cacao and SAIC Industries");
+  return UI.hero({ lang: S.lang, status: ovStatus(al, tt("Tout est en ordre", "All in order")), name: myName(), role, leadHtml: lead,
+      cta: n ? { href: "#inbox", label: tt("Examiner les demandes", "Review requests"), icon: "check" } : { href: "#pdg", label: tt("Mes demandes au PDG", "My requests to the PDG"), icon: "send" } })
+  + `<div class="kpis">${UI.kpi({ icon: "inbox", color: "var(--bad)", hot: urg > 0, label: t("k_inbox"), value: n, href: "#inbox",
+      deltaHtml: urg ? `<span class="delta down">${urg} ${esc(t("urgent").toLowerCase())}</span>` : "", sub: (() => { const d = pend.length ? Math.round((Date.now() - Math.min(...pend.map(r => new Date(r.created)))) / 864e5) : 0; return pend.length ? tt(`la plus ancienne : ${d} j`, `oldest: ${d} days`) : tt("tout est traité", "all handled"); })(), series: perDay(S.dg) })}
+    ${UI.kpi({ icon: "send", color: "#5aa2ff", label: t("k_topdg"), value: open.length, href: "#pdg", sub: t("k_topdg_sub", { p: mp.filter(r => r.status === "pending").length, i: info }), series: perDay(mp) })}
+    ${ovCocoaKpis(o, true)}${ovCashKpi(o)}</div>
+  <div class="g-main">${ovCocoaCard()}<div class="card ui-rise"><div class="card-h"><h3>${esc(t("waiting"))}</h3><a href="#inbox">${esc(t("see_all"))} →</a></div>
+    ${ovRows(pend, r => `data-dgopen="${esc(r.id)}"`, r => r.fromName || "—", t("none_waiting"))}</div></div>
+  <div class="g-3">${ovCashCard()}${ovTraceCard()}${ovFeedCard(al)}</div>
   ${WHP ? `<h2>${esc(t("e_whp"))}</h2>
   <div class="dept-grid">${deptRequestsFor("whp")}${pdgCard()}</div>
   <div><h2>${esc(t("sec_saic"))}</h2><p class="small muted" style="margin-top:4px">${esc(t("sec_saic_sub"))}</p></div>
-  <div class="dept-grid">${deptCash("cacao")}${deptCash("admin")}${deptRecep()}${deptTrace()}</div>` : `<h2>${esc(t("e_cacao"))}</h2>
-  <div class="dept-grid">${deptCash("cacao")}${deptCash("admin")}${deptRecep()}${deptTrace()}${deptRequestsFor("cacao")}${pdgCard()}</div>
+  <div class="dept-grid">${deptRecep()}</div>` : `<h2>${esc(t("e_cacao"))}</h2>
+  <div class="dept-grid">${deptRecep()}${deptRequestsFor("cacao")}${pdgCard()}</div>
   <h2>${esc(t("e_industries"))}</h2>
   <div class="dept-grid">${deptRequestsFor("industries")}<div class="card dept soon-card"><div class="box-head"><div><div class="ent">${esc(t("e_industries"))}</div><h2>${esc(t("ind_title"))}</h2></div><span class="pill neutral">${esc(t("soon"))}</span></div><p class="muted">${esc(t("ind_text"))}</p></div></div>`}`;
 }
