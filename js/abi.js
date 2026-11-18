@@ -9,6 +9,12 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 const FN_URL = SUPABASE_URL ? SUPABASE_URL.replace(/\/$/, "") + "/functions/v1/abi" : "";
 const STORE = "abi-chat-v1";
 
+// ABI's face: "Abi la conseillère", a young woman in a gold headwrap with leaf patterns.
+// Each copy gets its own ids so the gradients still work when another copy is hidden.
+const FACE = '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><defs><radialGradient id="b-bg-@" cx="30%" cy="20%" r="90%"><stop offset="0" stop-color="#2a6b45"/><stop offset="1" stop-color="#0f2b1e"/></radialGradient><linearGradient id="b-wrap-@" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc867"/><stop offset="1" stop-color="#e08a1e"/></linearGradient><clipPath id="b-clip-@"><circle cx="60" cy="60" r="60"/></clipPath></defs><g clip-path="url(#b-clip-@)"><circle cx="60" cy="60" r="60" fill="url(#b-bg-@)"/><path d="M18 124 C22 96 42 88 60 88 C78 88 98 96 102 124Z" fill="#4cc35a"/><path d="M44 92 Q60 104 76 92" stroke="#2f9b45" stroke-width="3" fill="none"/><rect x="52" y="72" width="16" height="20" rx="7" fill="#7a4428"/><ellipse cx="60" cy="62" rx="21" ry="24" fill="#8f5532"/><circle cx="39.5" cy="66" r="4.5" fill="none" stroke="#f0a944" stroke-width="2"/><circle cx="80.5" cy="66" r="4.5" fill="none" stroke="#f0a944" stroke-width="2"/><path d="M36 56 C33 32 47 22 60 22 C75 22 88 32 84 56 C79 46 70 41 60 41 C50 41 41 46 36 56Z" fill="url(#b-wrap-@)"/><path d="M47 27 C42 10 60 6 64 18 C70 6 90 10 84 24 C80 32 66 30 60 26 C55 30 50 31 47 27Z" fill="#f0a944"/><path d="M60 26 C58 20 60 15 63 12" stroke="#c46a1c" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/><g fill="#2f9b45" opacity=".9"><path d="M45 36 q4 -6 8 0 q-4 4 -8 0Z"/><path d="M60 31 q4 -6 8 0 q-4 4 -8 0Z"/><path d="M73 37 q4 -6 8 0 q-4 4 -8 0Z"/></g><path d="M49 61 Q53 57 57 61" stroke="#2a140a" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M63 61 Q67 57 71 61" stroke="#2a140a" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M48 58.5 l-2.5 -2 M72 58.5 l2.5 -2" stroke="#2a140a" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="47" cy="69" rx="4.5" ry="2.6" fill="#e9705a" opacity=".5"/><ellipse cx="73" cy="69" rx="4.5" ry="2.6" fill="#e9705a" opacity=".5"/><path d="M54 72 Q60 78 66 72" stroke="#5a1f14" stroke-width="2.4" fill="#b8473a" stroke-linecap="round"/></g></svg>';
+let faceN = 0;
+const face = () => FACE.replace(/@/g, "f" + (++faceN));
+
 const STR = {
   fr: {
     ask: "Demander à ABI", ask_s: "Résumés, questions, notes", sub: "Agricultural Business Intelligence",
@@ -67,7 +73,10 @@ const CSS = `
 #abi-root *{box-sizing:border-box} #abi-root [hidden]{display:none!important}
 #abi-root button,#abi-root textarea{font:inherit;color:inherit}
 #abi-root :focus-visible{outline:2px solid var(--a-gold);outline-offset:2px}
-.abi-orb{width:36px;height:36px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe2a8,#f0a944 55%,#4cc35a 120%);display:grid;place-items:center;color:#1a1206;font:800 12px/1 "Bricolage Grotesque",system-ui,sans-serif;flex:none;box-shadow:0 0 18px -2px rgba(240,169,68,.6)}
+.abi-orb{width:36px;height:36px;border-radius:50%;display:block;flex:none;overflow:hidden;box-shadow:0 0 0 1.5px color-mix(in srgb,var(--a-gold) 70%,transparent),0 0 18px -2px rgba(240,169,68,.55)}
+.abi-orb svg{width:100%;height:100%;display:block}
+.abi-say{display:flex;gap:8px;align-items:flex-end;align-self:flex-start;max-width:100%} .abi-say .abi-m{max-width:calc(100% - 36px)}
+.abi-say>.abi-orb{width:28px;height:28px;box-shadow:0 0 0 1px color-mix(in srgb,var(--a-gold) 60%,transparent)}
 .abi-fab{position:fixed;right:22px;bottom:22px;z-index:9000;display:flex;align-items:center;gap:10px;background:var(--a-panel);color:var(--a-ink);border:1px solid color-mix(in srgb,var(--a-gold) 45%,transparent);border-radius:999px;padding:7px 18px 7px 7px;cursor:pointer;box-shadow:0 14px 40px -14px var(--a-gold);font-weight:600;text-align:left}
 .abi-fab small{display:block;font-weight:400;color:var(--a-muted);font-size:11px}
 .abi-panel{position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);z-index:9001;background:var(--a-bg2);border-left:1px solid var(--a-line-hi);box-shadow:-24px 0 60px -30px rgba(0,0,0,.55);display:flex;flex-direction:column;transform:translateX(105%);transition:transform .22s ease;visibility:hidden}
@@ -175,9 +184,9 @@ function mount() {
   const st = document.createElement("style"); st.textContent = CSS; document.head.appendChild(st);
   root = document.createElement("div"); root.id = "abi-root";
   root.innerHTML = `
-  <button class="abi-fab" type="button" aria-haspopup="dialog"><span class="abi-orb">ABI</span><span><span data-s="ask"></span><small data-s="ask_s"></small></span></button>
+  <button class="abi-fab" type="button" aria-haspopup="dialog"><span class="abi-orb">${face()}</span><span><span data-s="ask"></span><small data-s="ask_s"></small></span></button>
   <aside class="abi-panel" role="dialog" aria-label="ABI" aria-modal="false">
-    <div class="abi-head"><span class="abi-orb">ABI</span><div class="abi-tt"><b>ABI</b><span data-s="sub"></span></div>
+    <div class="abi-head"><span class="abi-orb">${face()}</span><div class="abi-tt"><b>ABI</b><span data-s="sub"></span></div>
       <button class="abi-ib" type="button" data-a="new">↺</button><button class="abi-ib" type="button" data-a="close">×</button></div>
     <div class="abi-scope"><span class="abi-chip" data-s="act"></span><span data-s="scope"></span></div>
     <div class="abi-msgs" aria-live="polite"></div>
@@ -209,15 +218,17 @@ function render() {
   sg.innerHTML = t("s").map(s => `<button type="button">${esc(s)}</button>`).join("");
   sg.querySelectorAll("button").forEach(b => b.onclick = () => send(b.textContent));
   sg.hidden = S.view.some(v => v.who === "me");
-  msgs.innerHTML = `<div class="abi-m bot"><p>${esc(t("hello"))}</p></div>` + S.view.map(viewHtml).join("");
+  msgs.innerHTML = say(`<div class="abi-m bot"><p>${esc(t("hello"))}</p></div>`) + S.view.map(viewHtml).join("");
   wire(); msgs.scrollTop = 1e9;
 }
 function viewHtml(v, i) {
   if (v.who === "me") return `<div class="abi-m me">${esc(v.text)}</div>`;
   if (v.who === "err") return `<div class="abi-m err">${esc(v.text)}</div>`;
-  return `<div class="abi-m bot" data-i="${i}">${md(v.text)}${(v.proposals || []).map((p, j) => cardHtml(p, i, j)).join("")}
-    ${v.text ? `<div class="abi-tools"><button type="button" data-copy="${i}">${esc(t("copy"))}</button></div>` : ""}</div>`;
+  return say(`<div class="abi-m bot" data-i="${i}">${md(v.text)}${(v.proposals || []).map((p, j) => cardHtml(p, i, j)).join("")}
+    ${v.text ? `<div class="abi-tools"><button type="button" data-copy="${i}">${esc(t("copy"))}</button></div>` : ""}</div>`);
 }
+// An ABI message with her small face beside it.
+const say = html => `<div class="abi-say"><span class="abi-orb">${face()}</span>${html}</div>`;
 function cardHtml(p, i, j) {
   const row = (a, b) => `<div class="abi-row"><span>${esc(a)}</span><span>${b}</span></div>`;
   let h = "", label = "", danger = false;
@@ -285,8 +296,8 @@ async function send(text) {
   if (!FN_URL) return;
   busy = true; sendBtn.disabled = true; input.value = ""; input.style.height = "auto";
   S.view.push({ who: "me", text }); save(); render();
-  const wait = document.createElement("div"); wait.className = "abi-m bot";
-  wait.innerHTML = `<span class="abi-typing"><i></i><i></i><i></i><span>${esc(t("thinking"))}</span></span>`;
+  const wait = document.createElement("div"); wait.className = "abi-say";
+  wait.innerHTML = `<span class="abi-orb">${face()}</span><div class="abi-m bot"><span class="abi-typing"><i></i><i></i><i></i><span>${esc(t("thinking"))}</span></span></div>`;
   msgs.appendChild(wait); msgs.scrollTop = 1e9;
   try {
     if (!navigator.onLine) throw new Error(t("offline"));
