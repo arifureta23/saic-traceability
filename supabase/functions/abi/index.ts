@@ -389,7 +389,8 @@ Deno.serve(async (req) => {
     if (e instanceof Anthropic.RateLimitError) return json({ error: "busy" }, 429);
     if (e instanceof Anthropic.AuthenticationError) return json({ error: "not_configured" }, 503);
     if (e instanceof Anthropic.BadRequestError) {
-      // Usually a conversation the API no longer accepts: the page starts a new one.
+      if (/credit/i.test(e.message)) return json({ error: "no_credit" }, 402);
+      // Otherwise usually a conversation the API no longer accepts: the page starts a new one.
       console.error("ABI bad request", e.message);
       return json({ error: "reset" }, 400);
     }

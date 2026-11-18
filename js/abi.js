@@ -21,6 +21,7 @@ const STR = {
     signin: "Connectez-vous à SAIC Suite pour utiliser ABI.",
     not_conf: "ABI n'est pas encore activé sur ce serveur (clé API à ajouter). Voir le README, section ABI.",
     not_dep: "ABI n'est pas encore installé sur Supabase. Voir le README, section ABI.",
+    no_credit: "Le compte Claude n'a plus de crédit. Ajoutez du crédit sur platform.claude.com (Billing).",
     busy: "ABI est très sollicité. Réessayez dans un instant.", failed: "ABI n'a pas pu répondre. Réessayez.",
     reset: "La conversation a été réinitialisée. Reposez votre question.", offline: "Connexion impossible. Vérifiez internet et réessayez.",
     confirm: "Confirmer", cancel: "Annuler", cancelled: "Annulé. Rien n'a été modifié.",
@@ -43,6 +44,7 @@ const STR = {
     signin: "Sign in to SAIC Suite to use ABI.",
     not_conf: "ABI is not switched on on this server yet (API key to add). See the README, ABI section.",
     not_dep: "ABI is not installed on Supabase yet. See the README, ABI section.",
+    no_credit: "The Claude account is out of credit. Add credit at platform.claude.com (Billing).",
     busy: "ABI is busy. Try again in a moment.", failed: "ABI could not answer. Try again.",
     reset: "The conversation was reset. Please ask again.", offline: "Could not connect. Check the internet connection and try again.",
     confirm: "Confirm", cancel: "Cancel", cancelled: "Cancelled. Nothing was changed.",
@@ -301,7 +303,7 @@ async function send(text) {
     if (!res.ok) {
       const code = out.error || (res.status === 404 ? "not_dep" : res.status === 401 ? "sign_in" : "failed");
       if (code === "reset") S.conversation = [];
-      throw new Error(t({ sign_in: "signin", not_configured: "not_conf", not_dep: "not_dep", busy: "busy", reset: "reset" }[code] || "failed"));
+      throw new Error(t({ sign_in: "signin", not_configured: "not_conf", not_dep: "not_dep", busy: "busy", reset: "reset", no_credit: "no_credit" }[code] || "failed"));
     }
     S.notes = [];
     S.conversation = Array.isArray(out.conversation) ? out.conversation : [];
