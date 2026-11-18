@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAIC Suite · Nouveau design (aperçu)</title>
+<meta name="theme-color" content="#0b110e">
+<link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   SAIC Suite design preview: "Cacao Night"
+   Dark by default, light available. Colours come from the logos:
+   SAIC leaf green + harvest gold; WHP blue + red for group pages.
+   ============================================================ */
+:root{
+  --bg:#0b110e; --bg-2:#101814; --panel:rgba(255,255,255,.035); --panel-solid:#131c18; --panel-hi:rgba(255,255,255,.06);
+  --line:rgba(255,255,255,.08); --line-hi:rgba(255,255,255,.16);
+  --ink:#eef3ef; --ink-2:#b7c4bc; --muted:#7f8f86;
+  --leaf:#4cc35a; --leaf-2:#2f9b45; --leaf-soft:rgba(76,195,90,.14);
+  --gold:#f0a944; --gold-soft:rgba(240,169,68,.14);
+  --whp:#3b8eea; --whp-soft:rgba(59,142,234,.15); --red:#ef4a4a; --red-soft:rgba(239,74,74,.14);
+  --ok:#4cc35a; --warn:#f0a944; --bad:#ef5a5a;
+  --glow:0 0 0 1px var(--line), 0 20px 50px -20px rgba(0,0,0,.6);
+  --r:18px; --r-sm:12px;
+  --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#f4f1ea; --bg-2:#ece7dc; --panel:#fffdf8; --panel-solid:#fffdf8; --panel-hi:#f7f3ea;
+  --line:rgba(40,30,15,.10); --line-hi:rgba(40,30,15,.2);
+  --ink:#1c1a14; --ink-2:#4a4538; --muted:#7b7465;
+  --leaf:#1f8a3a; --leaf-2:#17722f; --leaf-soft:rgba(31,138,58,.10);
+  --gold:#b86e0a; --gold-soft:rgba(184,110,10,.11);
+  --whp:#1f6fd1; --whp-soft:rgba(31,111,209,.1); --red:#d42a2a; --red-soft:rgba(212,42,42,.1);
+  --ok:#1f8a3a; --warn:#b86e0a; --bad:#c93030;
+  --glow:0 1px 0 rgba(40,30,15,.04), 0 12px 30px -18px rgba(60,40,10,.35);
+  color-scheme:light;
+}
+*{box-sizing:border-box} [hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 500px at 85% -10%,var(--leaf-soft),transparent 60%),radial-gradient(700px 500px at -10% 110%,var(--gold-soft),transparent 60%)}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;letter-spacing:-.02em;text-wrap:balance}
+p{margin:0} a{color:inherit} button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:6px}
+.num{font-family:var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.mono{font-family:var(--mono);font-size:.85em}
+.muted{color:var(--muted)} .small{font-size:13px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- preview switcher (only for this preview) ---------- */
+.pv{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:50;display:flex;gap:4px;padding:5px;border-radius:999px;background:rgba(15,20,18,.82);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.pv a{white-space:nowrap;padding:7px 14px;border-radius:999px;text-decoration:none;font-size:13px;font-weight:600;color:#c9d4cd}
+.pv a.on{background:#f0a944;color:#1a1206}
+.pv .sep{width:1px;background:rgba(255,255,255,.15);margin:4px 2px}
+.pv button{border:0;background:none;padding:7px 12px;border-radius:999px;font-size:13px;font-weight:600;color:#c9d4cd}
+.pv button:hover,.pv a:hover:not(.on){background:rgba(255,255,255,.08)}
+
+/* ---------- shell ---------- */
+.view{position:relative;z-index:1;min-height:100vh}
+.shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:22px;padding:22px 16px;border-right:1px solid var(--line);background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(10px)}
+.side .brand{display:flex;align-items:center;gap:12px;padding:4px 8px;text-decoration:none}
+.side .brand img{width:42px;height:auto}
+.side .brand b{font-family:var(--display);font-size:17px;display:block;line-height:1.1}
+.side .brand span{font-size:12px;color:var(--muted)}
+.navg{display:flex;flex-direction:column;gap:2px}
+.navg h4{margin:10px 10px 6px;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.navg a{white-space:nowrap;display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px;text-decoration:none;color:var(--ink-2);font-weight:500;font-size:14px;position:relative}
+.navg a svg{width:18px;height:18px;flex:none;opacity:.8}
+.navg a:hover{background:var(--panel-hi);color:var(--ink)}
+.navg a.on{background:var(--panel-hi);color:var(--ink)}
+.navg a.on::before{content:"";position:absolute;left:-16px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--whp)}
+.navg .cnt{margin-left:auto;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--red);color:#fff}
+.me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
+.av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;background:linear-gradient(135deg,var(--whp),var(--red));flex:none}
+.me b{font-size:13px;display:block} .me span{font-size:12px;color:var(--muted)}
+
+.main{padding:22px 32px 110px;display:flex;flex-direction:column;gap:22px;min-width:0}
+.bar{display:flex;align-items:center;gap:12px}
+.search{flex:1;max-width:460px;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-size:14px;cursor:text}
+.search kbd{margin-left:auto;font-family:var(--mono);font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--line-hi)}
+.icon-btn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);position:relative}
+.icon-btn svg{width:18px;height:18px}
+.icon-btn .dot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--bg)}
+.chip{text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--panel)}
+.chip.ex{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 35%,transparent);background:var(--gold-soft)}
+
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.hero .eyebrow{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:8px;display:flex;gap:8px;align-items:center}
+.hero h1{font-size:clamp(30px,3.4vw,44px);font-weight:800}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--gold),var(--leaf));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{color:var(--ink-2);margin-top:8px;max-width:620px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;border:1px solid var(--line-hi);background:var(--panel);font-weight:600;font-size:14px;text-decoration:none;transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-1px);background:var(--panel-hi)}
+.btn.primary{background:linear-gradient(135deg,var(--gold),#e08a1e);color:#1a1206;border-color:transparent;box-shadow:0 10px 30px -10px var(--gold)}
+.btn.ok{background:var(--leaf);border-color:transparent;color:#06140a}
+.btn.ghost-bad{color:var(--bad)}
+.btn svg{width:16px;height:16px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--glow);backdrop-filter:blur(8px);min-width:0}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.card-h h3{font-size:17px;font-weight:700}
+.card-h a{font-size:13px;color:var(--muted);text-decoration:none} .card-h a:hover{color:var(--ink)}
+.seg{display:inline-flex;padding:3px;border-radius:10px;background:var(--panel-hi);border:1px solid var(--line)}
+.seg button{border:0;background:none;padding:4px 10px;font-size:12px;font-weight:600;border-radius:7px;color:var(--muted)}
+.seg button.on{background:var(--panel-solid);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+
+/* KPI row */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.kpi{position:relative;overflow:hidden;padding:18px 20px 14px}
+.kpi .l{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);font-weight:500}
+.kpi .l i{width:28px;height:28px;border-radius:9px;display:grid;place-items:center}
+.kpi .l i svg{width:15px;height:15px}
+.kpi .v{font-size:32px;font-weight:700;margin-top:12px;line-height:1}
+.kpi .v small{font-size:15px;color:var(--muted);font-weight:500;margin-left:4px}
+.kpi .s{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--muted)}
+.delta{font-weight:700;padding:1px 7px;border-radius:999px;font-size:11.5px}
+.delta.up{color:var(--ok);background:var(--leaf-soft)} .delta.down{color:var(--bad);background:var(--red-soft)}
+.kpi svg.spark{display:block;width:100%;height:42px;margin-top:10px}
+.kpi.hot{background:linear-gradient(160deg,color-mix(in srgb,var(--red) 22%,transparent),var(--panel) 60%);border-color:color-mix(in srgb,var(--red) 35%,transparent)}
+
+.g-main{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:16px}
+.g-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+
+/* chart */
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .gl{stroke:var(--line);stroke-dasharray:2 4}
+.chart .ax{fill:var(--muted);font:12px var(--body)}
+.chart .tip{position:absolute;pointer-events:none;padding:8px 11px;border-radius:10px;background:var(--panel-solid);border:1px solid var(--line-hi);font-size:12px;white-space:nowrap;transform:translate(-50%,-115%);box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;transition:opacity .12s}
+.chart .tip b{font-family:var(--display);font-size:15px;display:block}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px} .legend i{width:10px;height:10px;border-radius:3px}
+
+/* approvals list */
+.appr{display:flex;flex-direction:column;gap:8px}
+.ap{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--panel);transition:border-color .15s,background .15s;cursor:pointer}
+.ap:hover{border-color:var(--line-hi);background:var(--panel-hi)}
+.ap .av{width:34px;height:34px;font-size:12px}
+.ap .av.saic{background:linear-gradient(135deg,var(--leaf),var(--gold))}
+.ap b{font-size:14px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap .meta{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ap .amt{text-align:right}
+.ap .amt b{font-family:var(--display);font-size:15px}
+.tag{font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;letter-spacing:.02em}
+.tag.urgent{background:var(--red-soft);color:var(--red)} .tag.info{background:var(--whp-soft);color:var(--whp)} .tag.t{background:var(--panel-hi);color:var(--ink-2)}
+
+/* cash boxes */
+.box{display:flex;gap:18px;align-items:center}
+.ring{position:relative;width:118px;height:118px;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ring .c b{font-family:var(--display);font-size:22px;line-height:1} .ring .c span{font-size:11px;color:var(--muted)}
+.box h4{margin:0 0 2px;font-size:14px;font-weight:600}
+.box .bal{font-family:var(--display);font-size:26px;font-weight:700;line-height:1.1}
+.box .bal small{font-size:13px;color:var(--muted);font-weight:500}
+.box .io{display:flex;gap:14px;margin-top:8px;font-size:12px;color:var(--muted)}
+.box .io b{display:block;color:var(--ink);font-size:13px}
+.divider{height:1px;background:var(--line);margin:16px 0}
+
+/* departments */
+.dept{display:flex;flex-direction:column;gap:12px;text-decoration:none;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+.dept:hover{transform:translateY(-3px);border-color:var(--line-hi)}
+.dept .top{display:flex;justify-content:space-between;align-items:center}
+.dept .ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center}
+.dept .ico svg{width:20px;height:20px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+.st::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 20%,transparent)}
+.st.ok{color:var(--ok)} .st.warn{color:var(--warn)} .st.bad{color:var(--bad)}
+.dept h3{font-size:18px}
+.dept .big{font-family:var(--display);font-size:28px;font-weight:700;line-height:1}
+.bar-s{height:6px;border-radius:99px;background:var(--panel-hi);overflow:hidden}
+.bar-s i{display:block;height:100%;border-radius:99px}
+.stack{display:flex;height:10px;border-radius:99px;overflow:hidden;gap:2px}
+.stack i{display:block;height:100%}
+
+/* attention feed */
+.feed{display:flex;flex-direction:column}
+.feed li{list-style:none;display:grid;grid-template-columns:auto 1fr;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:13.5px}
+.feed li:first-child{border-top:0;padding-top:0}
+.feed .fi{width:30px;height:30px;border-radius:9px;display:grid;place-items:center}
+.feed .fi svg{width:15px;height:15px}
+.feed small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.feed ul{margin:0;padding:0}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:12px;right:12px;bottom:12px;width:min(480px,calc(100vw - 24px));z-index:41;background:var(--panel-solid);border:1px solid var(--line-hi);border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:18px;transform:translateX(110%);transition:transform .28s cubic-bezier(.2,.8,.2,1);overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.drawer.on{transform:none}
+.drawer .x{position:absolute;top:16px;right:16px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kv div{padding:12px;border-radius:12px;background:var(--panel-hi)}
+.kv span{display:block;font-size:12px;color:var(--muted)} .kv b{font-size:14px}
+.tl{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;font-size:13px}
+.tl li{display:grid;grid-template-columns:14px 1fr;gap:10px}
+.tl li::before{content:"";width:10px;height:10px;border-radius:50%;margin-top:4px;background:var(--whp);box-shadow:0 0 0 4px var(--whp-soft)}
+.tl small{color:var(--muted);display:block}
+.file{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px dashed var(--line-hi);font-size:13px}
+.file i{width:30px;height:36px;border-radius:6px;background:var(--red-soft);color:var(--red);display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:700}
+.actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}
+.toast{position:fixed;top:20px;left:50%;transform:translate(-50%,-140%);z-index:60;padding:12px 18px;border-radius:14px;background:var(--panel-solid);border:1px solid var(--line-hi);box-shadow:0 20px 50px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;font-weight:600;font-size:14px;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.toast.on{transform:translate(-50%,0)}
+.toast i{width:22px;height:22px;border-radius:50%;background:var(--leaf);display:grid;place-items:center;color:#06140a;font-style:normal;font-size:13px}
+
+/* ---------- suite (start screen) ---------- */
+.suite{max-width:1180px;margin:0 auto;padding:26px 32px 120px;display:flex;flex-direction:column;gap:30px}
+.suite-top{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.suite-top img{height:46px}
+.suite-top .r{display:flex;gap:10px;align-items:center}
+.suite .hero h1{font-size:clamp(36px,4.6vw,60px)}
+.quick{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.quick .chip{padding:8px 14px;font-size:13px}
+.quick .chip b{font-family:var(--display);font-size:15px}
+.mods{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.mod{grid-column:span 4;display:flex;flex-direction:column;gap:10px;text-decoration:none;min-height:210px;position:relative;overflow:hidden;transition:transform .25s cubic-bezier(.2,.8,.2,1),border-color .25s}
+.mod.wide{grid-column:span 6;min-height:240px}
+.mod::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;right:-90px;top:-110px;background:radial-gradient(circle,var(--c,var(--leaf)) 0%,transparent 65%);opacity:.18;transition:opacity .25s,transform .4s}
+.mod:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--c,var(--leaf)) 45%,transparent)}
+.mod:hover::after{opacity:.32;transform:scale(1.15)}
+.mod .ico{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.mod .ico svg{width:24px;height:24px}
+.mod h3{font-size:22px;margin-top:6px}
+.mod p{color:var(--ink-2);font-size:14px}
+.mod .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mod .role{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
+.mod .go{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line-hi);transition:background .2s,transform .2s}
+.mod:hover .go{background:var(--c);color:#0b110e;transform:rotate(-45deg)}
+.mod .go svg{width:16px;height:16px}
+.mod .stat{display:flex;gap:22px;margin-top:4px}
+.mod .stat b{font-family:var(--display);font-size:24px;display:block;line-height:1.1}
+.mod .stat span{font-size:12px;color:var(--muted)}
+.dl{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;background:linear-gradient(120deg,color-mix(in srgb,var(--leaf) 16%,transparent),var(--panel) 55%)}
+.dl .w{display:flex;gap:16px;align-items:center}
+.dl .w i{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:var(--panel-hi);border:1px solid var(--line)}
+.dl .w svg{width:26px;height:26px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline}
+.sec-h h2{font-size:22px}
+
+/* ---------- sign-in ---------- */
+.signin{display:grid;grid-template-columns:1.1fr 1fr;min-height:100vh}
+.art{position:relative;overflow:hidden;padding:48px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(800px 600px at 30% 20%,#1d3a24,#0a120d 70%);color:#eef3ef}
+.art svg.pods{position:absolute;inset:0;width:100%;height:100%;opacity:.55}
+.art .q{position:relative;max-width:460px}
+.art .q h2{font-size:clamp(34px,4vw,54px);font-weight:800;line-height:1.02}
+.art .q h2 em{font-style:normal;color:#f0a944}
+.art .q p{margin-top:16px;color:#b7c4bc;font-size:16px}
+.art .facts{position:relative;display:flex;gap:28px}
+.art .facts b{font-family:var(--display);font-size:28px;display:block}
+.art .facts span{font-size:12px;color:#93a39a}
+.art img{position:relative;height:52px;width:auto;align-self:flex-start;background:#fff;padding:8px 12px;border-radius:12px}
+.form{display:grid;place-items:center;padding:40px}
+.form form{width:100%;max-width:380px;display:flex;flex-direction:column;gap:16px}
+.form h1{font-size:34px;font-weight:800}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:13px;font-weight:600;color:var(--ink-2)}
+.fld input{padding:13px 14px;border-radius:12px;border:1px solid var(--line-hi);background:var(--panel);font:inherit;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+.fld input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px var(--gold-soft)}
+.form .btn.primary{justify-content:center;padding:13px}
+.form .row{display:flex;justify-content:space-between;font-size:13px}
+.form .row a{color:var(--muted);text-decoration:none}
+
+/* motion */
+@media (prefers-reduced-motion:no-preference){
+  .rise{animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.2s .2s cubic-bezier(.4,0,.2,1) forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+}
+
+/* responsive */
+@media (max-width:1180px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.g-main{grid-template-columns:1fr}}
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line)}
+  .side .navg h4,.side .me,.side .brand div{display:none}.navg{flex-direction:row}
+  .main{padding:18px 16px 110px}.g-3{grid-template-columns:1fr}.mod,.mod.wide{grid-column:span 12}
+  .signin{grid-template-columns:1fr}.art{min-height:340px;padding:28px}.suite{padding:18px 16px 120px}
+}
+@media (max-width:560px){.pv a{padding:7px 10px}.pv button{padding:7px 9px}.kpis{grid-template-columns:1fr}.box{flex-direction:column;align-items:flex-start}.search{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ========== 1. START SCREEN ========== -->
+<section class="view" id="v-suite">
+  <div class="suite">
+    <div class="suite-top">
+      <img src="../icons/logo.png" alt="SAIC" style="background:#fff;padding:6px 10px;border-radius:12px">
+      <div class="r"><span class="chip ex" data-t="example">Données d'exemple</span><span class="av" title="David Takam">DT</span></div>
+    </div>
+    <div class="hero rise">
+      <div>
+        <div class="eyebrow"><span id="today"></span></div>
+        <h1><span data-t="greet">Bonsoir</span>, <em>David</em>.</h1>
+        <p class="lead" data-t="suite_lead">Toutes vos applications SAIC et Wenkam Holdings Plus, au même endroit. Voici ce qui a bougé depuis votre dernière visite.</p>
+        <div class="quick">
+          <a class="chip" href="#pdg"><b style="color:var(--red)">4</b> <span data-t="q_appr">demandes à approuver</span></a>
+          <span class="chip"><b style="color:var(--leaf)">+3 120 kg</b> <span data-t="q_cocoa">de cacao reçus cette semaine</span></span>
+          <span class="chip"><b style="color:var(--gold)">18</b> <span data-t="q_recv">réceptions à confirmer</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-h"><h2 data-t="your_apps">Vos applications</h2><span class="muted small" data-t="by_role">Selon vos rôles</span></div>
+    <div class="mods" id="mods"></div>
+
+    <div class="card dl rise">
+      <div class="w"><i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5 10 4.5v7H3zm8-1.2L21 3v8.5H11zM3 12.5h7v7L3 18.5zm8 0h10V21l-10-1.4z"/></svg></i>
+        <div><b data-t="dl_t" style="font-size:16px">Application pour Windows</b><p class="muted small" data-t="dl_d">Une icône sur le bureau, une fenêtre dédiée, les mises à jour automatiques.</p></div></div>
+      <a class="btn primary" href="#suite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg><span data-t="dl_b">Télécharger</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 2. PDG DASHBOARD ========== -->
+<section class="view" id="v-pdg" hidden>
+  <div class="shell">
+    <aside class="side">
+      <a class="brand" href="#pdg"><img src="../icons/whp-logo.png" alt="WHP"><div><b>Wenkam</b><span>Holdings Plus</span></div></a>
+      <nav class="navg">
+        <h4 data-t="n_group">Groupe</h4>
+        <a class="on" href="#pdg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg><span data-t="n_over">Vue du groupe</span></a>
+        <a href="#pdg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><span data-t="n_appr">Approbations</span><span class="cnt">4</span></a>
+        <h4>SAIC</h4>
+        <a href="#pdg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/></svg><span data-t="n_tre">Trésorerie</span></a>
+        <a href="#pdg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c4 3 6 6.5 6 10a6 6 0 0 1-12 0c0-3.5 2-7 6-10z"/><path d="M12 7v13"/></svg><span data-t="n_rec">Réception cacao</span></a>
+        <a href="#pdg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span data-t="n_trace">Traçabilité</span></a>
+        <h4 data-t="n_more">Plus</h4>
+        <a href="#suite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/></svg><span data-t="n_apps">Applications</span></a>
+      </nav>
+      <div class="me"><span class="av">DT</span><div><b>David Takam</b><span>PDG · WHP</span></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="bar">
+        <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span data-t="search">Rechercher un producteur, une demande, un bon…</span><kbd>Ctrl K</kbd></div>
+        <span style="flex:1"></span>
+        <span class="chip ex" data-t="example">Données d'exemple</span>
+        <button class="icon-btn" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg><span class="dot"></span></button>
+      </div>
+
+      <div class="hero rise">
+        <div>
+          <div class="eyebrow"><span class="st ok" data-t="all_ok">Groupe en bonne santé</span> · <span id="today2"></span></div>
+          <h1><span data-t="greet">Bonsoir</span>, <em>David Takam</em></h1>
+          <p class="lead" data-t="pdg_lead">4 demandes attendent votre décision, dont 1 urgente. Les achats de cacao sont en hausse de 12 % sur le mois.</p>
+        </div>
+        <a class="btn primary" href="#pdg" id="openFirst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3 8-8"/></svg><span data-t="review">Examiner les demandes</span></a>
+      </div>
+
+      <div class="kpis">
+        <div class="card kpi hot rise" style="animation-delay:.05s"><div class="l"><i style="background:var(--red-soft);color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3 8-8"/></svg></i><span data-t="k_pend">À approuver</span></div>
+          <div class="v num" data-count="4">4</div><div class="s"><span class="delta down" data-t="k_urg">1 urgente</span><span data-t="k_oldest">la plus ancienne : 3 jours</span></div><svg class="spark" data-spark="1,2,2,3,2,4,3,4" data-c="var(--red)"></svg></div>
+        <div class="card kpi rise" style="animation-delay:.1s"><div class="l"><i style="background:var(--leaf-soft);color:var(--leaf)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c4 3 6 6.5 6 10a6 6 0 0 1-12 0c0-3.5 2-7 6-10z"/></svg></i><span data-t="k_cocoa">Cacao acheté</span></div>
+          <div class="v num"><span data-count="81256">81 256</span><small>kg</small></div><div class="s"><span class="delta up">+12 %</span><span data-t="k_cocoa_s">86 réceptions · 15 zones</span></div><svg class="spark" data-spark="4,6,5,8,7,9,8,11,10,12" data-c="var(--leaf)"></svg></div>
+        <div class="card kpi rise" style="animation-delay:.15s"><div class="l"><i style="background:var(--gold-soft);color:var(--gold)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></i><span data-t="k_price">Prix moyen d'achat</span></div>
+          <div class="v num"><span data-count="2702">2 702</span><small>F/kg</small></div><div class="s"><span class="delta up">+2,4 %</span><span>min. 2 450 · max. 2 900</span></div><svg class="spark" data-spark="26,26.5,26.2,27,26.8,27.4,27.1,27.6" data-c="var(--gold)"></svg></div>
+        <div class="card kpi rise" style="animation-delay:.2s"><div class="l"><i style="background:var(--whp-soft);color:var(--whp)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg></i><span data-t="k_cash">Trésorerie SAIC</span></div>
+          <div class="v num"><span data-count="12840">12,8</span><small>M F</small></div><div class="s"><span class="delta down">−8 %</span><span data-t="k_cash_s">2 caisses · sous plafond</span></div><svg class="spark" data-spark="15,14,16,13,14,12,13.5,12.8" data-c="var(--whp)"></svg></div>
+      </div>
+
+      <div class="g-main">
+        <div class="card rise">
+          <div class="card-h"><h3 data-t="c_title">Achats de cacao</h3><div class="seg" id="seg"><button data-t="w8">8 sem.</button><button class="on" data-t="w12">12 sem.</button></div></div>
+          <div class="chart" id="chart"><svg viewBox="0 0 640 250" id="chartSvg" role="img" aria-label="Achats de cacao par semaine"></svg><div class="tip" id="tip"></div></div>
+          <div class="legend"><span><i style="background:var(--leaf)"></i><span data-t="lg_kg">kg achetés</span></span><span><i style="background:var(--gold)"></i><span data-t="lg_p">prix moyen (F/kg)</span></span></div>
+        </div>
+        <div class="card rise">
+          <div class="card-h"><h3 data-t="appr_t">En attente de votre décision</h3><a href="#pdg" data-t="see_all">Tout voir →</a></div>
+          <div class="appr" id="appr"></div>
+        </div>
+      </div>
+
+      <div class="g-3">
+        <div class="card rise">
+          <div class="card-h"><h3 data-t="cash_t">Caisses SAIC</h3><span class="st ok" data-t="under">Sous plafond</span></div>
+          <div class="box"><div class="ring" data-pct="61" data-c="var(--leaf)"></div><div><h4 data-t="cb1">Caisse Achat Cacao</h4><div class="bal">12,2 M <small>F</small></div><div class="io"><span><b>+38,5 M</b><span data-t="in">entrées</span></span><span><b>−41,1 M</b><span data-t="out">sorties</span></span></div></div></div>
+          <div class="divider"></div>
+          <div class="box"><div class="ring" data-pct="84" data-c="var(--gold)"></div><div><h4 data-t="cb2">Caisse Administrative</h4><div class="bal">421 500 <small>F</small></div><div class="io"><span><b>+1,2 M</b><span data-t="in">entrées</span></span><span><b>−0,96 M</b><span data-t="out">sorties</span></span></div></div></div>
+        </div>
+        <div class="card dept rise" style="cursor:default">
+          <div class="top"><span class="ico" style="background:var(--leaf-soft);color:var(--leaf)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><span class="st warn" data-t="watch">À surveiller</span></div>
+          <div><h3 data-t="tr_t">Traçabilité EUDR</h3><p class="muted small" data-t="tr_s">Producteurs et parcelles du registre</p></div>
+          <div style="display:flex;gap:26px"><div><div class="big">42</div><span class="muted small" data-t="farmers">producteurs</span></div><div><div class="big">67</div><span class="muted small" data-t="plots">parcelles</span></div><div><div class="big">0 %</div><span class="muted small" data-t="traced">réceptions tracées</span></div></div>
+          <div class="stack"><i style="width:55%;background:var(--leaf)"></i><i style="width:30%;background:var(--gold)"></i><i style="width:15%;background:var(--bad)"></i></div>
+          <div class="legend" style="margin-top:0"><span><i style="background:var(--leaf)"></i>23 <span data-t="ver">vérifiés</span></span><span><i style="background:var(--gold)"></i>13 <span data-t="tov">à vérifier</span></span><span><i style="background:var(--bad)"></i>6 <span data-t="hold">en attente</span></span></div>
+        </div>
+        <div class="card rise">
+          <div class="card-h"><h3 data-t="att_t">Points d'attention</h3></div>
+          <div class="feed"><ul>
+            <li><span class="fi" style="background:var(--red-soft);color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></span><div><span data-t="a1">Aucune réception reliée à un producteur</span><small data-t="a1s">Traçabilité EUDR · 86 réceptions</small></div></li>
+            <li><span class="fi" style="background:var(--gold-soft);color:var(--gold)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></span><div><span data-t="a2">18 réceptions non confirmées au magasin</span><small data-t="a2s">Réception cacao</small></div></li>
+            <li><span class="fi" style="background:var(--gold-soft);color:var(--gold)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></span><div><span data-t="a3">Double paiement possible de 123 000 F</span><small data-t="a3s">Caisse Administrative · 2 bons</small></div></li>
+            <li><span class="fi" style="background:var(--whp-soft);color:var(--whp)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 16v-5M12 7h.01"/><circle cx="12" cy="12" r="9"/></svg></span><div><span data-t="a4">Caisse administrative à 84 % du plafond</span><small data-t="a4s">Plafond 500 000 F</small></div></li>
+          </ul></div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-label="Détail"></aside>
+  <div class="toast" id="toast"><i>✓</i><span id="toastT"></span></div>
+</section>
+
+<!-- ========== 3. SIGN-IN ========== -->
+<section class="view" id="v-signin" hidden>
+  <div class="signin">
+    <div class="art">
+      <svg class="pods" viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" id="pods"></svg>
+      <img src="../icons/logo.png" alt="SAIC">
+      <div class="q"><h2 data-t="si_h">Du producteur <em>au port</em>, chaque fève a son histoire.</h2><p data-t="si_p">Registre, trésorerie, réception et direction : une seule suite, un seul compte.</p></div>
+      <div class="facts"><div><b>81 t</b><span data-t="si_f1">cacao reçu</span></div><div><b>15</b><span data-t="si_f2">zones d'achat</span></div><div><b>7</b><span data-t="si_f3">applications</span></div></div>
+    </div>
+    <div class="form">
+      <form onsubmit="event.preventDefault();location.hash='suite'">
+        <div><h1 data-t="si_t">Connexion</h1><p class="muted" style="margin-top:6px" data-t="si_s">Un seul compte pour toutes les applications SAIC.</p></div>
+        <div class="fld"><label for="em" data-t="si_e">E-mail</label><input id="em" type="email" autocomplete="username" placeholder="nom@saic.cm"></div>
+        <div class="fld"><label for="pw" data-t="si_pw">Mot de passe</label><input id="pw" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+        <button class="btn primary" type="submit" data-t="si_go">Se connecter</button>
+        <div class="row"><a href="#signin" data-t="si_fg">Mot de passe oublié ?</a><span class="muted">FR · EN</span></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<nav class="pv" aria-label="Aperçu">
+  <a href="#suite" data-v="suite" data-t="pv1">Accueil</a><a href="#pdg" data-v="pdg" data-t="pv2">Tableau PDG</a><a href="#signin" data-v="signin" data-t="pv3">Connexion</a>
+  <span class="sep"></span><button id="theme" aria-label="Thème">☾</button><button id="lang">EN</button>
+</nav>
+
+<script>
+const T = {
+  fr:{},
+  en:{example:"Example data",greet_m:"Good morning",greet_a:"Good afternoon",greet_e:"Good evening",suite_lead:"All your SAIC and Wenkam Holdings Plus apps in one place. Here is what moved since your last visit.",q_appr:"requests to approve",q_cocoa:"of cocoa received this week",q_recv:"receptions to confirm",your_apps:"Your apps",by_role:"Based on your roles",dl_t:"Windows app",dl_d:"A desktop icon, its own window, automatic updates.",dl_b:"Download",
+    n_group:"Group",n_over:"Group overview",n_appr:"Approvals",n_tre:"Treasury",n_rec:"Cocoa reception",n_trace:"Traceability",n_more:"More",n_apps:"Apps",search:"Search a farmer, a request, a voucher…",all_ok:"Group in good health",pdg_lead:"4 requests await your decision, 1 of them urgent. Cocoa purchases are up 12% this month.",review:"Review requests",
+    k_pend:"To approve",k_urg:"1 urgent",k_oldest:"oldest: 3 days",k_cocoa:"Cocoa bought",k_cocoa_s:"86 receptions · 15 zones",k_price:"Average purchase price",k_cash:"SAIC treasury",k_cash_s:"2 cash boxes · under ceiling",c_title:"Cocoa purchases",w8:"8 wks",w12:"12 wks",lg_kg:"kg bought",lg_p:"average price (F/kg)",appr_t:"Waiting for your decision",see_all:"See all →",
+    cash_t:"SAIC cash boxes",under:"Under ceiling",cb1:"Cocoa purchase box",cb2:"Administrative box",in:"in",out:"out",watch:"Watch",tr_t:"EUDR traceability",tr_s:"Farmers and plots in the registry",farmers:"farmers",plots:"plots",traced:"receptions traced",ver:"verified",tov:"to verify",hold:"on hold",att_t:"Needs attention",
+    a1:"No reception linked to a farmer yet",a1s:"EUDR traceability · 86 receptions",a2:"18 receptions not confirmed at the warehouse",a2s:"Cocoa reception",a3:"Possible double payment of 123,000 F",a3s:"Administrative box · 2 vouchers",a4:"Administrative box at 84% of ceiling",a4s:"Ceiling 500,000 F",
+    si_h:"From farm <em>to port</em>, every bean has a story.",si_p:"Registry, treasury, reception and management: one suite, one account.",si_f1:"cocoa received",si_f2:"buying zones",si_f3:"apps",si_t:"Sign in",si_s:"One account for every SAIC app.",si_e:"Email",si_pw:"Password",si_go:"Sign in",si_fg:"Forgot password?",pv1:"Home",pv2:"PDG dashboard",pv3:"Sign in",
+    approve:"Approve",reject:"Reject",ask:"Ask for info",d_from:"From",d_amt:"Amount",d_type:"Type",d_due:"Decide by",d_det:"Details",d_files:"Attachments",d_hist:"History",approved:"Request approved",urgent:"Urgent",info:"Info sent"}
+};
+let LANG = "fr";
+const FR = {}; document.querySelectorAll("[data-t]").forEach(e => FR[e.dataset.t] = e.innerHTML);
+Object.assign(FR,{greet_m:"Bonjour",greet_a:"Bonjour",greet_e:"Bonsoir",approve:"Approuver",reject:"Rejeter",ask:"Demander des infos",d_from:"Soumise par",d_amt:"Montant",d_type:"Type",d_due:"Décision avant le",d_det:"Détails",d_files:"Pièces jointes",d_hist:"Historique",approved:"Demande approuvée",urgent:"Urgent",info:"Infos reçues"});
+const t = k => (LANG === "en" ? T.en[k] : FR[k]) ?? FR[k] ?? k;
+const h = new Date().getHours(), gk = h < 12 ? "greet_m" : h < 18 ? "greet_a" : "greet_e";
+
+/* ---- modules on the start screen ---- */
+const I = {
+  whp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>',
+  dg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>',
+  reg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  rec:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c4 3 6 6.5 6 10a6 6 0 0 1-12 0c0-3.5 2-7 6-10z"/><path d="M12 7v13"/></svg>',
+  tre:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/></svg>'
+};
+const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>';
+const MODS = [
+  {wide:1,c:"var(--whp)",i:"whp",fr:["Tableau de bord PDG","Le groupe Wenkam Holdings Plus en un coup d'œil, et vos approbations."],en:["PDG dashboard","The Wenkam Holdings Plus group at a glance, and your approvals."],role:"PDG",href:"#pdg",stat:[["4",{fr:"à approuver",en:"to approve"}],["3",{fr:"départements",en:"departments"}]]},
+  {wide:1,c:"var(--red)",i:"dg",fr:["Direction Générale WHP","Siège et filiale SAIC : demandes, équipe, suivi."],en:["WHP General Management","Head office and the SAIC subsidiary: requests, team, follow-up."],role:"DG WHP",href:"#pdg",stat:[["2",{fr:"demandes reçues",en:"requests received"}],["6",{fr:"personnes",en:"staff"}]]},
+  {c:"var(--leaf)",i:"reg",fr:["Registre des producteurs","Producteurs, parcelles, cartographie, F01."],en:["Farmer registry","Farmers, plots, mapping, F01."],role:"Responsable traçabilité|Traceability lead",href:"#suite"},
+  {c:"var(--gold)",i:"rec",fr:["Réception cacao","Réceptions, prix, zones, livraisons par producteur."],en:["Cocoa reception","Receptions, prices, zones, deliveries by farmer."],role:"Lecture|Read only",href:"#suite"},
+  {c:"#38c3b0",i:"tre",fr:["Trésorerie","Caisses, dépenses, demandes de fonds."],en:["Treasury","Cash boxes, expenses, fund requests."],role:"DAF",href:"#suite"}
+];
+function renderMods(){
+  document.getElementById("mods").innerHTML = MODS.map((m,i) => { const [n,d] = m[LANG]; const role = m.role.split("|")[LANG==="en"?1:0] || m.role;
+    return `<a class="card mod rise ${m.wide?"wide":""}" style="--c:${m.c};animation-delay:${.05*i}s" href="${m.href}"><span class="ico">${I[m.i]}</span><h3>${n}</h3><p>${d}</p>
+    ${m.stat?`<div class="stat">${m.stat.map(s=>`<div><b>${s[0]}</b><span>${s[1][LANG]}</span></div>`).join("")}</div>`:""}
+    <div class="foot"><span class="role">${role}</span><span class="go">${arrow}</span></div></a>`; }).join("");
+}
+
+/* ---- approvals ---- */
+const REQS = [
+  {id:"DEM-0012",who:"AI",whoN:"Anthony Imeni",ent:"WHP",cls:"",urg:1,amt:"4 800 000 F",fr:{t:"Achat d'un camion de collecte",ty:"Investissement",d:"Le camion actuel tombe en panne chaque semaine pendant la campagne. Trois devis joints ; le moins cher est retenu.",due:"21 nov."},en:{t:"Purchase of a collection truck",ty:"Investment",d:"The current truck breaks down every week during the season. Three quotes attached; the cheapest is chosen.",due:"21 Nov"},age:3},
+  {id:"DEM-0011",who:"ES",whoN:"Estelle L. Sah Pamboro",ent:"SAIC",cls:"saic",amt:"1 250 000 F",fr:{t:"Avance campagne, zone Mbangassina",ty:"Dépense",d:"Avance aux acheteurs de la zone pour la semaine 47.",due:"24 nov."},en:{t:"Season advance, Mbangassina zone",ty:"Expense",d:"Advance to the zone's buyers for week 47.",due:"24 Nov"},age:2},
+  {id:"DEM-0010",who:"ES",whoN:"Estelle L. Sah Pamboro",ent:"SAIC",cls:"saic",amt:"—",info:1,fr:{t:"Recrutement d'un magasinier adjoint",ty:"Recrutement",d:"Le magasin reçoit plus de 3 t par semaine ; un adjoint est nécessaire.",due:"28 nov."},en:{t:"Hire an assistant warehouse manager",ty:"Hiring",d:"The warehouse receives over 3 t a week; an assistant is needed.",due:"28 Nov"},age:2},
+  {id:"DEM-0009",who:"DF",whoN:"DAF WHP",ent:"WHP",cls:"",amt:"650 000 F",fr:{t:"Renouvellement des licences comptables",ty:"Contrat",d:"Licences annuelles pour 3 postes.",due:"30 nov."},en:{t:"Accounting licence renewal",ty:"Contract",d:"Annual licences for 3 seats.",due:"30 Nov"},age:1}
+];
+let OPEN = null;
+function renderAppr(){
+  document.getElementById("appr").innerHTML = REQS.map((r,i) => { const x = r[LANG];
+    return `<div class="ap rise" style="animation-delay:${.06*i}s" data-i="${i}" tabindex="0" role="button"><span class="av ${r.cls}">${r.who}</span>
+      <div style="min-width:0"><b>${x.t}</b><div class="meta">${r.urg?`<span class="tag urgent">${t("urgent")}</span>`:""}${r.info?`<span class="tag info">${t("info")}</span>`:""}<span class="tag t">${r.ent}</span><span>${r.whoN}</span></div></div>
+      <div class="amt"><b>${r.amt}</b><div class="muted small">${x.due}</div></div></div>`; }).join("") || `<p class="muted">✓</p>`;
+  document.querySelectorAll(".ap").forEach(el => { el.onclick = () => openReq(+el.dataset.i); el.onkeydown = e => e.key==="Enter" && openReq(+el.dataset.i); });
+}
+function openReq(i){
+  OPEN = i; const r = REQS[i], x = r[LANG];
+  document.getElementById("drawer").innerHTML = `<button class="icon-btn x" id="dx" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div><span class="mono muted">${r.id}</span><h2 style="font-size:24px;margin-top:6px;padding-right:40px">${x.t}</h2></div>
+    <div class="kv"><div><span>${t("d_from")}</span><b>${r.whoN}</b></div><div><span>${t("d_amt")}</span><b class="num">${r.amt}</b></div><div><span>${t("d_type")}</span><b>${x.ty}</b></div><div><span>${t("d_due")}</span><b>${x.due}</b></div></div>
+    <div><h3 style="font-size:14px;margin-bottom:6px">${t("d_det")}</h3><p style="color:var(--ink-2)">${x.d}</p></div>
+    <div><h3 style="font-size:14px;margin-bottom:8px">${t("d_files")}</h3><div class="file"><i>PDF</i><span>devis_${r.id.toLowerCase()}.pdf<br><small class="muted">412 Ko</small></span></div></div>
+    <div><h3 style="font-size:14px;margin-bottom:10px">${t("d_hist")}</h3><ol class="tl"><li><div>${LANG==="en"?"Submitted by":"Soumise par"} ${r.whoN}<small>${r.age} ${LANG==="en"?"days ago":"jours"}</small></div></li>${r.ent==="SAIC"?`<li><div>${LANG==="en"?"Opinion from the DG WHP: favourable":"Avis du DG WHP : favorable"}<small>${LANG==="en"?"yesterday":"hier"}</small></div></li>`:""}</ol></div>
+    <div class="actions"><button class="btn ok" id="dok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5 9-10"/></svg>${t("approve")}</button><button class="btn">${t("ask")}</button><button class="btn ghost-bad">${t("reject")}</button></div>`;
+  document.getElementById("drawer").classList.add("on"); document.getElementById("scrim").classList.add("on");
+  document.getElementById("dx").onclick = closeReq; document.getElementById("dok").onclick = () => { REQS.splice(OPEN,1); closeReq(); renderAppr(); toast(t("approved")); };
+}
+function closeReq(){ document.getElementById("drawer").classList.remove("on"); document.getElementById("scrim").classList.remove("on"); }
+document.getElementById("scrim").onclick = closeReq; document.addEventListener("keydown", e => e.key==="Escape" && closeReq());
+document.getElementById("openFirst").onclick = e => { e.preventDefault(); REQS.length && openReq(0); };
+function toast(m){ const el = document.getElementById("toast"); document.getElementById("toastT").textContent = m; el.classList.add("on"); setTimeout(()=>el.classList.remove("on"),2200); }
+
+/* ---- charts ---- */
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v.replace(/var\((.*)\)/,"$1")).trim() || v;
+function sparks(){ document.querySelectorAll("svg.spark").forEach(s => { const d = s.dataset.spark.split(",").map(Number), W=200, H=42, mn=Math.min(...d), mx=Math.max(...d);
+  const p = d.map((v,i)=>[i*(W/(d.length-1)), H-4-((v-mn)/(mx-mn||1))*(H-10)]); const line = p.map((q,i)=>(i?"L":"M")+q[0].toFixed(1)+","+q[1].toFixed(1)).join(""); const id="g"+Math.random().toString(36).slice(2,7), c=css(s.dataset.c);
+  s.setAttribute("viewBox",`0 0 ${W} ${H}`); s.setAttribute("preserveAspectRatio","none");
+  s.innerHTML = `<defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".35"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><path d="${line}L${W},${H}L0,${H}Z" fill="url(#${id})"/><path d="${line}" fill="none" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`; }); }
+const WEEKS = [["S36",4210,2560],["S37",5120,2590],["S38",4880,2610],["S39",6340,2640],["S40",5950,2655],["S41",7210,2680],["S42",6890,2700],["S43",7620,2715],["S44",8130,2740],["S45",7740,2760],["S46",8460,2790],["S47",8702,2805]];
+let RANGE = 12;
+function chart(){
+  const svg = document.getElementById("chartSvg"), data = WEEKS.slice(-RANGE), W=640,H=250,L=44,R=46,Tp=14,B=28, iw=W-L-R, ih=H-Tp-B;
+  const maxK = 10000, pMin=2500, pMax=2850, bw = iw/data.length;
+  const leaf=css("var(--leaf)"), gold=css("var(--gold)");
+  let g = "";
+  for (let k=0;k<=4;k++){ const y=Tp+ih-k*ih/4; g+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text class="ax" x="${L-8}" y="${y+4}" text-anchor="end">${k*2.5}t</text><text class="ax" x="${W-R+8}" y="${y+4}">${Math.round(pMin+k*(pMax-pMin)/4)}</text>`; }
+  g += `<defs><linearGradient id="bar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${leaf}"/><stop offset="1" stop-color="${leaf}" stop-opacity=".35"/></linearGradient></defs>`;
+  data.forEach((d,i)=>{ const x=L+i*bw+bw*.2, w=bw*.6, bh=d[1]/maxK*ih; g+=`<rect x="${x}" y="${Tp+ih-bh}" width="${w}" height="${bh}" rx="6" fill="url(#bar)" opacity="${i===data.length-1?1:.75}"/><text class="ax" x="${x+w/2}" y="${H-8}" text-anchor="middle">${d[0]}</text>`; });
+  const pts = data.map((d,i)=>[L+i*bw+bw/2, Tp+ih-(d[2]-pMin)/(pMax-pMin)*ih]);
+  const path = pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1)).join("");
+  g += `<path class="draw" style="--len:1400" d="${path}" fill="none" stroke="${gold}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.forEach((p,i)=> g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${i===pts.length-1?5:3}" fill="${gold}" stroke="${css("var(--bg)")}" stroke-width="2"/>`);
+  data.forEach((d,i)=> g+=`<rect x="${L+i*bw}" y="${Tp}" width="${bw}" height="${ih}" fill="transparent" data-i="${i}" class="hit"/>`);
+  svg.innerHTML = g;
+  const tip = document.getElementById("tip");
+  svg.querySelectorAll(".hit").forEach(r => { r.onmouseenter = () => { const i=+r.dataset.i, d=data[i], box=svg.getBoundingClientRect(), sc=box.width/W;
+      tip.innerHTML = `<span class="muted">${LANG==="en"?"Week":"Semaine"} ${d[0].slice(1)}</span><b>${d[1].toLocaleString("fr-FR")} kg</b><span style="color:${gold}">${d[2].toLocaleString("fr-FR")} F/kg</span>`;
+      tip.style.left = (pts[i][0]*sc)+"px"; tip.style.top = (Math.min(pts[i][1], Tp+ih-d[1]/maxK*ih)*sc)+"px"; tip.style.opacity=1; };
+    r.onmouseleave = () => tip.style.opacity=0; });
+}
+document.querySelectorAll("#seg button").forEach((b,i) => b.onclick = () => { RANGE = i?12:8; document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("on",x===b)); chart(); });
+function rings(){ document.querySelectorAll(".ring").forEach(r => { const p=+r.dataset.pct, C=2*Math.PI*48, c=css(r.dataset.c);
+  r.innerHTML = `<svg viewBox="0 0 110 110"><circle cx="55" cy="55" r="48" fill="none" stroke="${css("var(--panel-hi)")}" stroke-width="10"/><circle class="draw" style="--len:${C}" cx="55" cy="55" r="48" fill="none" stroke="${c}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C*p/100} ${C}"/></svg><div class="c"><b>${p}%</b><span>${LANG==="en"?"of ceiling":"du plafond"}</span></div>`; }); }
+function pods(){ let s=""; for(let i=0;i<14;i++){ const x=(i*97)%600, y=(i*173)%800, r=(i*37)%360, sc=.6+(i%5)*.25;
+  s+=`<g transform="translate(${x} ${y}) rotate(${r}) scale(${sc})"><ellipse rx="34" ry="70" fill="none" stroke="#f0a944" stroke-opacity=".35" stroke-width="2"/><path d="M0-66C10-30 10 30 0 66M-18-58C-8-20-8 20-18 58M18-58C8-20 8 20 18 58" fill="none" stroke="#4cc35a" stroke-opacity=".3" stroke-width="1.5"/></g>`; }
+  document.getElementById("pods").innerHTML = s; }
+
+/* ---- i18n, theme, routing ---- */
+function applyLang(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll("[data-t]").forEach(e => { const k=e.dataset.t; e.innerHTML = k==="greet" ? t(gk) : t(k); });
+  const d = new Date().toLocaleDateString(LANG==="en"?"en-GB":"fr-FR",{weekday:"long",day:"numeric",month:"long"});
+  document.getElementById("today").textContent = d; document.getElementById("today2").textContent = d;
+  document.getElementById("lang").textContent = LANG==="en" ? "FR" : "EN";
+  renderMods(); renderAppr(); chart(); rings();
+}
+document.getElementById("lang").onclick = () => { LANG = LANG==="fr"?"en":"fr"; try{localStorage.setItem("pv-lang",LANG)}catch(e){} applyLang(); };
+document.getElementById("theme").onclick = () => { const el=document.documentElement, n = el.dataset.theme==="dark"?"light":"dark"; el.dataset.theme=n; document.getElementById("theme").textContent = n==="dark"?"☾":"☀"; try{localStorage.setItem("pv-theme",n)}catch(e){} sparks(); chart(); rings(); };
+function route(){ const v = ["suite","pdg","signin"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "suite";
+  document.querySelectorAll(".view").forEach(s => s.hidden = s.id !== "v-"+v);
+  document.querySelectorAll(".pv a").forEach(a => a.classList.toggle("on", a.dataset.v===v)); closeReq(); window.scrollTo(0,0); }
+addEventListener("hashchange", route);
+try{ const l=localStorage.getItem("pv-lang"); if(l) LANG=l; const th=localStorage.getItem("pv-theme"); if(th){document.documentElement.dataset.theme=th; document.getElementById("theme").textContent = th==="dark"?"☾":"☀";} }catch(e){}
+pods(); sparks(); applyLang(); route();
+</script>
+</body>
+</html>
