@@ -139,16 +139,22 @@ function viewOverview() {
   for (const x of ev) for (const i of [...x.e.issues, ...x.e.plots.flatMap(p => p.issues)]) { (agg[i.k] ||= { lv: i.lv, n: 0, sample: i }).n++; }
   const top = Object.values(agg).sort((a, b) => a.lv === b.lv ? b.n - a.n : a.lv === "bad" ? -1 : 1).slice(0, 8);
   const generic = i => ["i.overlap", "i.pt_in_poly", "i.in_other", "i.dup_pt", "i.same_id", "i.dup_name", "i.poly_req", "i.area_diff", "i.yield"].includes(i.k) && agg[i.k].n > 1 ? t(i.k, { ...i.p, p: "…", o: "…", a: "…", m: "…", y: "…" }) : issueText(i);
-  const head = `<div class="topline"><div><h1>${esc(t("ov.title"))}</h1><p>${esc(t("ov.sub"))}</p></div>
+  const tt = (fr, en) => L === "fr" ? fr : en, n = live.length;
+  const lead = n ? tt(`<b>${fmt(n)} producteur${n > 1 ? "s" : ""}</b> et ${fmt(plots.length)} parcelles (${fmt(ha, 1)} ha) au registre. ${fmt(ver)} vérifié${ver > 1 ? "s" : ""} (${Math.round(ver / n * 100)} %)${hold ? `, <b>${fmt(hold)} en attente</b> : leur cacao ne peut pas être livré` : ""}.`,
+      `<b>${fmt(n)} farmer${n > 1 ? "s" : ""}</b> and ${fmt(plots.length)} plots (${fmt(ha, 1)} ha) in the registry. ${fmt(ver)} verified (${Math.round(ver / n * 100)}%)${hold ? `, <b>${fmt(hold)} on hold</b>: their cocoa cannot be released` : ""}.`)
+    : tt("Le registre est vide : enregistrez le premier producteur.", "The registry is empty: register the first farmer.");
+  const status = hold ? { lv: "bad", text: tt(`${hold} producteur${hold > 1 ? "s" : ""} en attente`, `${hold} farmer${hold > 1 ? "s" : ""} on hold`) } : pend ? { lv: "watch", text: tt(`${pend} à vérifier`, `${pend} to review`) } : { lv: "ok", text: tt("Registre à jour", "Registry up to date") };
+  const head = window.UI ? UI.hero({ lang: L, status, name: (S.me && S.me.name) || t("ov.title"), role: S.me && S.me.role ? t("role." + S.me.role) : "", leadHtml: lead,
+      actions: canWrite() ? `<button class="btn primary hero-cta" data-act="newFarmer">${UI.icon("farmer")}<span>${esc(t("btn.register"))}</span></button>` : "" })
+    : `<div class="topline"><div><h1>${esc(t("ov.title"))}</h1><p>${esc(t("ov.sub"))}</p></div>
     <div class="row">${canWrite() ? `<button class="btn primary" data-act="newFarmer">${esc(t("btn.register"))}</button>` : ""}</div></div>`;
   if (!live.length) return head + emptyState();
   return head + `
-  <div class="tiles">
-    <div class="tile"><span class="l">${esc(t("tile.farmers"))}</span><span class="v">${fmt(live.length)}</span><span class="s">${esc(t("tile.villages", { n: new Set(live.map(f => norm(f.village)).filter(Boolean)).size }))}</span></div>
-    <div class="tile"><span class="l">${esc(t("tile.plots"))}</span><span class="v">${fmt(plots.length)}</span><span class="s">${esc(t("tile.plots_sub", { g: plots.filter(x => plotPoint(x.p)).length, p: plots.filter(x => hasPoly(x.p)).length }))}</span></div>
-    <div class="tile"><span class="l">${esc(t("tile.area"))}</span><span class="v">${fmt(ha, 1)} <small>ha</small></span><span class="s">${esc(t("tile.area_sub", { n: plots.filter(x => Number(x.p.area) > POLYGON_THRESHOLD_HA).length, t: POLYGON_THRESHOLD_HA }))}</span></div>
-    <div class="tile"><span class="l">${esc(t("tile.verified"))}</span><span class="v ok">${fmt(ver)}</span><span class="s">${esc(t("tile.verified_sub", { p: Math.round(ver / live.length * 100) }))}</span></div>
-    <div class="tile"><span class="l">${esc(t("tile.hold"))}</span><span class="v bad">${fmt(hold)}</span><span class="s">${esc(t("tile.hold_sub"))}</span></div>
+  <div class="kpis">
+    ${UI.kpi({ icon: "farmer", color: "var(--ok)", label: t("tile.farmers"), value: fmt(n), href: "#farmers", sub: t("tile.villages", { n: new Set(live.map(f => norm(f.village)).filter(Boolean)).size }) })}
+    ${UI.kpi({ icon: "map", color: "var(--gold)", label: t("tile.plots"), value: fmt(plots.length), href: "#map", sub: `${fmt(ha, 1)} ha · ` + t("tile.plots_sub", { g: plots.filter(x => plotPoint(x.p)).length, p: plots.filter(x => hasPoly(x.p)).length }) })}
+    ${UI.kpi({ icon: "tick", color: "var(--ok)", label: t("tile.verified"), value: fmt(ver), sub: t("tile.verified_sub", { p: Math.round(ver / n * 100) }) })}
+    ${UI.kpi({ icon: "alert", color: "var(--bad)", label: t("tile.hold"), value: fmt(hold), sub: t("tile.hold_sub"), hot: hold > 0 })}
   </div>
   <div class="card stack"><h3>${esc(t("ov.status"))}</h3>
     <div class="bar" role="img" aria-label="${ver} / ${pend} / ${hold}"><span class="b-ok" style="width:${ver / live.length * 100}%"></span><span class="b-pend" style="width:${pend / live.length * 100}%"></span><span class="b-bad" style="width:${hold / live.length * 100}%"></span></div>

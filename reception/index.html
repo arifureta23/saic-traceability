@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../js/theme.js"></script>
+<script src="../js/ui.js"></script>
 <title>SAIC Réception cacao</title>
 <meta name="theme-color" content="#1f5c47">
 <link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
@@ -446,16 +447,22 @@ const newBtn = () => canEdit() ? `<button class="btn primary" data-act="new">${e
 function viewOverview() {
   const list = receptions(), s = stats(list), top = s.zones[0];
   const kindLabel = k => t("kind_" + k);
-  return `<div class="topline"><div><h1>${esc(t("ov_title"))}</h1><p>${esc(t("ov_sub"))}</p></div><div class="row">${newBtn()}</div></div>
-  <div class="tiles">
-    <div class="tile"><span class="l">${esc(t("k_qty"))}</span><span class="v">${ft(s.qty)}</span><span class="s">${esc(t("k_qty_sub", { n: s.n, r: ft(s.received) }))}</span></div>
-    <div class="tile"><span class="l">${esc(t("k_price"))}</span><span class="v">${fn(s.avg)} <small>F/kg</small></span><span class="s">${esc(t("k_price_sub", { min: fn(s.min), max: fn(s.max) }))}</span></div>
-    <div class="tile"><span class="l">${esc(t("k_amount"))}</span><span class="v">${fcs(s.amount)}</span><span class="s">${fc(s.amount)}</span></div>
-    <div class="tile"><span class="l">${esc(t("k_zones"))}</span><span class="v">${s.zones.length}</span><span class="s">${esc(t("k_zones_sub", { z: top ? top[0] : "—", p: top ? Math.round(top[1].kg / s.qty * 100) : 0 }))}</span></div>
-    <div class="tile"><span class="l">${esc(t("k_traced"))}</span><span class="v ${s.traced / s.qty < 0.5 ? "bad" : "ok"}">${Math.round(s.traced / Math.max(s.qty, 1) * 100)} %</span><span class="s">${esc(t("k_traced_sub", { t: fn(s.traced) }))}</span></div>
+  const tt = (fr, en) => S.lang === "en" ? en : fr, ctl = controls(list), bad = ctl.filter(c => c.lv === "bad").length, tp = Math.round(s.traced / Math.max(s.qty, 1) * 100), wk = s.weeks.slice(-12);
+  const nor = list.filter(r => !r.example && !r.received).length;
+  const lead = s.n ? tt(`<b>${ft(s.qty)}</b> de cacao reçues en ${s.n} réceptions, à <b>${fn(s.avg)} F/kg</b> en moyenne. ${tp} % sont tracées jusqu'au producteur${nor ? `, et ${nor} réception${nor > 1 ? "s" : ""} reste${nor > 1 ? "nt" : ""} à confirmer au magasin` : ""}.`,
+      `<b>${ft(s.qty)}</b> of cocoa received in ${s.n} receptions, at <b>${fn(s.avg)} F/kg</b> on average. ${tp}% is traced to the farmer${nor ? `, and ${nor} reception${nor > 1 ? "s" : ""} still need${nor > 1 ? "" : "s"} warehouse confirmation` : ""}.`)
+    : tt("Aucune réception enregistrée pour l'instant.", "No reception recorded yet.");
+  const status = bad ? { lv: "bad", text: tt(`${bad} point${bad > 1 ? "s" : ""} à traiter`, `${bad} point${bad > 1 ? "s" : ""} need${bad > 1 ? "" : "s"} action`) } : ctl.length ? { lv: "watch", text: tt("À surveiller", "Worth watching") } : { lv: "ok", text: tt("Tout est en ordre", "All in order") };
+  const half = (v, f) => v.length > 1 ? UI.change(f(v.slice(-4)), f(v.slice(-8, -4))) : null, sumKg = v => v.reduce((x, w) => x + w.kg, 0), avgP = v => v.length ? v.reduce((x, w) => x + w.avg, 0) / v.length : 0;
+  return UI.hero({ lang: S.lang, status, name: (S.me && S.me.name) || "", leadHtml: lead, actions: newBtn() })
+  + `<div class="kpis">
+    ${UI.kpi({ icon: "pod", color: "var(--ok)", label: t("k_qty"), value: fn(s.qty), unit: "kg", deltaHtml: UI.delta(half(wk, sumKg), S.lang), sub: t("k_qty_sub", { n: s.n, r: ft(s.received) }), series: wk.map(w => w.kg) })}
+    ${UI.kpi({ icon: "trend", color: "var(--gold)", label: t("k_price"), value: fn(s.avg), unit: "F/kg", deltaHtml: UI.delta(half(wk, avgP), S.lang, true), sub: t("k_price_sub", { min: fn(s.min), max: fn(s.max) }), series: wk.map(w => w.avg) })}
+    ${UI.kpi({ icon: "cash", color: "#5aa2ff", label: t("k_amount"), value: fcs(s.amount), unit: "F", sub: tt(`${s.zones.length} zones · ${s.buyers.length} acheteurs`, `${s.zones.length} zones · ${s.buyers.length} buyers`), series: wk.map(w => w.kg * w.avg) })}
+    ${UI.kpi({ icon: "pin", color: tp < 50 ? "var(--bad)" : "var(--ok)", label: t("k_traced"), value: tp + " %", sub: t("k_traced_sub", { t: fn(s.traced) }), hot: tp < 50 })}
   </div>
   <div class="grid-wide">
-    <div class="card stack"><h3>${esc(t("price_trend"))}</h3>${priceChart(s.weeks, s.avg)}</div>
+    <div class="card"><div class="card-h"><h3>${esc(tt("Achats par semaine", "Purchases per week"))}</h3></div>${UI.cocoaChart(wk, S.lang, UI.weekLabel(S.lang))}</div>
     <div class="card stack"><div class="topline"><h3>${esc(t("by_zone"))}</h3><a href="#zones">${esc(t("nav_zones"))}</a></div>${bars(s.zones.slice(0, 8).map(([k, v]) => [k, v.kg]), s.qty)}</div>
   </div>
   <div class="grid-wide">

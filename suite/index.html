@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="../js/theme.js"></script>
+<script src="../js/ui.js"></script>
 <title>SAIC Suite</title>
 <meta name="theme-color" content="#1f5c47">
 <link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
@@ -106,8 +107,10 @@ function render() {
       await sb.auth.resetPasswordForEmail(em, { redirectTo: location.origin + "/" }); $("#er").textContent = t("sent"); };
     return;
   }
-  m.innerHTML = `<div><h1>${esc(t("hello", { n: S.me.name }))}</h1><p class="muted" style="margin-top:4px">${esc(t("sub"))}</p></div>
-    ${S.mods.length ? `<div class="grid">${S.mods.map(x => `<a class="mod ${x.whp ? "whp" : ""}" href="${x.href}"><span class="ic" aria-hidden="true">${esc(x.ic)}</span><b>${esc(t(x.k))}</b><span>${esc(t(x.k + "_d"))}</span><span class="role">${esc(x.role)}</span></a>`).join("")}</div>` : `<div class="card">${esc(t("none"))}</div>`}
+  const nApps = S.mods.length;
+  m.innerHTML = UI.hero({ lang: S.lang, name: S.me.name, leadHtml: esc(t("sub")) + " " + (S.lang === "en" ? `You have access to <b>${nApps} app${nApps > 1 ? "s" : ""}</b> with your roles.` : `Vous avez accès à <b>${nApps} application${nApps > 1 ? "s" : ""}</b> selon vos rôles.`) })
+    + `<h2 class="sec-title">${S.lang === "en" ? "Your apps" : "Vos applications"}</h2>
+    ${S.mods.length ? `<div class="grid">${S.mods.map(x => `<a class="mod ${x.whp ? "whp" : ""}" href="${x.href}"><span class="ic" aria-hidden="true">${UI.icon({ W: "globe", DG: "grid", F: "pin", R: "pod", T: "cash" }[x.ic] || "apps")}</span><b>${esc(t(x.k))}</b><span>${esc(t(x.k + "_d"))}</span><span class="role">${esc(x.role)}</span></a>`).join("")}</div>` : `<div class="card">${esc(t("none"))}</div>`}
     ${download()}`;
 }
 async function boot() {
