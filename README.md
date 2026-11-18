@@ -159,3 +159,12 @@ insert into public.exec_members (user_id, role)
 select id, 'dg_whp' from auth.users where email = 'someone@example.com'
 on conflict do nothing;
 ```
+
+---
+
+## Tests
+The F01 checks and plot geometry live in `js/checks.js` (no screen code), so they can be tested on their own. Unit tests are in `tests/`; they need Node 20 or newer and nothing to install:
+```
+node --test tests/*.test.mjs
+```
+GitHub runs them on every push and pull request (`.github/workflows/tests.yml`). They don't touch the database or the live site.
