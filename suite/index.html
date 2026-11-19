@@ -99,7 +99,7 @@ function render() {
       <form id="lf" style="display:flex;flex-direction:column;gap:12px" novalidate>
         <div class="f"><label for="em">${esc(t("email"))}</label><input id="em" type="email" autocomplete="username"></div>
         <div class="f"><label for="pw">${esc(t("password"))}</label><input id="pw" type="password" autocomplete="current-password"></div>
-        <span class="err" id="er"></span><button class="btn primary" type="submit" style="justify-content:center">${esc(t("go"))}</button><a href="#" id="fg">${esc(t("forgot"))}</a></form></div>${download()}`;
+        <span class="err" id="er"></span><button class="btn primary" type="submit" style="justify-content:center">${esc(t("go"))}</button><a href="#" id="fg">${esc(t("forgot"))}</a></form><p class="privacy-link" style="font-size:13px;text-align:center;color:var(--muted);margin:0"><a href="/confidentialite/" style="color:inherit">${document.documentElement.lang === "en" ? "Privacy policy" : "Politique de confidentialité"}</a> · <a href="/conditions/" style="color:inherit">${document.documentElement.lang === "en" ? "Terms of use" : "Conditions d'utilisation"}</a></p></div>${download()}`;
     $("#lf").onsubmit = async e => { e.preventDefault(); $("#er").textContent = "";
       const { error } = await sb.auth.signInWithPassword({ email: $("#em").value.trim(), password: $("#pw").value });
       if (error) { $("#er").textContent = /invalid/i.test(error.message) ? t("bad") : error.message; return; } await boot(); };
@@ -111,7 +111,8 @@ function render() {
   m.innerHTML = UI.hero({ lang: S.lang, name: S.me.name, leadHtml: esc(t("sub")) + " " + (S.lang === "en" ? `You have access to <b>${nApps} app${nApps > 1 ? "s" : ""}</b> with your roles.` : `Vous avez accès à <b>${nApps} application${nApps > 1 ? "s" : ""}</b> selon vos rôles.`) })
     + `<h2 class="sec-title">${S.lang === "en" ? "Your apps" : "Vos applications"}</h2>
     ${S.mods.length ? `<div class="grid">${S.mods.map(x => `<a class="mod ${x.whp ? "whp" : ""}" href="${x.href}"><span class="ic" aria-hidden="true">${UI.icon({ W: "globe", DG: "grid", F: "pin", R: "pod", T: "cash" }[x.ic] || "apps")}</span><b>${esc(t(x.k))}</b><span>${esc(t(x.k + "_d"))}</span><span class="role">${esc(x.role)}</span></a>`).join("")}</div>` : `<div class="card">${esc(t("none"))}</div>`}
-    ${download()}`;
+    ${download()}
+    <p style="text-align:center;margin-top:8px"><a href="/confidentialite/" style="font-size:13px;color:var(--muted)">${document.documentElement.lang === "en" ? "Privacy policy" : "Politique de confidentialité"}</a> · <a href="/conditions/" style="font-size:13px;color:var(--muted)">${document.documentElement.lang === "en" ? "Terms of use" : "Conditions d'utilisation"}</a></p>`;
 }
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();

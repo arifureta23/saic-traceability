@@ -74,7 +74,7 @@ window.addEventListener("online", () => { if (S.offline) loadAll(); });
 function shell() {
   document.documentElement.lang = L;
   $("#nav").innerHTML = ["overview", "farmers", "map", "team"].map(r => `<a href="#${r}" data-r="${r}">${esc(t("nav." + r))}${r === "farmers" ? ` <small>${S.farmers.filter(f => !f.archived).length || ""}</small>` : ""}</a>`).join("");
-  $("#railFoot").innerHTML = `<a href="reception/">${esc(t("nav.reception"))}</a><a href="tresorerie/">${esc(t("nav.treasury"))}</a><span>${esc(t("foot.forms"))}</span>${S.me ? `<span>${esc(S.me.name)}<br>${esc(t("role." + S.me.role))}</span>` : ""}
+  $("#railFoot").innerHTML = `<a href="reception/">${esc(t("nav.reception"))}</a><a href="tresorerie/">${esc(t("nav.treasury"))}</a><a href="confidentialite/producteurs/">${L === "en" ? "Farmer information sheet" : "Fiche d'information producteur"}</a><span>${esc(t("foot.forms"))}</span>${S.me ? `<span>${esc(S.me.name)}<br>${esc(t("role." + S.me.role))}</span>` : ""}
     <div class="row"><button class="btn small" id="langBtn">${esc(t("lang.switch"))}</button>${S.api && S.api.mode === "live" && S.me ? `<button class="btn small" id="outBtn">${esc(t("auth.signout"))}</button>` : ""}</div>
     ${S.api && S.api.mode === "demo" ? `<a href="#" id="resetDemo">${esc(t("demo.reset"))}</a>` : ""}`;
   $("#langBtn").onclick = () => { L = L === "fr" ? "en" : "fr"; try { localStorage.setItem("saic-lang", L); } catch (e) {} render(); };
@@ -114,7 +114,7 @@ function viewLogin() {
       <span class="err" id="loginErr"></span>
       <button class="btn primary" type="submit" id="loginBtn">${esc(t("auth.signin"))}</button>
       <a href="#" id="forgot">${esc(t("auth.forgot"))}</a>
-    </form></div>`;
+    </form><p class="privacy-link" style="font-size:13px;text-align:center;color:var(--muted);margin:0"><a href="/confidentialite/" style="color:inherit">${document.documentElement.lang === "en" ? "Privacy policy" : "Politique de confidentialité"}</a> · <a href="/conditions/" style="color:inherit">${document.documentElement.lang === "en" ? "Terms of use" : "Conditions d'utilisation"}</a></p></div>`;
 }
 function bindLogin() {
   const pf = $("#pwForm");

@@ -957,7 +957,7 @@ function viewLogin() {
     <form id="lf" class="stack" novalidate>
       <div class="f"><label for="lem">${esc(t("email"))}</label><input id="lem" type="email" autocomplete="username" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
       <div class="f"><label for="lpw">${esc(t("password"))}</label><input id="lpw" type="password" autocomplete="current-password" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
-      <span class="err" id="lErr"></span><button class="btn primary" type="submit" id="lBtn">${esc(t("signin_btn"))}</button><a href="#" id="lForgot">${esc(t("forgot"))}</a></form></div>`;
+      <span class="err" id="lErr"></span><button class="btn primary" type="submit" id="lBtn">${esc(t("signin_btn"))}</button><a href="#" id="lForgot">${esc(t("forgot"))}</a></form><p class="privacy-link" style="font-size:13px;text-align:center;color:var(--muted);margin:0"><a href="/confidentialite/" style="color:inherit">${document.documentElement.lang === "en" ? "Privacy policy" : "Politique de confidentialité"}</a> · <a href="/conditions/" style="color:inherit">${document.documentElement.lang === "en" ? "Terms of use" : "Conditions d'utilisation"}</a></p></div>`;
 }
 function bindLogin() {
   $("#lf").onsubmit = async e => { e.preventDefault(); $("#lBtn").disabled = true; $("#lErr").textContent = "";

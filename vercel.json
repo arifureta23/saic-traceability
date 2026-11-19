@@ -35,6 +35,22 @@
     {
       "source": "/dg-whp/",
       "destination": "/dg-saic/index.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/confidentialite/index.html"
+    },
+    {
+      "source": "/privacy/",
+      "destination": "/confidentialite/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/conditions/index.html"
+    },
+    {
+      "source": "/terms/",
+      "destination": "/conditions/index.html"
     }
   ]
 }
