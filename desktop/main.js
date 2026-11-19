@@ -1,4 +1,4 @@
-// SAIC Suite — Windows desktop app.
+// SAIC Suite — desktop app for Windows and macOS.
 // It opens the live SAIC apps in their own window, so every update to the site reaches the app at once.
 const { app, BrowserWindow, Menu, shell, dialog } = require("electron");
 const path = require("path");
@@ -49,11 +49,18 @@ function createWindow() {
   win.loadURL(START);
 }
 
+const isMac = process.platform === "darwin";
+
 function buildMenu() {
   const go = p => () => win && win.loadURL(SITE + p);
+  // On macOS, copy/paste shortcuts only work when an Edit menu exists.
+  const editMenu = isMac ? [{ label: "Édition / Edit", submenu: [
+    { role: "undo", label: "Annuler / Undo" }, { role: "redo", label: "Rétablir / Redo" }, { type: "separator" },
+    { role: "cut", label: "Couper / Cut" }, { role: "copy", label: "Copier / Copy" }, { role: "paste", label: "Coller / Paste" },
+    { role: "selectAll", label: "Tout sélectionner / Select all" } ] }] : [];
   Menu.setApplicationMenu(Menu.buildFromTemplate([
     { label: "SAIC Suite", submenu: [
-      { label: "Accueil / Home", accelerator: "CmdOrCtrl+H", click: go("/suite/") },
+      { label: "Accueil / Home", accelerator: isMac ? "Cmd+Shift+H" : "Ctrl+H", click: go("/suite/") },
       { type: "separator" },
       { label: "Registre des producteurs", click: go("/") },
       { label: "Trésorerie", click: go("/tresorerie/") },
@@ -63,9 +70,10 @@ function buildMenu() {
       { label: "Tableau de bord PDG", click: go("/pdg/") },
       { type: "separator" },
       { role: "quit", label: "Quitter / Quit" } ] },
+    ...editMenu,
     { label: "Affichage / View", submenu: [
-      { label: "Retour / Back", accelerator: "Alt+Left", click: () => win && win.webContents.navigationHistory.canGoBack() && win.webContents.navigationHistory.goBack() },
-      { label: "Actualiser / Refresh", accelerator: "F5", click: () => win && win.webContents.reload() },
+      { label: "Retour / Back", accelerator: isMac ? "Cmd+[" : "Alt+Left", click: () => win && win.webContents.navigationHistory.canGoBack() && win.webContents.navigationHistory.goBack() },
+      { label: "Actualiser / Refresh", accelerator: isMac ? "Cmd+R" : "F5", click: () => win && win.webContents.reload() },
       { type: "separator" },
       { role: "zoomIn", label: "Agrandir / Zoom in" }, { role: "zoomOut", label: "Réduire / Zoom out" }, { role: "resetZoom", label: "Taille normale / Actual size" },
       { type: "separator" }, { role: "togglefullscreen", label: "Plein écran / Full screen" } ] },

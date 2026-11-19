@@ -1,7 +1,16 @@
-# Builds the SAIC Suite Windows installer and publishes it as the latest GitHub release.
-# Download link (always the newest version):
+# Builds the SAIC Suite desktop apps (Windows installer + macOS disk image).
+#
+# On main, both files are published as the latest GitHub release. Download links (always the newest version):
 #   https://github.com/arifureta23/saic-traceability/releases/latest/download/SAIC-Suite-Setup.exe
-name: Desktop app (Windows)
+#   https://github.com/arifureta23/saic-traceability/releases/latest/download/SAIC-Suite-Mac.dmg
+#
+# On any other branch, nothing touches the latest release: the Mac build goes to a separate
+# pre-release, "desktop-mac-preview", so it can be tried before merging:
+#   https://github.com/arifureta23/saic-traceability/releases/download/desktop-mac-preview/SAIC-Suite-Mac.dmg
+#
+# The Mac app is not signed with an Apple Developer ID (ad-hoc signature only), so macOS asks
+# for confirmation the first time: System Settings > Privacy & Security > "Open Anyway".
+name: Desktop app (Windows + macOS)
 
 on:
   push:
@@ -12,7 +21,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  windows:
     runs-on: windows-latest
     defaults:
       run:
@@ -24,15 +33,73 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: desktop/dist/SAIC-Suite-Setup.exe
+          if-no-files-found: error
+
+  mac:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: desktop
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run dist:mac
+      - name: Check the app signature
+        run: codesign --verify --deep --strict --verbose=2 "dist/mac-universal/SAIC Suite.app"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: desktop/dist/SAIC-Suite-Mac.dmg
+          if-no-files-found: error
+
+  release:
+    if: github.ref == 'refs/heads/main'
+    needs: [windows, mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
       - name: Publish release
-        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=$(node -p "require('./desktop/package.json').version")
           TAG="desktop-v${VERSION}"
           gh release delete "$TAG" --yes --cleanup-tag || true
-          gh release create "$TAG" "dist/SAIC-Suite-Setup.exe" \
-            --title "SAIC Suite ${VERSION} (Windows)" \
-            --notes "Installateur Windows de SAIC Suite. Téléchargez SAIC-Suite-Setup.exe et lancez-le." \
+          gh release create "$TAG" out/SAIC-Suite-Setup.exe out/SAIC-Suite-Mac.dmg \
+            --title "SAIC Suite ${VERSION} (Windows + macOS)" \
+            --notes "Windows : téléchargez SAIC-Suite-Setup.exe et lancez-le. macOS : téléchargez SAIC-Suite-Mac.dmg, glissez SAIC Suite dans Applications ; au premier lancement, Réglages Système > Confidentialité et sécurité > « Ouvrir quand même »." \
             --target "$GITHUB_SHA" --latest
+
+  mac-preview:
+    if: github.ref != 'refs/heads/main'
+    needs: [mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mac
+          path: out
+      - name: Publish Mac preview (pre-release, never marked latest)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="desktop-mac-preview"
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" out/SAIC-Suite-Mac.dmg \
+            --title "SAIC Suite macOS preview (${GITHUB_REF_NAME})" \
+            --notes "Version de test macOS, non signée par Apple. Premier lancement : Réglages Système > Confidentialité et sécurité > « Ouvrir quand même »." \
+            --target "$GITHUB_SHA" --prerelease --latest=false
