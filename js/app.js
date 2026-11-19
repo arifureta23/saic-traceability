@@ -114,7 +114,7 @@ function viewLogin() {
       <span class="err" id="loginErr"></span>
       <button class="btn primary" type="submit" id="loginBtn">${esc(t("auth.signin"))}</button>
       <a href="#" id="forgot">${esc(t("auth.forgot"))}</a>
-    </form></div>`;
+    </form><a class="privacy-link" href="/confidentialite/" style="display:block;font-size:13px;text-align:center;color:var(--muted)">${document.documentElement.lang === "en" ? "Privacy policy" : "Politique de confidentialité"}</a></div>`;
 }
 function bindLogin() {
   const pf = $("#pwForm");
