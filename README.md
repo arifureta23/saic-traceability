@@ -199,6 +199,8 @@ What they check: nobody approves their own request; treasury requests follow DAF
 
 Tests marked **TODO** document known gaps: they are reported but do not fail the run.
 
+**Security tests** (`supabase/tests/rules/50_access_by_role.sql`): for each kind of account (no account, brand-new sign-up, lead, warehouse, accountant, DAF, DG, PDG) they check what can be seen, that nothing can be deleted, that nobody can give themselves a higher role, and that cash box ceilings are protected. Known open problems from the security test of 19 Nov 2026 (new accounts can read the registry; ceiling changes are not logged) are marked TODO until they are fixed.
+
 Run them on your own computer (needs PostgreSQL 16, `postgresql-16-pgtap` and `pg_prove`):
 ```bash
 PGHOST=localhost PGUSER=postgres ./supabase/tests/run.sh

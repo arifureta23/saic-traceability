@@ -26,3 +26,23 @@ begin
   reset role;
   perform set_config('request.jwt.claim.sub', '', true);
 end $$;
+
+-- Security tests: how many rows of a table the current person can see (0 when access is refused outright)
+create or replace function tests.visible(tbl text) returns bigint language plpgsql as $$
+declare n bigint;
+begin
+  execute format('select count(*) from %s', tbl) into n;
+  return n;
+exception when insufficient_privilege then return 0;
+end $$;
+
+-- Security tests: runs a change and returns how many rows it changed (0 when it is refused)
+create or replace function tests.changed(stmt text) returns bigint language plpgsql as $$
+declare n bigint;
+begin
+  execute stmt;
+  get diagnostics n = row_count;
+  return n;
+exception when insufficient_privilege or raise_exception or check_violation or not_null_violation then return 0;
+end $$;
+grant execute on all functions in schema tests to anon, authenticated;
