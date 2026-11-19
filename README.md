@@ -162,6 +162,35 @@ on conflict do nothing;
 
 ---
 
+# ABI — Agricultural Business Intelligence (assistant)
+
+ABI is the assistant built into every SAIC Suite page (the "Demander à ABI / Ask ABI" button, bottom right). It writes summaries, answers questions about the treasury, receptions, registry and requests, and drafts notes, in French or English.
+
+- **Same access as the dashboards.** ABI reads the database with the signed-in person's own session, so Row Level Security applies: a warehouse manager can't see the cash boxes through ABI, a DG only sees their office's requests. Phone numbers, ID numbers and photos are never sent to the AI.
+- **Actions only with a click (stage 2).** ABI can prepare a treasury fund request step (DAF or DG), a decision on a request to the DG or the PDG, or a correction to a reception. It shows a card; nothing is saved until the person clicks **Confirm**, and the database rules still apply (step order, no self-approval, reasons, history and change logs). Funding by the Treasurer is not done through ABI.
+- **Files:** `js/abi.js` (the panel, loaded by each page), `supabase/functions/abi/index.ts` (the server part, which calls Claude).
+
+## Setup (about 10 minutes, once)
+1. **Claude API key:** at [platform.claude.com](https://platform.claude.com) → API keys → Create key. Keep it private.
+2. **Add the key to Supabase:** Supabase → Edge Functions → Secrets → add `ANTHROPIC_API_KEY` with the key. Never put it in `js/config.js` or in GitHub.
+3. **Install the function:** Supabase → Edge Functions → Deploy a new function → Via editor → name it `abi`, paste `supabase/functions/abi/index.ts`, deploy. Then in the function's settings, turn **off** "Enforce JWT verification" (the function checks the session itself).
+   With the Supabase CLI instead: `supabase functions deploy abi --no-verify-jwt`.
+4. Open any SAIC Suite page, sign in and click **Demander à ABI**.
+
+Options (Edge Functions → Secrets): `ABI_ACTIONS=off` makes ABI read only; `ABI_MODEL` changes the Claude model (default `claude-opus-5-5`).
+Costs: each question is billed by Anthropic on the API key's account (roughly 5 to 20 US cents for a typical question, more for long reports). Set a monthly limit in the Claude Console.
+
+---
+
+## Tests
+The F01 checks and plot geometry live in `js/checks.js` (no screen code), so they can be tested on their own; `tests/abi.test.mjs` checks that ABI's answers are shown safely. Unit tests are in `tests/`; they need Node 20 or newer and nothing to install:
+```
+node --test tests/*.test.mjs
+```
+GitHub runs them on every push and pull request (`.github/workflows/tests.yml`). They don't touch the database or the live site.
+
+---
+
 # Database rule tests (`supabase/tests`)
 
 Automatic tests for the approval rules the database enforces. They run on GitHub on every push and pull request that touches `supabase/` (workflow **Database rule tests**), on a throwaway PostgreSQL built from the SQL files in this repository. They never connect to the real Supabase project and need no secrets.

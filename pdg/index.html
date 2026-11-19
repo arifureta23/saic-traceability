@@ -3,12 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../js/theme.js"></script>
+<script src="../js/ui.js"></script>
 <title>Tableau de bord PDG</title>
 <meta name="theme-color" content="#1a5fd6">
 <link rel="icon" href="../icons/whp-logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 
 /* Layout: same shell as the SAIC farmer registry — left rail + work area; cash box page = tiles, balance chart | categories, table. */
@@ -241,6 +243,7 @@ label.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .statusbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--paper)}
 .statusbar span{display:block;height:100%}
 </style>
+<link rel="stylesheet" href="../css/theme.css">
 </head>
 <body>
 <div class="app">
@@ -540,24 +543,90 @@ function deptRequests() {
     <div class="who-row">${Object.keys(SUBMITTERS).map(k => { const c = reqCounts(k); return `<span><span class="ent-chip ${SUBMITTERS[k].ent}">${SUBMITTERS[k].ent}</span> ${esc(t("r_" + k))}</span><span class="n"><b>${c.pending}</b> ${esc(t("req_pending"))}</span><span class="n muted">${c.approved} ${esc(t("req_approved"))}</span>`; }).join("")}</div>
     <div class="foot"><a href="#approvals">${esc(t("see_all"))}</a></div></div>`;
 }
+/* ---------- "Cacao Night" overview widgets (shared by the PDG and DG dashboards; uses js/ui.js) ---------- */
+const tt = (fr, en) => S.lang === "en" ? en : fr;
+const plural = (n, fr, frs, en, ens) => tt(n > 1 ? frs : fr, n > 1 ? ens : en);
+function ovData() {
+  const rs = recStats(), weeks = rs.weeks.slice(-12);
+  const sum = a => a.reduce((x, w) => x + w.kg, 0);
+  const last4 = sum(weeks.slice(-4)), prev4 = sum(weeks.slice(-8, -4));
+  const lastP = weeks.length ? weeks[weeks.length - 1].avg : 0, prevP = weeks.length > 1 ? weeks.slice(-5, -1).reduce((a, w) => a + w.avg, 0) / Math.min(4, weeks.length - 1) : 0;
+  /* combined SAIC cash balance over time */
+  const dates = [...new Set([...CB.cacao.days, ...CB.admin.days].map(d => d.date))].sort();
+  const at = (days, opening, d) => { let v = opening; for (const x of days) { if (x.date > d) break; v = x.bal; } return v; };
+  const cash = dates.map(d => at(CB.cacao.days, CB.cacao.d.opening, d) + at(CB.admin.days, CB.admin.d.opening, d)).slice(-12);
+  return { rs, weeks, last4, prev4, kgChange: prev4 ? UI.change(last4, prev4) : null, priceChange: prevP ? UI.change(lastP, prevP) : null, cash,
+    cashChange: cash.length > 1 ? UI.change(cash[cash.length - 1], cash[Math.max(0, cash.length - 8)]) : null };
+}
+const perDay = list => { const out = []; for (let i = 7; i >= 0; i--) { const d = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10); out.push(list.filter(r => String(r.created || "").slice(0, 10) <= d).length); } return out; };
+function ovStatus(al, okText) {
+  const bad = al.filter(a => a.lv === "bad").length, warn = al.length - bad;
+  return bad ? { lv: "bad", text: tt(`${bad} point${bad > 1 ? "s" : ""} à traiter`, `${bad} point${bad > 1 ? "s" : ""} need${bad > 1 ? "" : "s"} action`) }
+    : warn ? { lv: "watch", text: tt("À surveiller", "Worth watching") } : { lv: "ok", text: okText };
+}
+function cocoaSentence(o) {
+  if (!o.rs.qty) return "";
+  if (o.kgChange != null && o.prev4) {
+    const up = o.kgChange >= 0, p = UI.num(Math.abs(o.kgChange), S.lang);
+    return tt(`Les achats de cacao sont en ${up ? "hausse" : "baisse"} de <b>${p} %</b> sur les 4 dernières semaines (${UI.num(o.last4 / 1000, S.lang, 1)} t).`,
+      `Cocoa purchases are <b>${up ? "up" : "down"} ${p}%</b> over the last 4 weeks (${UI.num(o.last4 / 1000, S.lang, 1)} t).`);
+  }
+  return tt(`<b>${UI.num(o.rs.qty / 1000, S.lang, 1)} t</b> de cacao achetées à ${UI.num(o.rs.avg, S.lang)} F/kg en moyenne.`, `<b>${UI.num(o.rs.qty / 1000, S.lang, 1)} t</b> of cocoa bought at ${UI.num(o.rs.avg, S.lang)} F/kg on average.`);
+}
+function ovCocoaKpis(o, onlyKg) {
+  return UI.kpi({ icon: "pod", color: "var(--ok)", label: t("k_rq"), value: UI.num(o.rs.qty, S.lang), unit: "kg", href: "#recep",
+      deltaHtml: UI.delta(o.kgChange, S.lang), sub: tt(`${o.rs.n} réceptions · ${o.rs.zones.length} zones`, `${o.rs.n} receptions · ${o.rs.zones.length} zones`), series: o.weeks.map(w => w.kg) })
+    + (onlyKg ? "" : UI.kpi({ icon: "trend", color: "var(--gold)", label: t("k_rp"), value: UI.num(o.rs.avg, S.lang), unit: "F/kg", href: "#recep",
+      deltaHtml: UI.delta(o.priceChange, S.lang, true), sub: `min. ${UI.num(o.rs.min, S.lang)} · max. ${UI.num(o.rs.max, S.lang)}`, series: o.weeks.map(w => w.avg) }));
+}
+function ovCashKpi(o) {
+  const tot = CB.cacao.closing + CB.admin.closing, under = CB.cacao.closing <= CB.cacao.c.ceiling && CB.admin.closing <= CB.admin.c.ceiling;
+  return UI.kpi({ icon: "cash", color: "#5aa2ff", label: t("k_cash"), value: fcs(tot).replace(/ (M|k)$/, ""), unit: (/ M$/.test(fcs(tot)) ? "M " : / k$/.test(fcs(tot)) ? "k " : "") + "F", href: "#treasury",
+    deltaHtml: UI.delta(o.cashChange, S.lang), sub: tt(`2 caisses · ${under ? "sous plafond" : "plafond dépassé"}`, `2 cash boxes · ${under ? "under ceiling" : "over ceiling"}`), series: o.cash });
+}
+function ovCocoaCard() {
+  const o = ovData();
+  return `<div class="card ui-rise"><div class="card-h"><h3>${esc(tt("Achats de cacao", "Cocoa purchases"))}</h3><a href="#recep">${esc(tt("Détail →", "Details →"))}</a></div>${UI.cocoaChart(o.weeks, S.lang, UI.weekLabel(S.lang))}</div>`;
+}
+function ovCashCard() {
+  const row = k => { const a = CB[k]; return UI.cashRow({ name: t("d_" + k), pct: a.closing / a.c.ceiling * 100, ringSub: tt("du plafond", "of ceiling"), balance: fc(a.closing),
+    inflow: fcs(a.totIn), outflow: fcs(a.totOut), inLabel: tt("entrées", "in"), outLabel: tt("sorties", "out") }); };
+  const st = [CB.cacao.status, CB.admin.status].includes("bad") ? "bad" : [CB.cacao.status, CB.admin.status].includes("watch") ? "watch" : "ok";
+  return `<div class="card ui-rise"><div class="card-h"><h3>${esc(tt("Caisses SAIC", "SAIC cash boxes"))}</h3><span class="st ${st}">${esc(t("st_" + st))}</span></div>${row("cacao")}${row("admin")}</div>`;
+}
+function ovTraceCard() {
+  const s = trace, rs = recStats(), n = Math.max(s.n, 1), tp = rs.qty ? Math.round(rs.traced / rs.qty * 100) : 0, st = s.hold ? (s.hold / n > 0.2 ? "bad" : "watch") : "ok";
+  return `<a class="card trace-card ui-rise" href="#trace" style="text-decoration:none;color:inherit;display:block"><div class="card-h"><h3>${esc(tt("Traçabilité EUDR", "EUDR traceability"))}</h3><span class="st ${st}">${esc(t("st_" + st))}</span></div>
+    <div class="nums"><div><b>${s.n}</b><span>${esc(t("farmers"))}</span></div><div><b>${s.plots}</b><span>${esc(t("plots"))}</span></div><div><b>${tp} %</b><span>${esc(tt("du cacao tracé", "of cocoa traced"))}</span></div></div>
+    <div class="stackbar"><i style="width:${s.verified / n * 100}%;background:var(--ok)"></i><i style="width:${s.pending / n * 100}%;background:var(--gold)"></i><i style="width:${s.hold / n * 100}%;background:var(--bad)"></i></div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>${s.verified} ${esc(t("verified"))}</span><span><i style="background:var(--gold)"></i>${s.pending} ${esc(t("pending"))}</span><span><i style="background:var(--bad)"></i>${s.hold} ${esc(t("hold"))}</span></div></a>`;
+}
+const AREA = { "#treasury": ["Trésorerie SAIC", "SAIC treasury"], "#trace": ["Traçabilité", "Traceability"], "#recep": ["Réception cacao", "Cocoa reception"], "#inbox": ["Demandes", "Requests"], "#pdg": ["PDG", "PDG"] };
+function ovFeedCard(al) {
+  const items = al.slice(0, 5).map(a => ({ lv: a.lv, m: a.m, href: a.href, sub: AREA[a.href] ? tt(...AREA[a.href]) : "" }));
+  return `<div class="card ui-rise"><div class="card-h"><h3>${esc(t("attention"))}</h3></div>${UI.feed(items, tt("Rien à signaler.", "Nothing to report."))}</div>`;
+}
+const dueTxt = r => r.due ? tt("avant le ", "by ") + dfmt(r.due) : dfmt(r.created);
+function ovRows(list, attr, who, emptyText) {
+  return list.length ? `<div class="appr">${list.slice(0, 4).map(r => UI.reqRow({ openAttr: attr(r), ent: r.ent || (r.entity === "whp" ? "WHP" : "SAIC"), title: r.title, who: who(r), amount: r.amount ? fc(r.amount) : "—", due: dueTxt(r),
+    tags: [...(r.urgency === "urgent" ? [{ cls: "urgent", text: t("urgent") }] : []), ...(r.status === "info" ? [{ cls: "info", text: t("s_info") }] : []), { cls: "", text: r.ent || (r.entity === "whp" ? "WHP" : "SAIC") }, ...(r.example ? [{ cls: "ex", text: t("example") }] : [])] })).join("")}</div>`
+    : `<p class="muted">${esc(emptyText)}</p>`;
+}
+document.addEventListener("keydown", e => { const o = e.target.closest && e.target.closest(".ap"); if (o && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); o.click(); } });
+
 function viewOverview() {
-  const pend = pendingForPdg(), urg = pend.filter(r => r.urgency === "urgent").length, al = alerts(), rs = recStats();
-  return `<div class="topline"><div><h1>${esc(t("pdg_hello", { n: PDG_NAME }))}</h1><p style="font-weight:600;color:var(--accent)">${esc(t("pdg_role"))}</p><p>${esc(t("pdg_intro"))}</p></div><span class="muted">${new Date().toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
-  <div class="tiles">
-    <a class="tile" href="#approvals" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_pending"))}</span><span class="v ${pend.length ? "warn" : "ok"}">${pend.length}</span><span class="s">${esc(t("k_urgent", { n: urg }))}</span></a>
-    <div class="tile"><span class="l">${esc(t("k_cash"))}</span><span class="v">${fcs(CB.cacao.closing + CB.admin.closing)}</span><span class="s">${esc(t("k_cash_sub"))}</span></div>
-    <a class="tile" href="#recep" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_rq"))}</span><span class="v">${(rs.qty / 1000).toLocaleString(loc(), { maximumFractionDigits: 1 })} <small>t</small></span><span class="s">${esc(t("k_rq_sub", { n: rs.n, z: rs.zones.length }))}</span></a>
-    <a class="tile" href="#recep" style="text-decoration:none;color:inherit"><span class="l">${esc(t("k_rp"))}</span><span class="v">${fn(rs.avg)} <small>F/kg</small></span><span class="s">${esc(t("k_rp_sub", { a: fn(rs.min), b: fn(rs.max) }))}</span></a>
-    <div class="tile"><span class="l">${esc(t("k_farmers"))}</span><span class="v">${trace.verified}</span><span class="s">${esc(t("k_farmers_sub", { v: trace.verified, n: trace.n }))}</span></div>
-    <div class="tile"><span class="l">${esc(t("k_alerts"))}</span><span class="v ${al.some(a => a.lv === "bad") ? "bad" : "warn"}">${al.length}</span><span class="s">${esc(t("k_alerts_sub"))}</span></div>
-  </div>
-  <div class="grid-wide">
-    <div class="card stack"><div class="topline"><h3>${esc(t("approvals_preview"))}</h3><a href="#approvals">${esc(t("see_all"))}</a></div>
-      ${pend.length ? pend.slice(0, 4).map(r => reqCard(r, true)).join("") : `<p class="muted">${esc(t("none_pending"))}</p>`}</div>
-    <div class="card stack"><h3>${esc(t("attention"))}</h3><ul class="issues">${al.map(a => `<li class="${a.lv}"><a href="${a.href}" style="color:inherit;text-decoration:none">${esc(a.m)}</a></li>`).join("")}</ul></div>
-  </div>
+  const pend = pendingForPdg(), urg = pend.filter(r => r.urgency === "urgent").length, al = alerts(), o = ovData(), n = pend.length, bad = al.filter(a => a.lv === "bad").length;
+  const lead = (n ? tt(`<b>${n} demande${n > 1 ? "s" : ""}</b> attend${n > 1 ? "ent" : ""} votre décision${urg ? `, dont ${urg} urgente${urg > 1 ? "s" : ""}` : ""}.`, `<b>${n} request${n > 1 ? "s" : ""}</b> await${n > 1 ? "" : "s"} your decision${urg ? `, ${urg} of them urgent` : ""}.`)
+    : tt("Rien n'attend votre décision.", "Nothing is waiting for your decision.")) + " " + cocoaSentence(o) + (bad ? " " + tt(`${bad} point${bad > 1 ? "s" : ""} demande${bad > 1 ? "nt" : ""} une action.`, `${bad} point${bad > 1 ? "s" : ""} need${bad > 1 ? "" : "s"} action.`) : "");
+  return UI.hero({ lang: S.lang, status: ovStatus(al, tt("Groupe en bonne santé", "Group in good health")), name: PDG_NAME, role: t("pdg_role"), leadHtml: lead,
+      cta: n ? { href: "#approvals", label: tt("Examiner les demandes", "Review requests"), icon: "check" } : null })
+  + `<div class="kpis">${UI.kpi({ icon: "check", color: "var(--bad)", hot: urg > 0, label: t("k_pending"), value: n, href: "#approvals",
+      deltaHtml: urg ? `<span class="delta down">${urg} ${esc(t("urgent").toLowerCase())}</span>` : "", sub: (() => { const d = pend.length ? Math.round((Date.now() - Math.min(...pend.map(r => new Date(r.created)))) / 864e5) : 0; return pend.length ? tt(`la plus ancienne : ${d} j`, `oldest: ${d} days`) : tt("tout est traité", "all handled"); })(), series: perDay(S.requests) })}${ovCocoaKpis(o)}${ovCashKpi(o)}</div>
+  <div class="g-main">${ovCocoaCard()}<div class="card ui-rise"><div class="card-h"><h3>${esc(t("approvals_preview"))}</h3><a href="#approvals">${esc(t("see_all"))} →</a></div>
+    ${ovRows(pend, r => `data-open="${esc(r.id)}"`, r => t("rl_" + r.from).split(",")[0], t("none_pending"))}</div></div>
+  <div class="g-3">${ovCashCard()}${ovTraceCard()}${ovFeedCard(al)}</div>
   <h2>${esc(t("depts"))}</h2>
-  <div class="dept-grid">${deptCash("cacao")}${deptCash("admin")}${deptRecep()}${deptTrace()}${deptRequests()}</div>`;
+  <div class="dept-grid">${deptRecep()}${deptRequests()}</div>`;
 }
 
 /* ---------- approvals ---------- */
@@ -845,7 +914,7 @@ function viewLogin() {
     <form id="lf" class="stack" novalidate>
       <div class="f"><label for="lem">${esc(t("email"))}</label><input id="lem" type="email" autocomplete="username" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
       <div class="f"><label for="lpw">${esc(t("password"))}</label><input id="lpw" type="password" autocomplete="current-password" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
-      <span class="err" id="lErr"></span><button class="btn primary" type="submit" id="lBtn">${esc(t("signin_btn"))}</button><a href="#" id="lForgot">${esc(t("forgot"))}</a></form></div>`;
+      <span class="err" id="lErr"></span><button class="btn primary" type="submit" id="lBtn">${esc(t("signin_btn"))}</button><a href="#" id="lForgot">${esc(t("forgot"))}</a></form><p class="privacy-link" style="font-size:13px;text-align:center;color:var(--muted);margin:0"><a href="/confidentialite/" style="color:inherit">${document.documentElement.lang === "en" ? "Privacy policy" : "Politique de confidentialité"}</a> · <a href="/conditions/" style="color:inherit">${document.documentElement.lang === "en" ? "Terms of use" : "Conditions d'utilisation"}</a></p></div>`;
 }
 function bindLogin() {
   $("#lf").onsubmit = async e => { e.preventDefault(); $("#lBtn").disabled = true; $("#lErr").textContent = "";
@@ -903,5 +972,6 @@ async function boot() {
 }
 recompute(); render(); boot();
 </script>
+<script type="module" src="../js/abi.js"></script>
 </body>
 </html>

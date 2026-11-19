@@ -1,14 +1,15 @@
 {
   "name": "saic-suite",
   "productName": "SAIC Suite",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "SAIC Suite: registre, trésorerie, réception cacao, Direction Générale et PDG",
   "author": "SAIC",
   "main": "main.js",
   "private": true,
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win nsis --x64 --publish never"
+    "dist": "electron-builder --win nsis --x64 --publish never",
+    "dist:mac": "electron-builder --mac dmg --universal --publish never"
   },
   "devDependencies": {
     "electron": "^38.0.0",
@@ -18,9 +19,20 @@
     "appId": "cm.saic.suite",
     "productName": "SAIC Suite",
     "copyright": "SAIC",
-    "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["main.js", "build/icon.png", "package.json"],
-    "win": { "target": "nsis", "icon": "build/icon.png", "artifactName": "SAIC-Suite-Setup.${ext}" },
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "build/icon.png",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png",
+      "artifactName": "SAIC-Suite-Setup.${ext}"
+    },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
@@ -29,6 +41,16 @@
       "createStartMenuShortcut": true,
       "shortcutName": "SAIC Suite",
       "language": "1036"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.png",
+      "category": "public.app-category.business",
+      "identity": "-",
+      "artifactName": "SAIC-Suite-Mac.${ext}"
+    },
+    "dmg": {
+      "title": "SAIC Suite"
     }
   }
 }
