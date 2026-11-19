@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../js/theme.js"></script>
+<title>Télécharger SAIC Suite</title>
+<meta name="description" content="SAIC Suite pour Mac et Windows : registre des producteurs, trésorerie, réception cacao, tableaux de bord de direction.">
+<meta name="theme-color" content="#0b110e">
+<link rel="icon" href="../icons/saic-favicon-48.png" type="image/png">
+<link rel="apple-touch-icon" href="../icons/saic-apple-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/theme.css">
+<style>
+/* Public download page for the SAIC Suite desktop apps. No sign-in needed. */
+*{box-sizing:border-box} [hidden]{display:none!important}
+html,body{margin:0} body{font:16px/1.55 var(--font-body);min-height:100vh}
+a{color:var(--accent)} :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+.top{position:sticky;top:0;z-index:10}
+.hdr{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-top:14px;padding-bottom:14px}
+.top img{height:44px;width:auto;display:block}
+.who{display:flex;gap:10px;align-items:center}
+.chip{background:var(--raise);border:1px solid var(--line);color:var(--ink-2);border-radius:999px;padding:7px 14px;font:600 13px var(--font-body);cursor:pointer;text-decoration:none}
+.chip:hover{border-color:var(--line-hi);color:var(--ink)}
+
+.hero{padding:56px 0 36px;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;font:600 12px var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.eyebrow::before{content:"";width:22px;height:2px;background:var(--gold);border-radius:2px}
+h1{font-size:clamp(36px,5.4vw,58px);line-height:1.02;margin:16px 0 18px;font-weight:800}
+h1 em{font-style:normal;color:var(--accent)}
+.lead{color:var(--ink-2);font-size:18px;max-width:520px;margin:0}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.dl{display:inline-flex;align-items:center;gap:12px;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:600;border:1px solid var(--line-hi);color:var(--ink);background:var(--surface);transition:transform .15s,border-color .15s,box-shadow .15s}
+.dl:hover{transform:translateY(-2px);border-color:var(--accent)}
+.dl.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 14px 34px -14px var(--accent)}
+.dl svg{width:22px;height:22px;flex:none}
+.dl small{display:block;font-weight:500;font-size:12px;opacity:.75}
+.meta{margin-top:14px;color:var(--muted);font-size:13px}
+
+.shot{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.shot .bar{display:flex;gap:7px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.shot .bar .ex{margin-left:auto;font:600 11px var(--font-body);font-style:normal;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.shot .bar i{width:11px;height:11px;border-radius:50%;background:var(--line-hi)}
+.shot .bar i:nth-child(1){background:#ff5f57}.shot .bar i:nth-child(2){background:#febc2e}.shot .bar i:nth-child(3){background:#28c840}
+.shot .body{padding:20px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.tile{background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:14px}
+.tile b{display:block;font:700 22px var(--font-display);margin-top:4px}
+.tile span{font-size:12px;color:var(--muted)}
+.tile.wide{grid-column:1/-1;display:flex;align-items:flex-end;gap:6px;height:110px}
+.tile.wide i{flex:1;border-radius:4px 4px 0 0;background:linear-gradient(var(--accent),var(--accent-soft))}
+.tile.wide i:nth-child(3n){background:linear-gradient(var(--gold),var(--gold-soft))}
+
+h2{font-size:28px;margin:0 0 6px}
+section{padding:40px 0}
+.sub{color:var(--muted);margin:0 0 24px}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.f{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.f .ic{width:40px;height:40px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin-bottom:12px}
+.f .ic svg{width:20px;height:20px}
+.f b{display:block;font-size:16px;margin-bottom:4px} .f p{margin:0;color:var(--muted);font-size:14px}
+
+.install{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+.card.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.card h3{margin:0 0 4px;font:700 19px var(--font-display);display:flex;align-items:center;gap:10px}
+.card h3 svg{width:20px;height:20px}
+.card .req{color:var(--muted);font-size:13px;margin:0 0 14px}
+ol{margin:0 0 18px;padding:0;list-style:none;counter-reset:s}
+ol li{counter-increment:s;position:relative;padding:0 0 12px 38px;color:var(--ink-2);font-size:15px}
+ol li::before{content:counter(s);position:absolute;left:0;top:-1px;width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 13px var(--font-body);display:grid;place-items:center}
+ol b{color:var(--ink)}
+.note{font-size:13px;color:var(--muted);background:var(--raise);border-radius:10px;padding:10px 12px;margin:0 0 16px}
+.web{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+footer{padding:30px 0 40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:30px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media (max-width:860px){.hero{grid-template-columns:1fr;padding-top:24px}.shot{display:none}.install{grid-template-columns:1fr}}
+@media (max-width:560px){.wrap{padding:0 18px}.top img{height:32px}.dl{width:100%;justify-content:center}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap hdr">
+  <img src="../icons/logo.png" alt="SAIC">
+  <div class="who"><button class="chip" id="lang" type="button">English</button></div>
+</div></header>
+<div class="wrap">
+
+<div class="hero">
+  <div>
+    <span class="eyebrow" data-t="eyebrow"></span>
+    <h1 data-h="h1"></h1>
+    <p class="lead" data-t="lead"></p>
+    <div class="cta" id="cta"></div>
+    <p class="meta" data-t="meta"></p>
+  </div>
+  <div class="shot" aria-hidden="true">
+    <div class="bar"><i></i><i></i><i></i><em class="ex" data-t="ex"></em></div>
+    <div class="body">
+      <div class="tile"><span data-t="k1"></span><b>1 284</b></div>
+      <div class="tile"><span data-t="k2"></span><b>312 t</b></div>
+      <div class="tile"><span data-t="k3"></span><b>98 %</b></div>
+      <div class="tile"><span data-t="k4"></span><b>14,6 M F</b></div>
+      <div class="tile wide"><i style="height:38%"></i><i style="height:52%"></i><i style="height:46%"></i><i style="height:64%"></i><i style="height:58%"></i><i style="height:76%"></i><i style="height:70%"></i><i style="height:88%"></i><i style="height:82%"></i><i style="height:96%"></i></div>
+    </div>
+  </div>
+</div>
+
+<section>
+  <h2 data-t="f_t"></h2>
+  <p class="sub" data-t="f_s"></p>
+  <div class="feat" id="feat"></div>
+</section>
+
+<section id="install">
+  <h2 data-t="i_t"></h2>
+  <p class="sub" data-t="i_s"></p>
+  <div class="install">
+    <div class="card" id="c-mac">
+      <h3><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.6c0-2.5 2-3.6 2.1-3.7-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.2 2.5-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.8-1-2.8-4.2zM14 5.2c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.5z"/></svg>macOS</h3>
+      <p class="req" data-t="mac_req"></p>
+      <ol data-l="mac_steps"></ol>
+      <p class="note" data-t="mac_note"></p>
+      <a class="dl main" data-dl="mac"></a>
+    </div>
+    <div class="card" id="c-win">
+      <h3><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5 10.5 4.4v7.1H3zM11.5 4.3 21 3v8.5h-9.5zM3 12.5h7.5v7.1L3 18.5zM11.5 12.5H21V21l-9.5-1.3z"/></svg>Windows</h3>
+      <p class="req" data-t="win_req"></p>
+      <ol data-l="win_steps"></ol>
+      <p class="note" data-t="win_note"></p>
+      <a class="dl main" data-dl="win"></a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="card web">
+    <div><b data-t="w_t"></b><p class="sub" style="margin:4px 0 0" data-t="w_s"></p></div>
+    <a class="dl" href="/suite/" data-t="w_b"></a>
+  </div>
+</section>
+
+<footer><span data-t="foot"></span><a href="https://github.com/arifureta23/saic-traceability/releases/latest" data-t="all"></a></footer>
+</div>
+
+<script>
+(function () {
+  var REL = "https://github.com/arifureta23/saic-traceability/releases/latest/download/";
+  var LINKS = { mac: REL + "SAIC-Suite-Mac.dmg", win: REL + "SAIC-Suite-Setup.exe" };
+  var ICON = {
+    mac: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.6c0-2.5 2-3.6 2.1-3.7-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.2 2.5-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.8-1-2.8-4.2zM14 5.2c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.5z"/></svg>',
+    win: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5 10.5 4.4v7.1H3zM11.5 4.3 21 3v8.5h-9.5zM3 12.5h7.5v7.1L3 18.5zM11.5 12.5H21V21l-9.5-1.3z"/></svg>'
+  };
+  var FI = [
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>'
+  ];
+  var T = {
+    fr: {
+      title: "Télécharger SAIC Suite", lang: "English",
+      eyebrow: "Application pour ordinateur",
+      h1: "Toute la filière cacao, <em>dans une seule application.</em>",
+      lead: "Registre des producteurs, trésorerie, réception cacao et tableaux de bord de direction : SAIC Suite réunit tout dans une fenêtre dédiée, toujours à jour.",
+      meta: "Gratuit · Mises à jour automatiques · Connexion internet requise",
+      dl_mac: "Télécharger pour Mac", dl_win: "Télécharger pour Windows", sz_mac: "macOS 11+ · Intel et Apple Silicon", sz_win: "Windows 10 et 11 · 64 bits",
+      ex: "Exemple", k1: "Producteurs enregistrés", k2: "Cacao réceptionné", k3: "Parcelles conformes F01", k4: "Solde des caisses",
+      f_t: "Ce que contient SAIC Suite", f_s: "Les mêmes applications que sur le web, avec votre compte habituel.",
+      feat: [["Registre des producteurs", "Producteurs, parcelles, cartographie GPS et contrôles F01."], ["Trésorerie", "Caisses, dépenses, demandes de fonds et approbations."], ["Réception cacao", "Pesées, prix, zones et livraisons par producteur."], ["Tableaux de bord", "Direction Générale SAIC, WHP et PDG en temps réel."]],
+      i_t: "Installation", i_s: "Deux minutes, une seule fois. Ensuite, SAIC Suite s'ouvre comme n'importe quelle application.",
+      mac_req: "macOS 11 Big Sur ou plus récent, Intel ou Apple Silicon (M1 à M4).",
+      mac_steps: ["Ouvrez le fichier <b>SAIC-Suite-Mac.dmg</b> téléchargé.", "Glissez <b>SAIC Suite</b> dans le dossier <b>Applications</b>.", "Ouvrez SAIC Suite. Au premier lancement, macOS l'empêche de s'ouvrir : cliquez sur <b>Terminé</b>.", "Allez dans <b>Réglages Système › Confidentialité et sécurité</b>, puis cliquez sur <b>Ouvrir quand même</b> à côté de SAIC Suite."],
+      mac_note: "Cette étape n'est demandée qu'une seule fois. Elle disparaîtra quand l'application sera certifiée par Apple.",
+      win_req: "Windows 10 ou 11, 64 bits.",
+      win_steps: ["Ouvrez le fichier <b>SAIC-Suite-Setup.exe</b> téléchargé.", "Si Windows affiche « Windows a protégé votre ordinateur », cliquez sur <b>Informations complémentaires</b>, puis <b>Exécuter quand même</b>.", "Suivez l'installation. Une icône SAIC Suite apparaît sur le bureau."],
+      win_note: "Le message de Windows apparaît car l'application est récente. Il disparaîtra avec la signature de l'éditeur.",
+      w_t: "Pas d'installation possible ?", w_s: "SAIC Suite fonctionne aussi directement dans le navigateur, sur ordinateur, tablette et téléphone.", w_b: "Ouvrir la version web",
+      foot: "© SAIC · Société Agro Industrielle Camerounaise", all: "Toutes les versions"
+    },
+    en: {
+      title: "Download SAIC Suite", lang: "Français",
+      eyebrow: "Desktop app",
+      h1: "The whole cocoa chain, <em>in one app.</em>",
+      lead: "Farmer registry, treasury, cocoa reception and management dashboards: SAIC Suite brings everything into its own window, always up to date.",
+      meta: "Free · Automatic updates · Internet connection required",
+      dl_mac: "Download for Mac", dl_win: "Download for Windows", sz_mac: "macOS 11+ · Intel and Apple Silicon", sz_win: "Windows 10 and 11 · 64-bit",
+      ex: "Example", k1: "Registered farmers", k2: "Cocoa received", k3: "F01-compliant plots", k4: "Cash box balance",
+      f_t: "What's in SAIC Suite", f_s: "The same apps as on the web, with your usual account.",
+      feat: [["Farmer registry", "Farmers, plots, GPS mapping and F01 checks."], ["Treasury", "Cash boxes, expenses, fund requests and approvals."], ["Cocoa reception", "Weighing, prices, zones and deliveries per farmer."], ["Dashboards", "SAIC and WHP General Management and PDG, in real time."]],
+      i_t: "Installation", i_s: "Two minutes, once. After that, SAIC Suite opens like any other app.",
+      mac_req: "macOS 11 Big Sur or later, Intel or Apple Silicon (M1 to M4).",
+      mac_steps: ["Open the downloaded <b>SAIC-Suite-Mac.dmg</b> file.", "Drag <b>SAIC Suite</b> into the <b>Applications</b> folder.", "Open SAIC Suite. The first time, macOS stops it from opening: click <b>Done</b>.", "Go to <b>System Settings › Privacy &amp; Security</b> and click <b>Open Anyway</b> next to SAIC Suite."],
+      mac_note: "You only need to do this once. It will go away once the app is certified by Apple.",
+      win_req: "Windows 10 or 11, 64-bit.",
+      win_steps: ["Open the downloaded <b>SAIC-Suite-Setup.exe</b> file.", "If Windows shows “Windows protected your PC”, click <b>More info</b>, then <b>Run anyway</b>.", "Follow the installer. A SAIC Suite icon appears on the desktop."],
+      win_note: "Windows shows this message because the app is new. It will go away once the publisher signature is added.",
+      w_t: "Can't install apps?", w_s: "SAIC Suite also runs right in the browser, on computer, tablet and phone.", w_b: "Open the web version",
+      foot: "© SAIC · Société Agro Industrielle Camerounaise", all: "All versions"
+    }
+  };
+  var ua = navigator.userAgent, os = /Mac/.test(navigator.platform || ua) && !/iPhone|iPad/.test(ua) ? "mac" : /Win/.test(navigator.platform || ua) ? "win" : null;
+  var lang = (function () { try { var v = localStorage.getItem("saic-lang"); if (v === "fr" || v === "en") return v; } catch (e) {} return (navigator.language || "fr").slice(0, 2) === "en" ? "en" : "fr"; })();
+
+  function btn(k, main) {
+    var s = T[lang];
+    return '<a class="dl' + (main ? " main" : "") + '" href="' + LINKS[k] + '">' + ICON[k] + "<span>" + s["dl_" + k] + "<small>" + s["sz_" + k] + "</small></span></a>";
+  }
+  function render() {
+    var s = T[lang];
+    document.documentElement.lang = lang; document.title = s.title;
+    document.getElementById("lang").textContent = s.lang;
+    document.querySelectorAll("[data-t]").forEach(function (el) { el.textContent = s[el.dataset.t]; });
+    document.querySelectorAll("[data-h]").forEach(function (el) { el.innerHTML = s[el.dataset.h]; });
+    document.querySelectorAll("[data-l]").forEach(function (el) { el.innerHTML = s[el.dataset.l].map(function (x) { return "<li>" + x + "</li>"; }).join(""); });
+    document.querySelectorAll("[data-dl]").forEach(function (el) { var k = el.dataset.dl; el.href = LINKS[k]; el.innerHTML = ICON[k] + "<span>" + s["dl_" + k] + "</span>"; });
+    var order = os === "win" ? ["win", "mac"] : ["mac", "win"];
+    document.getElementById("cta").innerHTML = btn(order[0], true) + btn(order[1], false);
+    document.getElementById("feat").innerHTML = s.feat.map(function (f, i) { return '<div class="f"><div class="ic">' + FI[i] + "</div><b>" + f[0] + "</b><p>" + f[1] + "</p></div>"; }).join("");
+    document.getElementById("c-mac").classList.toggle("on", os === "mac");
+    document.getElementById("c-win").classList.toggle("on", os === "win");
+  }
+  document.getElementById("lang").addEventListener("click", function () { lang = lang === "fr" ? "en" : "fr"; try { localStorage.setItem("saic-lang", lang); } catch (e) {} render(); });
+  render();
+})();
+</script>
+</body>
+</html>
