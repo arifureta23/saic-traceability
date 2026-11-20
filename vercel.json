@@ -51,6 +51,38 @@
     {
       "source": "/terms/",
       "destination": "/conditions/index.html"
+    },
+    {
+      "source": "/daf",
+      "destination": "/tresorerie/index.html"
+    },
+    {
+      "source": "/daf/",
+      "destination": "/tresorerie/index.html"
+    },
+    {
+      "source": "/comptable",
+      "destination": "/tresorerie/index.html"
+    },
+    {
+      "source": "/comptable/",
+      "destination": "/tresorerie/index.html"
+    },
+    {
+      "source": "/caisse-cacao",
+      "destination": "/tresorerie/index.html"
+    },
+    {
+      "source": "/caisse-cacao/",
+      "destination": "/tresorerie/index.html"
+    },
+    {
+      "source": "/caisse-admin",
+      "destination": "/tresorerie/index.html"
+    },
+    {
+      "source": "/caisse-admin/",
+      "destination": "/tresorerie/index.html"
     }
   ],
   "redirects": [
