@@ -83,6 +83,8 @@ select is(tests.visible($$public.treasury_questions$$), 3::bigint, 'DAF: sees ev
 select is(tests.changed($$update public.treasury_questions set answer = 'Oui.' where target = 'daf'$$), 1::bigint, 'DAF: answers its question');
 select is(tests.changed($$insert into public.cash_transactions (caisse, kind, date, cat, details, amount) values ('cacao','out','2026-11-20','Carburant','x',1)$$), 0::bigint, 'DAF: does not record transactions');
 select is(tests.changed($$update public.fund_requests set status = 'daf' where id = 'T-CACAO'$$), 1::bigint, 'DAF: approves the cocoa box request');
+select is(tests.changed($$update public.fund_requests set status = 'funded' where id = 'T-CACAO'$$), 0::bigint, 'DAF: marking funded needs the bank reference');
+select is(tests.changed($$update public.fund_requests set status = 'funded', bank_ref = 'AFB-123' where id = 'T-CACAO'$$), 1::bigint, 'DAF: records the bank transfer');
 select is(tests.changed($$update public.cash_boxes set ceiling = 25000000 where id = 'cacao'$$), 0::bigint, 'DAF: a ceiling change without a reason is refused');
 select is(tests.changed($$update public.cash_boxes set ceiling = 25000000, change_reason = 'Pic de campagne' where id = 'cacao'$$), 1::bigint, 'DAF: changes a ceiling with a reason');
 select is(tests.changed($$update public.treasury_members set role = 'caisse_admin' where user_id = (select v::uuid from ids where k = 'nobody')$$), 0::bigint, 'DAF: (no row yet for a newcomer)');

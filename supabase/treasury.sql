@@ -153,7 +153,8 @@ begin
   if auth.uid() = old.created_by then raise exception 'You cannot approve or fund your own request (separation of duties)'; end if;
   i := case when old.status = 'submitted' then 0 else coalesce(array_position(old.flow, old.status), 0) end;
   nxt := case when i < array_length(old.flow, 1) then old.flow[i + 1] else 'tresorier' end;
-  if r is distinct from nxt then raise exception 'This step is for the %', nxt; end if;
+  -- the DAF also records the bank transfer (Cedric, 20 Nov 2026: no separate Treasurer dashboard)
+  if r is distinct from nxt and not (nxt = 'tresorier' and r = 'daf') then raise exception 'This step is for the %', nxt; end if;
   if new.status = 'rejected' then
     if coalesce(new.reject_reason,'') = '' then raise exception 'Give a reason for the rejection'; end if;
     new.rejected_at := i + 1;

@@ -332,7 +332,7 @@ const STR = {
     recon: "Rapprochement de caisse", recon_sub: "Modèle du manuel : solde théorique contre comptage physique.", recon_a: "Solde d'ouverture (A)", recon_b: "Total des entrées (B)", recon_c: "Total des sorties (C)", recon_d: "Solde théorique (D = A + B − C)", recon_e: "Comptage physique (E)", recon_gap: "Écart (E − D)",
     req_title: "Demandes de fonds", req_sub: "Approvisionnement courant (hebdomadaire, validé par la DAF) ou exceptionnel (DAF puis DG). Les fonds viennent d'Afriland First Bank.",
     new_req: "Nouvelle demande", no_req: "Aucune demande pour l'instant.", st_submitted: "Soumise", st_daf: "Validée DAF", st_dg: "Approuvée DG", st_funded: "Fonds versés", st_rejected: "Rejetée",
-    s_submit: "Soumise", s_daf: "Validation DAF", s_dg: "Approbation DG", s_fund: "Versement (Trésorier)",
+    s_submit: "Soumise", s_daf: "Validation DAF", s_dg: "Approbation DG", s_fund: "Versement (DAF)",
     act_approve: "Valider", act_reject: "Rejeter", act_fund: "Marquer comme versé", waiting_for: "En attente : {r}", own_request: "Vous avez soumis cette demande : un autre rôle doit la valider (séparation des fonctions).",
     f_caisse: "Caisse", f_type: "Type d'approvisionnement", f_amount: "Montant demandé (FCFA)", f_reason: "Motif", f_details: "Justification", f_need: "Besoin pour le", f_by: "Demandé par",
     ty_courant: "Courant (hebdomadaire)", ty_exceptionnel: "Exceptionnel",
@@ -405,7 +405,7 @@ const STR = {
     recon: "Cash count reconciliation", recon_sub: "The manual's template: theoretical balance against the physical count.", recon_a: "Opening balance (A)", recon_b: "Total cash in (B)", recon_c: "Total cash out (C)", recon_d: "Theoretical balance (D = A + B − C)", recon_e: "Physical count (E)", recon_gap: "Difference (E − D)",
     req_title: "Fund requests", req_sub: "Regular weekly top-up (approved by the DAF) or exceptional (DAF, then DG). Funds come from Afriland First Bank.",
     new_req: "New request", no_req: "No requests yet.", st_submitted: "Submitted", st_daf: "DAF approved", st_dg: "DG approved", st_funded: "Funded", st_rejected: "Rejected",
-    s_submit: "Submitted", s_daf: "DAF approval", s_dg: "DG approval", s_fund: "Transfer (Treasurer)",
+    s_submit: "Submitted", s_daf: "DAF approval", s_dg: "DG approval", s_fund: "Transfer (DAF)",
     act_approve: "Approve", act_reject: "Reject", act_fund: "Mark as funded", waiting_for: "Waiting for: {r}", own_request: "You submitted this request: another role must approve it (separation of duties).",
     f_caisse: "Cash box", f_type: "Top-up type", f_amount: "Amount requested (FCFA)", f_reason: "Reason", f_details: "Justification", f_need: "Needed by", f_by: "Requested by",
     ty_courant: "Regular (weekly)", ty_exceptionnel: "Exceptional",
@@ -722,7 +722,7 @@ function reqCard(r) {
   const stepName = { submitted: t("s_submit"), comptable: t("role_comptable"), daf: t("s_daf"), dg: t("s_dg"), funded: t("s_fund") };
   const steps = flow.map((s, i) => { let cls = i <= idx ? "done" : i === idx + 1 && r.status !== "rejected" ? "now" : ""; if (r.status === "rejected" && i === (r.rejectedAt ?? 1)) cls = "no"; return `<span class="step ${cls}">${esc(stepName[s])}</span>`; }).join("");
   const actor = nextActor(r);
-  const mine = actor && actor === S.role;
+  const mine = actor && (actor === S.role || (actor === "tresorier" && S.role === "daf"));
   const own = r.createdBy === S.me.id && actor;
   const stLabel = r.status === "submitted" ? t("st_submitted") : r.status === "daf" ? t("st_daf") : r.status === "dg" ? t("st_dg") : r.status === "comptable" ? t("role_comptable") + " ✓" : r.status === "funded" ? t("st_funded") : t("st_rejected");
   const stCls = r.status === "funded" ? "ok" : r.status === "rejected" ? "bad" : "warn";
@@ -733,7 +733,7 @@ function reqCard(r) {
       <div class="small muted">${esc(S.people[r.createdBy] || t("role_comptable"))} · ${dfull(r.date)}${r.need ? " · " + esc(t("f_need")) + " " + dfull(r.need) : ""}${r.bankRef ? " · " + esc(r.bankRef) : ""}${r.rejectReason ? " · " + esc(r.rejectReason) : ""}</div>${fileLinks(r.files)}</div>
     <div class="amt">${fc(r.amount)}</div>
     <div class="steps">${steps}</div>
-    ${actor ? `<div class="acts">${own ? `<span class="small muted">${esc(t("own_request"))}</span>` : mine ? (actor === "tresorier" ? `<button class="btn primary small" data-act="fund" data-id="${esc(r.id)}">${esc(t("act_fund"))}</button>` : `<button class="btn primary small" data-act="approve" data-id="${esc(r.id)}">${esc(t("act_approve"))}</button>`) + `<button class="btn small danger" data-act="reject" data-id="${esc(r.id)}">${esc(t("act_reject"))}</button>` : `<span class="small muted">${esc(t("waiting_for", { r: t("role_" + actor) }))}</span>`}</div>` : ""}
+    ${actor ? `<div class="acts">${own ? `<span class="small muted">${esc(t("own_request"))}</span>` : mine ? (actor === "tresorier" ? `<button class="btn primary small" data-act="fund" data-id="${esc(r.id)}">${esc(t("act_fund"))}</button>` : `<button class="btn primary small" data-act="approve" data-id="${esc(r.id)}">${esc(t("act_approve"))}</button>`) + `<button class="btn small danger" data-act="reject" data-id="${esc(r.id)}">${esc(t("act_reject"))}</button>` : `<span class="small muted">${esc(t("waiting_for", { r: t("role_" + (actor === "tresorier" ? "daf" : actor)) }))}</span>`}</div>` : ""}
   </div>`;
 }
 function viewRequests() {
