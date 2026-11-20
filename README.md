@@ -61,11 +61,15 @@ While `js/config.js` is empty, the app runs in demo mode with three example farm
 
 ---
 
-# SAIC Trésorerie (`/tresorerie`)
+# SAIC Trésorerie: four dashboards (`/daf`, `/comptable`, `/caisse-cacao`, `/caisse-admin`)
 
 Cash box management for the **Caisse Achat Cacao** (COC) and the **Caisse Administration** (CAD), following the *Manuel des procédures de trésorerie 2026/2027*.
 
-- **Roles** (table `treasury_members`, separate from the registry roles): Accountant (`comptable`) enters transactions and submits fund requests; `daf` approves top-ups and manages roles; `dg` approves exceptional top-ups; `tresorier` records the Afriland transfer; `viewer` reads.
+- **One dashboard per role** (one page, `tresorerie/index.html`, served at four addresses by `vercel.json`; the old `/tresorerie` sends each person to their own dashboard):
+  - `/caisse-cacao` (`caisse_cacao`) and `/caisse-admin` (`caisse_admin`): each cash box sees only its own entries, records expenses, edits them (a reason is required), requests funds from the DAF and answers Accounting's questions.
+  - `/comptable` (`comptable`): reads both cash boxes, cannot record or request; asks questions to a cash box or the DAF (`treasury_questions`).
+  - `/daf` (`daf`, also `dg`, `tresorier`, `viewer`): both boxes, approves requests, changes ceilings (with a reason), answers questions, manages roles on **Team**.
+- Every edit of an expense or a ceiling is kept in `treasury_log` with old value, new value, who, when and the reason (shown on **Historique**).
 - **Rules enforced by the database:** imported Excel lines can't be changed; transactions are cancelled with a reason, never deleted; a request follows DAF (regular) or DAF then DG (exceptional), then the Treasurer; nobody acts on their own request; a funded request adds the top-up to the cash box; every change is written to `treasury_log`.
 - **Supporting documents** are stored in the private `treasury-files` bucket.
 
@@ -77,7 +81,7 @@ Cash box management for the **Caisse Achat Cacao** (COC) and the **Caisse Admini
    select id, 'daf' from auth.users where email = 'daf@example.com'
    on conflict (user_id) do update set role = excluded.role;
    ```
-3. The DAF opens `/tresorerie` → **Team** and sets everyone else's role. New people are first added in Authentication → Users.
+3. The DAF opens `/daf` → **Team** and sets everyone else's role. New people are first added in Authentication → Users.
 
 Ceilings and opening balances are in the `cash_boxes` table (cocoa ceiling 20,000,000 F, admin 500,000 F).
 

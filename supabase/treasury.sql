@@ -5,19 +5,39 @@
 -- =====================================================================
 
 -- ---------- Treasury roles (separate from the registry roles) ----------
--- comptable = Accountant: enters transactions and submits fund requests
--- daf       = DAF: approves top-ups, manages treasury roles and cash box ceilings
--- dg        = General Management: approves exceptional top-ups
--- tresorier = Treasurer: records the bank transfer when a top-up is funded
--- viewer    = read only
+-- Each role has its own dashboard (since Nov 2026 the single /tresorerie app is replaced by four):
+-- caisse_cacao = Caisse Achat Cacao (/caisse-cacao): records, edits and requests funds for the cocoa box only
+-- caisse_admin = Caisse Administrative (/caisse-admin): same, for the admin box only
+-- comptable    = Accountant (/comptable): reads both boxes, asks questions; cannot record or request
+-- daf          = DAF (/daf): approves top-ups, manages treasury roles and cash box ceilings, answers questions
+-- dg           = General Management: approves exceptional top-ups (from the DAF dashboard)
+-- tresorier    = Treasurer: records the bank transfer when a top-up is funded (from the DAF dashboard)
+-- viewer       = read only (from the DAF dashboard)
 create table if not exists public.treasury_members (
   user_id uuid primary key references auth.users(id) on delete cascade,
-  role text not null check (role in ('comptable','daf','dg','tresorier','viewer')),
+  role text not null,
   updated_at timestamptz not null default now()
 );
+alter table public.treasury_members drop constraint if exists treasury_members_role_check;
+alter table public.treasury_members add constraint treasury_members_role_check
+  check (role in ('caisse_cacao','caisse_admin','comptable','daf','dg','tresorier','viewer'));
 create or replace function public.treasury_role() returns text
 language sql stable security definer set search_path = public as $$
   select role from public.treasury_members where user_id = auth.uid()
+$$;
+-- the cash box a cash box manager works on ('cacao' / 'admin'), null for every other role
+create or replace function public.treasury_box() returns text
+language sql stable security definer set search_path = public as $$
+  select case role when 'caisse_cacao' then 'cacao' when 'caisse_admin' then 'admin' end
+  from public.treasury_members where user_id = auth.uid()
+$$;
+-- may the signed-in person see this cash box? Cash box managers only see their own.
+create or replace function public.treasury_sees(p_box text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce((select role in ('comptable','daf','dg','tresorier','viewer')
+                       or (role = 'caisse_cacao' and p_box = 'cacao')
+                       or (role = 'caisse_admin' and p_box = 'admin')
+                   from public.treasury_members where user_id = auth.uid()), false)
 $$;
 
 -- ---------- Cash boxes ----------
@@ -33,6 +53,20 @@ insert into public.cash_boxes (id, code, opening, start_date, ceiling, target) v
   ('cacao','COC', 4397425, '2026-10-01', 20000000, 20000000),
   ('admin','CAD', 17400,   '2026-11-02', 500000,   500000)
 on conflict (id) do nothing;
+-- reason given with each ceiling / target change (kept in treasury_log)
+alter table public.cash_boxes add column if not exists change_reason text;
+create or replace function public.guard_cash_box() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.id <> old.id then raise exception 'A cash box cannot be renamed'; end if;
+  if auth.uid() is not null and (new.ceiling, new.target, new.opening, new.start_date) is distinct from (old.ceiling, old.target, old.opening, old.start_date)
+     and (coalesce(trim(new.change_reason),'') = '' or new.change_reason is not distinct from old.change_reason) then
+    raise exception 'Give a reason for this change';
+  end if;
+  return new;
+end $$;
+drop trigger if exists cash_box_guard on public.cash_boxes;
+create trigger cash_box_guard before update on public.cash_boxes for each row execute function public.guard_cash_box();
 
 -- ---------- Transactions ----------
 create table if not exists public.cash_transactions (
@@ -57,6 +91,7 @@ create table if not exists public.cash_transactions (
   created_at timestamptz not null default now(), created_by uuid default auth.uid(),
   updated_at timestamptz not null default now(), updated_by uuid default auth.uid()
 );
+alter table public.cash_transactions add column if not exists edit_reason text;  -- reason for the latest edit (each edit is kept in treasury_log)
 create index if not exists cash_tx_box_date on public.cash_transactions(caisse, date, seq);
 
 create or replace function public.guard_cash_tx() returns trigger
@@ -68,6 +103,9 @@ begin
     if new.caisse <> old.caisse then raise exception 'The cash box of a transaction cannot be changed'; end if;
     new.source := old.source; new.created_at := old.created_at; new.created_by := old.created_by;
     if new.voided and coalesce(new.void_reason,'') = '' then raise exception 'Give a reason to cancel a transaction'; end if;
+    if not new.voided and auth.uid() is not null and (coalesce(trim(new.edit_reason),'') = '' or new.edit_reason is not distinct from old.edit_reason) then
+      raise exception 'Give a reason for this change';
+    end if;
   elsif tg_op = 'INSERT' and auth.uid() is not null and new.source = 'app' then
     new.created_by := auth.uid();
   end if;
@@ -99,7 +137,7 @@ language plpgsql security definer set search_path = public as $$
 declare r text := public.treasury_role(); i int; nxt text;
 begin
   if tg_op = 'INSERT' then
-    if r is distinct from 'comptable' then raise exception 'Only Accounting can submit a fund request'; end if;
+    if public.treasury_box() is distinct from new.caisse then raise exception 'Only the manager of this cash box can request funds for it'; end if;
     new.status := 'submitted';
     new.flow := case new.type when 'exceptionnel' then array['daf','dg'] else array['daf'] end;  -- manual §7
     new.created_by := auth.uid(); new.created_at := now(); new.bank_ref := null; new.reject_reason := null;
@@ -169,6 +207,42 @@ drop trigger if exists cash_tx_log on public.cash_transactions;
 create trigger cash_tx_log after insert or update on public.cash_transactions for each row execute function public.treasury_log_change();
 drop trigger if exists fund_req_log on public.fund_requests;
 create trigger fund_req_log after insert or update on public.fund_requests for each row execute function public.treasury_log_change();
+drop trigger if exists cash_box_log on public.cash_boxes;
+create trigger cash_box_log after update on public.cash_boxes for each row execute function public.treasury_log_change();
+
+-- ---------- Questions from Accounting to a cash box or the DAF ----------
+create table if not exists public.treasury_questions (
+  id bigint generated always as identity primary key,
+  target text not null check (target in ('cacao','admin','daf')),
+  tx_id uuid references public.cash_transactions(id),
+  question text not null,
+  answer text,
+  asked_by uuid default auth.uid(), asked_at timestamptz not null default now(),
+  answered_by uuid, answered_at timestamptz
+);
+create or replace function public.guard_treasury_question() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare r text := public.treasury_role(); b text;
+begin
+  if tg_op = 'INSERT' then
+    if r is distinct from 'comptable' then raise exception 'Only Accounting can ask a question'; end if;
+    if coalesce(trim(new.question),'') = '' then raise exception 'Write the question'; end if;
+    if new.tx_id is not null and new.target <> 'daf' then
+      select caisse into b from public.cash_transactions where id = new.tx_id;
+      if b is distinct from new.target then raise exception 'This transaction belongs to another cash box'; end if;
+    end if;
+    new.asked_by := auth.uid(); new.asked_at := now(); new.answer := null; new.answered_by := null; new.answered_at := null;
+    return new;
+  end if;
+  if old.answer is not null then raise exception 'This question has already been answered'; end if;
+  if not ((old.target = 'daf' and r = 'daf') or public.treasury_box() = old.target) then raise exception 'This question is for someone else'; end if;
+  if coalesce(trim(new.answer),'') = '' then raise exception 'Write the answer'; end if;
+  new.target := old.target; new.tx_id := old.tx_id; new.question := old.question; new.asked_by := old.asked_by; new.asked_at := old.asked_at;
+  new.answered_by := auth.uid(); new.answered_at := now();
+  return new;
+end $$;
+drop trigger if exists treasury_question_guard on public.treasury_questions;
+create trigger treasury_question_guard before insert or update on public.treasury_questions for each row execute function public.guard_treasury_question();
 
 -- ---------- Row level security ----------
 alter table public.treasury_members enable row level security;
@@ -176,6 +250,7 @@ alter table public.cash_boxes enable row level security;
 alter table public.cash_transactions enable row level security;
 alter table public.fund_requests enable row level security;
 alter table public.treasury_log enable row level security;
+alter table public.treasury_questions enable row level security;
 
 drop policy if exists "tm read" on public.treasury_members;
 create policy "tm read" on public.treasury_members for select to authenticated using (true);
@@ -183,30 +258,47 @@ drop policy if exists "tm daf insert" on public.treasury_members;
 create policy "tm daf insert" on public.treasury_members for insert to authenticated with check (public.treasury_role() = 'daf');
 drop policy if exists "tm daf update" on public.treasury_members;
 create policy "tm daf update" on public.treasury_members for update to authenticated using (public.treasury_role() = 'daf') with check (public.treasury_role() = 'daf');
+drop policy if exists "tm daf delete" on public.treasury_members;
+create policy "tm daf delete" on public.treasury_members for delete to authenticated using (public.treasury_role() = 'daf' and user_id <> auth.uid());
 
 drop policy if exists "boxes read" on public.cash_boxes;
-create policy "boxes read" on public.cash_boxes for select to authenticated using (public.treasury_role() is not null);
+create policy "boxes read" on public.cash_boxes for select to authenticated using (public.treasury_sees(id));
 drop policy if exists "boxes daf update" on public.cash_boxes;
 create policy "boxes daf update" on public.cash_boxes for update to authenticated using (public.treasury_role() = 'daf') with check (public.treasury_role() = 'daf');
 
 drop policy if exists "tx read" on public.cash_transactions;
-create policy "tx read" on public.cash_transactions for select to authenticated using (public.treasury_role() is not null);
+create policy "tx read" on public.cash_transactions for select to authenticated using (public.treasury_sees(caisse));
 drop policy if exists "tx insert" on public.cash_transactions;
-create policy "tx insert" on public.cash_transactions for insert to authenticated with check (public.treasury_role() = 'comptable' and source = 'app');
+create policy "tx insert" on public.cash_transactions for insert to authenticated with check (public.treasury_box() = caisse and source = 'app');
 drop policy if exists "tx update" on public.cash_transactions;
-create policy "tx update" on public.cash_transactions for update to authenticated using (public.treasury_role() = 'comptable') with check (public.treasury_role() = 'comptable');
+create policy "tx update" on public.cash_transactions for update to authenticated using (public.treasury_box() = caisse) with check (public.treasury_box() = caisse);
 
 drop policy if exists "req read" on public.fund_requests;
-create policy "req read" on public.fund_requests for select to authenticated using (public.treasury_role() is not null);
+create policy "req read" on public.fund_requests for select to authenticated using (public.treasury_sees(caisse));
 drop policy if exists "req insert" on public.fund_requests;
-create policy "req insert" on public.fund_requests for insert to authenticated with check (public.treasury_role() = 'comptable');
+create policy "req insert" on public.fund_requests for insert to authenticated with check (public.treasury_box() = caisse);
 drop policy if exists "req update" on public.fund_requests;
 create policy "req update" on public.fund_requests for update to authenticated using (public.treasury_role() in ('daf','dg','tresorier')) with check (public.treasury_role() in ('daf','dg','tresorier'));
 
 drop policy if exists "tlog read" on public.treasury_log;
-create policy "tlog read" on public.treasury_log for select to authenticated using (public.treasury_role() in ('daf','dg','comptable'));
+create policy "tlog read" on public.treasury_log for select to authenticated using (
+  public.treasury_role() in ('daf','dg','comptable')
+  or (table_name = 'cash_boxes' and record_id = public.treasury_box())
+  or (table_name = 'cash_transactions' and exists (select 1 from public.cash_transactions t where t.id::text = record_id and t.caisse = public.treasury_box()))
+  or (table_name = 'fund_requests' and exists (select 1 from public.fund_requests q where q.id = record_id and q.caisse = public.treasury_box())));
 
-revoke delete on public.cash_transactions, public.fund_requests, public.treasury_log, public.cash_boxes from anon, authenticated;
+drop policy if exists "tq read" on public.treasury_questions;
+create policy "tq read" on public.treasury_questions for select to authenticated using (public.treasury_role() in ('daf','dg','comptable') or public.treasury_box() = target);
+drop policy if exists "tq ask" on public.treasury_questions;
+create policy "tq ask" on public.treasury_questions for insert to authenticated with check (public.treasury_role() = 'comptable');
+drop policy if exists "tq answer" on public.treasury_questions;
+create policy "tq answer" on public.treasury_questions for update to authenticated
+  using ((target = 'daf' and public.treasury_role() = 'daf') or public.treasury_box() = target)
+  with check ((target = 'daf' and public.treasury_role() = 'daf') or public.treasury_box() = target);
+
+revoke delete on public.cash_transactions, public.fund_requests, public.treasury_log, public.cash_boxes, public.treasury_questions from anon, authenticated;
+revoke all on public.treasury_questions from anon;
+grant select, insert, update on public.treasury_questions to authenticated;
 revoke insert, update on public.treasury_log from anon, authenticated;
 
 -- ---------- Supporting documents storage ----------
@@ -214,7 +306,7 @@ insert into storage.buckets (id, name, public) values ('treasury-files','treasur
 drop policy if exists "tfiles read" on storage.objects;
 create policy "tfiles read" on storage.objects for select to authenticated using (bucket_id = 'treasury-files' and public.treasury_role() is not null);
 drop policy if exists "tfiles write" on storage.objects;
-create policy "tfiles write" on storage.objects for insert to authenticated with check (bucket_id = 'treasury-files' and public.treasury_role() = 'comptable');
+create policy "tfiles write" on storage.objects for insert to authenticated with check (bucket_id = 'treasury-files' and public.treasury_box() is not null);
 
 -- ---------- Import of the two Excel cash books (runs only once) ----------
 do $$ begin
@@ -292,5 +384,5 @@ end $$;
 --   insert into public.treasury_members (user_id, role)
 --   select id, 'daf' from auth.users where email = 'daf@example.com'
 --   on conflict (user_id) do update set role = excluded.role;
--- After that the DAF can manage everyone's role from the app's Team page.
+-- After that the DAF can manage everyone's role from the DAF dashboard's Team page (/daf#team).
 -- =====================================================================

@@ -216,13 +216,24 @@ import { LOGO } from "../js/logo.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm";
 document.getElementById("brandLogo").src = LOGO;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+/* ---------- one page, four dashboards: the address decides which one (vercel.json rewrites them here) ---------- */
+const APPS = {
+  "daf": { roles: ["daf", "dg", "tresorier", "viewer"], name: { fr: "Tableau de bord DAF", en: "DAF dashboard" } },
+  "comptable": { roles: ["comptable"], name: { fr: "Tableau de bord Comptable", en: "Accounting dashboard" } },
+  "caisse-cacao": { roles: ["caisse_cacao"], box: "cacao", name: { fr: "Caisse Achat Cacao", en: "Cocoa purchase cash box" } },
+  "caisse-admin": { roles: ["caisse_admin"], box: "admin", name: { fr: "Caisse Administrative", en: "Administrative cash box" } }
+};
+const ROLE_APP = { daf: "daf", dg: "daf", tresorier: "daf", viewer: "daf", comptable: "comptable", caisse_cacao: "caisse-cacao", caisse_admin: "caisse-admin" };
+const APP_KEY = (location.pathname.split("/").filter(Boolean)[0] || "").toLowerCase();
+const APP = APPS[APP_KEY] || null;          // null on the old /tresorerie address: it sends each person to their own dashboard
+const BOX = APP && APP.box || null;          // the cash box this dashboard works on (cash box managers only)
 let DATA = { cacao: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] }, admin: { opening: 0, from: "2026-01-01", to: "2026-01-01", rows: [] } };
 
 /* ---------- rules from the treasury manual (Manuel des procédures de trésorerie 2026/2027) ---------- */
 const CAISSES = {
   cacao: { code: "COC", ceiling: 20000000, target: 20000000, name: { fr: "Caisse Achat Cacao", en: "Cocoa purchase cash box" },
     scope: ["Achat de cacao", "Manutention", "Usinage", "Frais de transport et ration", "Carburant", "Frais de mission", "Prestations MOON Ltd", "mains levées", "Approvisionnement DAF", "Retour en caisse"] },
-  admin: { code: "CAD", ceiling: 500000, target: 500000, name: { fr: "Caisse Administration", en: "Administration cash box" }, scope: null }
+  admin: { code: "CAD", ceiling: 500000, target: 500000, name: { fr: "Caisse Administrative", en: "Administrative cash box" }, scope: null }
 };
 const DG_THRESHOLD = 150000;          // §8.2: above this, an admin expense needs DG approval
 const DUP_MIN = 50000;                // same amount in both cash boxes within 30 days → possible double payment
@@ -266,15 +277,26 @@ const PURCHASE_TYPES = { "COC-001": "magasin", "COC-002": "ramassage", "COC-003"
 /* ---------- strings ---------- */
 const STR = {
   fr: {
-    sub: "Trésorerie", nav_overview: "Vue d'ensemble", nav_cacao: "Caisse Achat Cacao", nav_admin: "Caisse Administration", nav_requests: "Demandes de fonds",
-    nav_expenses: "Dépenses", new_entry: "Nouvelle opération", edit_entry: "Modifier l'opération", entry_sub: "Saisie par la comptabilité, avec la pièce justificative.",
+    sub: "Trésorerie", nav_questions: "Questions", nav_history: "Historique", nav_mybox: "Ma caisse",
+    role_caisse_cacao: "Caisse Achat Cacao", role_caisse_admin: "Caisse Administrative", only_box: "Seule la caisse saisit ses opérations et ses demandes de fonds.",
+    wrong_app: "Ce tableau de bord ({r}) ne correspond pas à votre rôle : {m}.", open_mine: "Ouvrir mon tableau de bord", home: "Accueil SAIC Suite",
+    no_access_app: "Votre compte n'a pas de rôle dans la trésorerie. Demandez à la DAF de vous l'attribuer.", redirecting: "Ouverture de votre tableau de bord…",
+    edit_reason: "Motif de la modification", edit_reason_hint: "Obligatoire. L'ancienne valeur reste dans l'historique.", need_reason: "Indiquez le motif de la modification.",
+    edited: "modifié", ask: "Poser une question", q_title: "Questions", q_sub_compta: "Vos questions aux caisses et à la DAF, et leurs réponses.", q_sub_other: "Questions de la comptabilité. Répondez directement ici.",
+    q_to: "Destinataire", q_about: "Concerne", q_text: "Question", q_none: "Aucune question pour le moment.", q_sent: "Question envoyée", q_answered: "Répondue", q_open: "Sans réponse",
+    reply: "Répondre", answer: "Réponse", answered_toast: "Réponse envoyée", q_from: "De la comptabilité", to_daf: "DAF", q_off: "Les questions seront disponibles dès la mise à jour de la base.",
+    h_title: "Historique des modifications", h_sub: "Chaque modification d'une opération ou d'un plafond : ancienne et nouvelle valeur, auteur, date et motif. Rien n'est effacé.",
+    h_when: "Date", h_who: "Par", h_what: "Élément", h_change: "Changement", h_reason: "Motif", h_none: "Aucune modification pour le moment.", h_void: "Annulée",
+    ceil_edit: "Modifier le plafond", ceil_new: "Nouveau plafond (FCFA)", ceil_saved: "Plafond enregistré", readonly_compta: "Lecture seule : vous consultez les opérations des deux caisses et posez vos questions.",
+    nav_overview: "Vue d'ensemble", nav_cacao: "Caisse Achat Cacao", nav_admin: "Caisse Administrative", nav_requests: "Demandes de fonds",
+    nav_expenses: "Dépenses", new_entry: "Nouvelle opération", edit_entry: "Modifier l'opération", entry_sub: "Saisie par la caisse, avec la pièce justificative.",
     e_kind: "Type d'opération", e_out: "Dépense (sortie)", e_in: "Entrée de fonds", e_nature: "Nature / catégorie", e_date: "Date", e_amount: "Montant (FCFA)", e_party: "Payé à / reçu de",
     e_details: "Libellé", e_ref: "Référence", e_ref_hint: "Générée selon le format du manuel ; modifiable.", e_market: "N° marché", e_proof: "Pièce justificative", e_approved: "Approuvé par",
     p_facture: "Facture / pro forma", p_bulletin: "Bulletin de pesée", p_bon: "Bon de livraison / commande", p_ordre: "Ordre de mission", p_recu: "Reçu de caisse", p_none: "Aucune pour l'instant",
     a_comptable: "Comptable (≤ 150 000)", a_dg: "Direction Générale", a_daf: "DAF",
     need_entry: "Saisissez une date, un montant supérieur à zéro et un libellé.", entry_saved: "Opération {r} enregistrée", entry_deleted: "Opération supprimée", del: "Supprimer", edit: "Modifier", save: "Enregistrer",
     only_accountant: "Seule la comptabilité saisit les opérations et les demandes de fonds.",
-    exp_title: "Dépenses", exp_sub: "Toutes les opérations des deux caisses, par catégorie. La comptabilité saisit chaque dépense avec sa pièce justificative.",
+    exp_title: "Dépenses", exp_sub: "Toutes les opérations des deux caisses, par catégorie. Chaque caisse saisit ses dépenses avec la pièce justificative.",
     all_boxes: "Les deux caisses", all_months: "Tous les mois", by_cat_box: "Dépenses par catégorie et par caisse", c_box: "Caisse", added: "Saisie app", both: "Total",
     f_noproof: "Pas de pièce justificative jointe.", f_needdg: "{a} > 150 000 FCFA approuvé par le Comptable seul : approbation DG requise (§8.2).", f_cacao_dg: "Achat cacao sans validation de la Direction Générale (§8.1).",
     funded_entry: "Approvisionnement {id} ajouté à la {c}.",
@@ -328,15 +350,26 @@ const STR = {
     f_ramassage: "Avance de ramassage de {a} retournée en caisse le {d} : vérifier la reddition des comptes."
   },
   en: {
-    sub: "Treasury", nav_overview: "Overview", nav_cacao: "Cocoa cash box", nav_admin: "Admin cash box", nav_requests: "Fund requests",
-    nav_expenses: "Expenses", new_entry: "New transaction", edit_entry: "Edit transaction", entry_sub: "Entered by Accounting, with its supporting document.",
+    sub: "Treasury", nav_questions: "Questions", nav_history: "History", nav_mybox: "My cash box",
+    role_caisse_cacao: "Cocoa purchase cash box", role_caisse_admin: "Administrative cash box", only_box: "Only the cash box records its transactions and fund requests.",
+    wrong_app: "This dashboard ({r}) doesn't match your role: {m}.", open_mine: "Open my dashboard", home: "SAIC Suite home",
+    no_access_app: "Your account has no treasury role. Ask the DAF to give you one.", redirecting: "Opening your dashboard…",
+    edit_reason: "Reason for the change", edit_reason_hint: "Required. The old value stays in the history.", need_reason: "Give the reason for the change.",
+    edited: "edited", ask: "Ask a question", q_title: "Questions", q_sub_compta: "Your questions to the cash boxes and the DAF, with their answers.", q_sub_other: "Questions from Accounting. Answer them here.",
+    q_to: "To", q_about: "About", q_text: "Question", q_none: "No questions yet.", q_sent: "Question sent", q_answered: "Answered", q_open: "Unanswered",
+    reply: "Reply", answer: "Answer", answered_toast: "Answer sent", q_from: "From Accounting", to_daf: "DAF", q_off: "Questions will be available once the database is updated.",
+    h_title: "Change history", h_sub: "Every change to a transaction or a ceiling: old and new value, who, when and why. Nothing is erased.",
+    h_when: "Date", h_who: "By", h_what: "Item", h_change: "Change", h_reason: "Reason", h_none: "No changes yet.", h_void: "Cancelled",
+    ceil_edit: "Change ceiling", ceil_new: "New ceiling (FCFA)", ceil_saved: "Ceiling saved", readonly_compta: "Read only: you see both cash boxes' transactions and ask questions.",
+    nav_overview: "Overview", nav_cacao: "Cocoa cash box", nav_admin: "Administrative cash box", nav_requests: "Fund requests",
+    nav_expenses: "Expenses", new_entry: "New transaction", edit_entry: "Edit transaction", entry_sub: "Entered by the cash box, with its supporting document.",
     e_kind: "Transaction type", e_out: "Expense (cash out)", e_in: "Cash in", e_nature: "Nature / category", e_date: "Date", e_amount: "Amount (FCFA)", e_party: "Paid to / received from",
     e_details: "Details", e_ref: "Reference", e_ref_hint: "Generated in the manual's format; you can edit it.", e_market: "Market no.", e_proof: "Supporting document", e_approved: "Approved by",
     p_facture: "Invoice / pro forma", p_bulletin: "Weighing slip", p_bon: "Delivery / purchase order", p_ordre: "Mission order", p_recu: "Cash receipt", p_none: "None yet",
     a_comptable: "Accountant (≤ 150,000)", a_dg: "General Management", a_daf: "DAF",
     need_entry: "Enter a date, an amount above zero and details.", entry_saved: "Transaction {r} saved", entry_deleted: "Transaction deleted", del: "Delete", edit: "Edit", save: "Save",
     only_accountant: "Only Accounting enters transactions and fund requests.",
-    exp_title: "Expenses", exp_sub: "Every transaction from both cash boxes, by category. Accounting enters each expense with its supporting document.",
+    exp_title: "Expenses", exp_sub: "Every transaction from both cash boxes, by category. Each cash box enters its expenses with the supporting document.",
     all_boxes: "Both cash boxes", all_months: "All months", by_cat_box: "Spending by category and cash box", c_box: "Cash box", added: "Entered in app", both: "Total",
     f_noproof: "No supporting document attached.", f_needdg: "{a} > 150,000 FCFA approved by the Accountant only: needs DG approval (§8.2).", f_cacao_dg: "Cocoa purchase without General Management approval (§8.1).",
     funded_entry: "Top-up {id} added to the {c}.",
@@ -392,7 +425,7 @@ const STR = {
 };
 
 /* ---------- state ---------- */
-const S = { lang: (() => { try { const l = localStorage.getItem("saic-lang"); if (l === "en" || l === "fr") return l; } catch (e) {} return (navigator.language || "fr").slice(0, 2) === "en" ? "en" : "fr"; })(), role: null, me: null, ready: false, people: {}, members: [], loadError: "", assets: null, requests: [], entries: [], matrix: JSON.parse(JSON.stringify(DEFAULT_MATRIX)), matrixMeta: null, ex: { box: "", month: "", cat: "", q: "" }, db: null, uid: null, flt: { cacao: { q: "", cat: "", flags: false }, admin: { q: "", cat: "", flags: false } }, count: {} };
+const S = { lang: (() => { try { const l = localStorage.getItem("saic-lang"); if (l === "en" || l === "fr") return l; } catch (e) {} return (navigator.language || "fr").slice(0, 2) === "en" ? "en" : "fr"; })(), role: null, me: null, ready: false, people: {}, members: [], loadError: "", assets: null, requests: [], entries: [], questions: [], qOk: true, log: [], editedIds: new Set(), matrix: JSON.parse(JSON.stringify(DEFAULT_MATRIX)), matrixMeta: null, ex: { box: "", month: "", cat: "", q: "" }, db: null, uid: null, flt: { cacao: { q: "", cat: "", flags: false }, admin: { q: "", cat: "", flags: false } }, count: {} };
 const t = (k, p = {}) => String((STR[S.lang][k] ?? STR.fr[k] ?? k)).replace(/\{(\w+)\}/g, (_, x) => p[x] ?? "");
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -519,16 +552,27 @@ function bars(list, total, opt = {}) {
 }
 
 /* ---------- shell ---------- */
-const route = () => location.hash.replace(/^#/, "") || "overview";
+const NAVS = {
+  daf: ["overview", "expenses", "cacao", "admin", "requests", "questions", "history", "team"],
+  comptable: ["overview", "expenses", "cacao", "admin", "requests", "questions", "history"],
+  box: ["box", "requests", "questions", "history"]
+};
+const navKeys = () => BOX ? NAVS.box : NAVS[APP_KEY] || [];
+const route = () => { const h = location.hash.replace(/^#/, ""), keys = navKeys(); const r = h === BOX ? "box" : h; return keys.includes(r) ? r : keys[0] || "overview"; };
+const canWrite = () => !!BOX && APP.roles.includes(S.role);
+const canEdit = r => canWrite() && r.added && r.source === "app" && r.caisse === BOX;
 window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
 function shell() {
   document.documentElement.lang = S.lang;
-  $("#brandSub").textContent = t("sub");
+  $("#brandSub").textContent = APP ? APP.name[S.lang] : t("sub");
+  document.title = "SAIC · " + (APP ? APP.name[S.lang] : t("sub"));
   const pend = S.requests.filter(r => !["funded", "rejected"].includes(r.status)).length;
-  const r = route();
-  $("#nav").innerHTML = !S.role ? "" : [["overview", t("nav_overview")], ["expenses", t("nav_expenses")], ["cacao", t("nav_cacao")], ["admin", t("nav_admin")], ["requests", t("nav_requests"), pend], ["team", t("nav_team")]]
-    .map(([k, l, n]) => `<a href="#${k}" class="${r === k ? "on" : ""}">${esc(l)}${n ? `<span class="badge">${n}</span>` : ""}</a>`).join("");
-  $("#railFoot").innerHTML = `<a href="../">${esc(t("registry"))}</a><a href="../reception/">${S.lang === "fr" ? "Réception cacao" : "Cocoa reception"}</a>
+  const qOpen = S.questions.filter(q => !q.answer && (S.role === "comptable" ? false : q.target === (BOX || "daf"))).length;
+  const r = route(), label = { overview: t("nav_overview"), expenses: t("nav_expenses"), cacao: t("nav_cacao"), admin: t("nav_admin"), box: t("nav_mybox"), requests: t("nav_requests"), questions: t("nav_questions"), history: t("nav_history"), team: t("nav_team") };
+  const badge = { requests: S.role === "daf" || BOX ? pend : 0, questions: qOpen };
+  $("#nav").innerHTML = !S.role || !APP || !APP.roles.includes(S.role) ? "" : navKeys()
+    .map(k => `<a href="#${k}" class="${r === k ? "on" : ""}">${esc(label[k])}${badge[k] ? `<span class="badge">${badge[k]}</span>` : ""}</a>`).join("");
+  $("#railFoot").innerHTML = `<a href="/suite/">← ${esc(t("home"))}</a>
     ${S.me ? `<span>${esc(S.me.name)}${S.role ? `<br>${esc(t("role_" + S.role))}` : ""}</span>` : ""}
     <div class="row"><button class="btn small" id="langBtn">${esc(t("lang"))}</button>${S.me ? `<button class="btn small" id="outBtn">${esc(t("signout"))}</button>` : ""}</div>`;
   const ob = $("#outBtn"); if (ob) ob.onclick = async () => { await sb.auth.signOut(); S.me = null; S.role = null; render(); };
@@ -539,15 +583,19 @@ function render() {
   shell();
   const r = route(), m = $("#main");
   if (!S.ready) { m.innerHTML = `<div class="card">${esc(t("loading"))}</div>`; return; }
+  if (!APP) { m.innerHTML = `<div class="card">${esc(t("redirecting"))}</div>`; return; }
   if (!S.me) { m.innerHTML = viewLogin(); bindLogin(); return; }
-  if (!S.role) { m.innerHTML = `<div class="notice">${esc(t("no_access"))}</div>`; return; }
+  if (!S.role) { m.innerHTML = `<div class="notice">${esc(t("no_access_app"))}</div>`; return; }
+  if (!APP.roles.includes(S.role)) { m.innerHTML = `<div class="notice stack">${esc(t("wrong_app", { r: APP.name[S.lang], m: t("role_" + S.role) }))}<div><a class="btn primary" href="/${ROLE_APP[S.role]}/">${esc(t("open_mine"))}</a></div></div>`; return; }
   if (S.loadError) { m.innerHTML = `<div class="notice" style="background:var(--bad-bg);color:var(--bad)">${esc(t("load_err", { m: S.loadError }))}</div>`; return; }
   const note = "";
   if (r === "team") { m.innerHTML = viewTeam(); bindTeam(); return; }
-  if (r === "cacao" || r === "admin") { m.innerHTML = note + viewBox(A[r]); bindChart(A[r]); bindBox(A[r]); return; }
+  if (r === "cacao" || r === "admin" || r === "box") { const a = A[r === "box" ? BOX : r]; m.innerHTML = note + viewBox(a); bindChart(a); bindBox(a); return; }
   if (r === "requests") { m.innerHTML = note + viewRequests(); return; }
+  if (r === "questions") { m.innerHTML = viewQuestions(); return; }
+  if (r === "history") { m.innerHTML = viewHistory(); return; }
   if (r === "expenses") { m.innerHTML = note + viewExpenses(); bindExpenses(); return; }
-  m.innerHTML = note + viewOverview(); bindChart(A.cacao); bindChart(A.admin);
+  m.innerHTML = (S.role === "comptable" ? `<div class="notice" style="margin-bottom:12px">${esc(t("readonly_compta"))}</div>` : "") + viewOverview(); bindChart(A.cacao); bindChart(A.admin);
 }
 const pill = st => `<span class="pill ${st === "over" ? "bad" : st === "low" ? "warn" : "ok"}">${esc(t("st_" + st))}</span>`;
 
@@ -563,7 +611,7 @@ function boxCard(a) {
     ${a.over.length ? `<div class="small" style="color:var(--bad)">${esc(t("days_over", { n: a.over.length }))} · ${esc(t("max_bal", { v: fc(a.maxDay.bal) }))}</div>` : ""}
     ${balanceChart(a)}
     <div><h3 style="margin-bottom:8px">${esc(t("top_cats"))}</h3>${bars(a.catList.slice(0, 4), a.totOut)}</div>
-    <div class="row"><a class="btn" href="#${a.key}">${esc(t("open_box"))}</a><button class="btn primary" data-act="newReq" data-caisse="${a.key}">${esc(t("request_funds"))}</button></div>
+    <div class="row"><a class="btn" href="#${a.key}">${esc(t("open_box"))}</a>${S.role === "daf" ? `<button class="btn" data-act="ceiling" data-caisse="${a.key}">${esc(t("ceil_edit"))}</button>` : ""}</div>
   </div>`;
 }
 function controlList(items, max = 99, showBox = false) {
@@ -583,7 +631,7 @@ function viewOverview() {
   const boxKpi = (a, icon, color) => UI.kpi({ icon, color, label: t("nav_" + a.key), value: fcs(a.closing).replace(/ (M|k)$/, ""), unit: (/ M$/.test(fcs(a.closing)) ? "M " : / k$/.test(fcs(a.closing)) ? "k " : "") + "F", href: "#" + a.key,
     deltaHtml: UI.delta(chg(a), S.lang), sub: tt(`${pc(a)} % du plafond de ${fcs(a.c.ceiling)}`, `${pc(a)}% of the ${fcs(a.c.ceiling)} ceiling`), series: series(a), hot: a.status === "bad" });
   return UI.hero({ lang: S.lang, status, name: (S.me && S.me.name) || "", role: S.role ? t("role_" + S.role) : "", leadHtml: lead,
-      actions: `<button class="btn" data-act="newReq">${esc(t("new_req"))}</button><button class="btn primary hero-cta" data-act="newEntry">${UI.icon("tick", 2.4)}<span>${esc(t("new_entry"))}</span></button>` })
+      actions: S.role === "comptable" ? `<button class="btn primary hero-cta" data-act="ask">${UI.icon("send", 2.4)}<span>${esc(t("ask"))}</span></button>` : `<a class="btn primary hero-cta" href="#requests">${UI.icon("tick", 2.4)}<span>${esc(t("nav_requests"))}</span></a>` })
   + `<div class="kpis">${boxKpi(A.cacao, "pod", "var(--ok)")}${boxKpi(A.admin, "cash", "var(--gold)")}
     ${UI.kpi({ icon: "send", color: "#5aa2ff", label: t("nav_requests"), value: pend.length, href: "#requests", sub: tt("en attente de visa ou de virement", "awaiting sign-off or transfer") })}
     ${UI.kpi({ icon: "alert", color: "var(--bad)", label: t("controls"), value: all.length, sub: tt(`${bad} critique${bad > 1 ? "s" : ""} · ${all.length - bad} à vérifier`, `${bad} critical · ${all.length - bad} to check`), hot: bad > 0 })}</div>
@@ -610,7 +658,7 @@ function viewBox(a) {
       <p class="small muted">${ex.le[0]} / ${ex.gt[0]} ${esc(t("transactions").toLowerCase())}</p></div>`;
   const theo = a.d.opening + a.totIn - a.totOut, cnt = S.count[a.key];
   return `<div class="topline"><div><h1>${esc(cname(a.key))}</h1><p>${a.c.code} · ${esc(t("period"))} ${dfull(a.d.from)} – ${dfull(a.d.to)} · ${esc(t("ops", { n: a.rows.length }))}</p></div>
-    <div class="row">${pill(a.status)}<button class="btn" data-act="newReq" data-caisse="${a.key}">${esc(t("request_funds"))}</button><button class="btn primary" data-act="newEntry" data-caisse="${a.key}">${esc(t("new_entry"))}</button></div></div>
+    <div class="row">${pill(a.status)}${canWrite() ? `<button class="btn" data-act="newReq" data-caisse="${a.key}">${esc(t("request_funds"))}</button><button class="btn primary" data-act="newEntry" data-caisse="${a.key}">${esc(t("new_entry"))}</button>` : S.role === "daf" ? `<button class="btn" data-act="ceiling" data-caisse="${a.key}">${esc(t("ceil_edit"))}</button>` : S.role === "comptable" ? `<button class="btn primary" data-act="ask" data-caisse="${a.key}">${esc(t("ask"))}</button>` : ""}</div></div>
   <div class="tiles">
     <div class="tile"><span class="l">${esc(t("opening"))}</span><span class="v">${fcs(a.d.opening)}</span><span class="s">${fc(a.d.opening)}</span></div>
     <div class="tile"><span class="l">${esc(t("inflows"))}</span><span class="v ok">+${fcs(a.totIn)}</span><span class="s">${esc(t("t_in_supply", { v: fcs(a.supply) }))}${a.returns ? " · " + esc(t("t_in_return", { v: fcs(a.returns) })) : ""}</span></div>
@@ -644,7 +692,7 @@ function txTable(a) {
   const so = rows.reduce((x, r) => x + r.out, 0), si = rows.reduce((x, r) => x + r.in, 0);
   return `<div class="table-wrap"><table><thead><tr><th>${esc(t("c_date"))}</th><th>${esc(t("c_ref"))}</th>${a.key === "cacao" ? `<th>${esc(t("c_party"))}</th>` : ""}<th>${esc(t("c_cat"))}</th><th>${esc(t("c_details"))}</th><th class="r">${esc(t("c_out"))}</th><th class="r">${esc(t("c_in"))}</th><th class="r">${esc(t("c_bal"))}</th></tr></thead>
   <tbody>${rows.map(r => { const lv = r.flags.some(x => x.lv === "bad") ? "bad" : r.flags.length ? "warn" : ""; return `<tr class="${lv ? "flag-" + lv : ""}">
-    <td class="num">${dfmt(r.date)}</td><td class="mono">${esc(r.ref || "—")}${r.added ? `<br><span class="tag">${esc(t("added"))}</span>${r.source === "app" && S.role === "comptable" ? ` <button class="btn small" data-act="editEntry" data-id="${esc(r.id)}">${esc(t("edit"))}</button>` : ""}` : ""}</td>${a.key === "cacao" ? `<td>${esc(r.party)}</td>` : ""}<td>${esc(r.cat)}</td>
+    <td class="num">${dfmt(r.date)}</td><td class="mono">${esc(r.ref || "—")}${r.added ? `<br><span class="tag">${esc(t("added"))}</span>${S.editedIds.has(r.id) ? ` <span class="tag" style="background:var(--warn-bg);color:var(--warn)">${esc(t("edited"))}</span>` : ""}${canEdit(r) ? ` <button class="btn small" data-act="editEntry" data-id="${esc(r.id)}">${esc(t("edit"))}</button>` : ""}` : ""}${S.role === "comptable" && r.id ? ` <button class="btn small" data-act="ask" data-id="${esc(r.id)}" data-caisse="${a.key}">${esc(t("ask"))}</button>` : ""}</td>${a.key === "cacao" ? `<td>${esc(r.party)}</td>` : ""}<td>${esc(r.cat)}</td>
     <td>${esc(r.details)}${fileLinks(r.files)}${r.obs && r.obs !== "RAS" ? `<span class="flagtxt" style="color:var(--muted)">${esc(r.obs)}</span>` : ""}${r.flags.map(x => `<span class="flagtxt ${x.lv}">${esc(x.m)}</span>`).join("")}</td>
     <td class="r num">${r.out ? fc(r.out) : ""}</td><td class="r num in">${r.in ? fc(r.in) : ""}</td><td class="r num">${fc(r.bal)}</td></tr>`; }).join("")}</tbody>
   <tfoot><tr><td colspan="${a.key === "cacao" ? 5 : 4}">${esc(t("total"))} (${rows.length})</td><td class="r num">${fc(so)}</td><td class="r num">${fc(si)}</td><td></td></tr></tfoot></table></div>`;
@@ -687,8 +735,8 @@ function reqCard(r) {
 }
 function viewRequests() {
   const list = S.requests.slice().sort((a, b) => b.created.localeCompare(a.created));
-  return `<div class="topline"><div><h1>${esc(t("req_title"))}</h1><p>${esc(t("req_sub"))}</p></div><button class="btn primary" data-act="newReq">${esc(t("new_req"))}</button></div>
-  <div class="tiles">${["cacao", "admin"].map(k => { const a = A[k]; const sug = Math.max(0, a.c.target - a.closing); return `<div class="tile"><span class="l">${esc(cname(k))}</span><span class="v">${fcs(a.closing)} <small>/ ${fcs(a.c.target)}</small></span><span class="s">${esc(t("suggest", { b: fc(a.closing), t: fc(a.c.target), s: fc(sug) }))}</span></div>`; }).join("")}</div>
+  return `<div class="topline"><div><h1>${esc(t("req_title"))}</h1><p>${esc(t("req_sub"))}</p></div>${canWrite() ? `<button class="btn primary" data-act="newReq">${esc(t("new_req"))}</button>` : ""}</div>
+  <div class="tiles">${(BOX ? [BOX] : ["cacao", "admin"]).map(k => { const a = A[k]; const sug = Math.max(0, a.c.target - a.closing); return `<div class="tile"><span class="l">${esc(cname(k))}</span><span class="v">${fcs(a.closing)} <small>/ ${fcs(a.c.target)}</small></span><span class="s">${esc(t("suggest", { b: fc(a.closing), t: fc(a.c.target), s: fc(sug) }))}</span></div>`; }).join("")}</div>
   <div class="stack">${list.length ? list.map(reqCard).join("") : `<div class="card muted">${esc(t("no_req"))}</div>`}</div>`;
 }
 async function saveReq(r) {
@@ -720,7 +768,7 @@ document.addEventListener("click", async e => {
 function attachField(existing) {
   attKeep = (existing || []).slice(); attNew = [];
   return `<div class="f full"><span style="font-size:13px;font-weight:500">${esc(t("att"))}</span>
-    ${S.role === "comptable" ? `<label class="btn small" style="align-self:flex-start"><input type="file" id="attIn" class="vh" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf">${esc(t("att_add"))}</label><span class="hint">${esc(t("att_hint"))}</span>` : `<span class="hint">${esc(t("att_off"))}</span>`}
+    ${canWrite() ? `<label class="btn small" style="align-self:flex-start"><input type="file" id="attIn" class="vh" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf">${esc(t("att_add"))}</label><span class="hint">${esc(t("att_hint"))}</span>` : `<span class="hint">${esc(t("att_off"))}</span>`}
     <ul class="att-list" id="attList"></ul></div>`;
 }
 function bindAttach() {
@@ -762,6 +810,7 @@ async function uploadAttachments(errEl) {
 async function saveEntry(e, isNew) {
   const body = { caisse: e.caisse, kind: e.kind, date: e.date, cat: e.cat, code: e.code || null, amount: e.amount, party: e.party || null, market: e.market || null,
     details: e.details, ref: e.ref || null, proof: e.proof, approvals: e.approvals, asset: !!e.asset, files: e.files || [] };
+  if (!isNew) body.edit_reason = e.editReason;
   const { error } = isNew ? await sb.from("cash_transactions").insert(body) : await sb.from("cash_transactions").update(body).eq("id", e.id);
   if (error) throw new Error(error.message);
   await loadData();
@@ -782,12 +831,12 @@ function nextRef(box, code, date) {
 }
 function openEntryForm(box, id) {
   const ex = id ? S.entries.find(e => e.id === id) : null;
-  box = ex ? ex.caisse : box || "cacao";
+  box = BOX || (ex ? ex.caisse : box || "cacao");
   const today = new Date().toISOString().slice(0, 10);
   modal(`<form id="ef" novalidate>
     <header><div><h2>${esc(t(ex ? "edit_entry" : "new_entry"))}</h2><p>${esc(t("entry_sub"))}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
     <div class="body"><div class="fgrid">
-      <div class="f"><label for="eb">${esc(t("f_caisse"))}</label><select id="eb" ${ex ? "disabled" : ""}>${["cacao", "admin"].map(k => `<option value="${k}" ${k === box ? "selected" : ""}>${esc(cname(k))}</option>`).join("")}</select></div>
+      <div class="f"><label for="eb">${esc(t("f_caisse"))}</label><select id="eb" ${ex || BOX ? "disabled" : ""}>${[box].map(k => `<option value="${k}" ${k === box ? "selected" : ""}>${esc(cname(k))}</option>`).join("")}</select></div>
       <div class="f"><label for="ek">${esc(t("e_kind"))}</label><select id="ek"><option value="out">${esc(t("e_out"))}</option><option value="in" ${ex && ex.kind === "in" ? "selected" : ""}>${esc(t("e_in"))}</option></select></div>
       <div class="f full"><label for="en">${esc(t("e_nature"))}</label><select id="en"></select></div>
       <div class="f"><label for="ed">${esc(t("e_date"))}</label><input id="ed" type="date" value="${esc(ex ? ex.date : today)}"></div>
@@ -802,6 +851,7 @@ function openEntryForm(box, id) {
         <span class="hint" id="eReq"></span></div>
       ${attachField(ex ? ex.files : [])}
       <div class="f full"><label for="er">${esc(t("e_ref"))}</label><input id="er" type="text" value="${esc(ex ? ex.ref : "")}"><span class="hint">${esc(t("e_ref_hint"))}</span></div>
+      ${ex ? `<div class="f full"><label for="ewhy">${esc(t("edit_reason"))}</label><input id="ewhy" type="text" required><span class="hint">${esc(t("edit_reason_hint"))}</span></div>` : ""}
     </div></div>
     <footer><div class="row">${ex ? `<button type="button" class="btn danger" id="edel">${esc(t("void"))}</button>` : ""}<span class="err" id="efErr"></span></div><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("save"))}</button></div></footer></form>`);
   let refTouched = !!ex;
@@ -833,12 +883,14 @@ function openEntryForm(box, id) {
     e.preventDefault();
     const amount = Number($("#ea").value), date = $("#ed").value, details = $("#et").value.trim();
     if (!(amount > 0) || !date || !details) { $("#efErr").textContent = t("need_entry"); return; }
+    const editReason = ex ? $("#ewhy").value.trim() : "";
+    if (ex && !editReason) { $("#efErr").textContent = t("need_reason"); $("#ewhy").focus(); return; }
     const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
     let files; try { files = await uploadAttachments($("#efErr")); } catch (x) { $("#efErr").textContent = x.message; btn.disabled = false; return; }
     const [code, cat] = $("#en").value.split("|"), kind = $("#ek").value, b = $("#eb").value;
     const ent = { id: ex ? ex.id : null, caisse: b, kind, date, cat, code, amount, out: kind === "out" ? amount : 0, in: kind === "in" ? amount : 0,
       party: $("#ep").value.trim(), market: b === "cacao" ? $("#em").value.trim() : "", details, ref: $("#er").value.trim(), proof: $("#epr").value, approvals: [...document.querySelectorAll(".eappr:checked")].map(x => x.value), asset: kind === "out" && $("#easset").checked,
-      obs: "", files, created: ex ? ex.created : new Date().toISOString(), by: S.role };
+      obs: "", files, created: ex ? ex.created : new Date().toISOString(), by: S.role, editReason };
     try { await saveEntry(ent, !ex); } catch (x) { $("#efErr").textContent = t("save_err", { m: x.message }); btn.disabled = false; return; }
     closeModal(); toast(t("entry_saved", { r: ent.ref || details }));
   };
@@ -858,7 +910,7 @@ function viewExpenses() {
   const list = inMonth.filter(r => (!f.box || r.box === f.box) && (!f.cat || r.cat === f.cat) && (!q || [r.details, r.party, r.ref, r.cat].join(" ").toLowerCase().includes(q))).sort((a, b) => b.date.localeCompare(a.date));
   const sum = list.reduce((a, r) => a + r.out, 0);
   return `<div class="topline"><div><h1>${esc(t("exp_title"))}</h1><p>${esc(t("exp_sub"))}</p></div>
-    <div class="row"><button class="btn primary" data-act="newEntry">${esc(t("new_entry"))}</button></div></div>
+    <div class="row">${S.role === "comptable" ? `<button class="btn primary" data-act="ask">${esc(t("ask"))}</button>` : ""}</div></div>
   <div class="toolbar">
     <select id="xBox" aria-label="${esc(t("c_box"))}"><option value="">${esc(t("all_boxes"))}</option>${["cacao", "admin"].map(k => `<option value="${k}" ${f.box === k ? "selected" : ""}>${esc(cname(k))}</option>`).join("")}</select>
     <select id="xMonth" aria-label="Mois"><option value="">${esc(t("all_months"))}</option>${months.map(m => `<option value="${m}" ${f.month === m ? "selected" : ""}>${esc(mlabel(m))}</option>`).join("")}</select>
@@ -873,7 +925,7 @@ function viewExpenses() {
   <div class="card stack"><h3>${esc(t("transactions"))} (${list.length} · ${fc(sum)})</h3>
     <div class="table-wrap"><table><thead><tr><th>${esc(t("c_date"))}</th><th>${esc(t("c_box"))}</th><th>${esc(t("c_ref"))}</th><th>${esc(t("c_cat"))}</th><th>${esc(t("c_details"))}</th><th class="r">${esc(t("c_out"))}</th></tr></thead>
     <tbody>${list.map(r => { const lv = r.flags.some(x => x.lv === "bad") ? "bad" : r.flags.length ? "warn" : ""; return `<tr class="${lv ? "flag-" + lv : ""}"><td class="num">${dfull(r.date)}</td><td>${esc(CAISSES[r.box].code)}</td>
-      <td class="mono">${esc(r.ref || "—")}${r.added ? `<br><span class="tag">${esc(t("added"))}</span>${r.source === "app" && S.role === "comptable" ? ` <button class="btn small" data-act="editEntry" data-id="${esc(r.id)}">${esc(t("edit"))}</button>` : ""}` : ""}</td><td>${esc(r.cat)}</td>
+      <td class="mono">${esc(r.ref || "—")}${r.added ? `<br><span class="tag">${esc(t("added"))}</span>${S.editedIds.has(r.id) ? ` <span class="tag" style="background:var(--warn-bg);color:var(--warn)">${esc(t("edited"))}</span>` : ""}` : ""}${S.role === "comptable" && r.id ? ` <button class="btn small" data-act="ask" data-id="${esc(r.id)}" data-caisse="${r.box}">${esc(t("ask"))}</button>` : ""}</td><td>${esc(r.cat)}</td>
       <td>${esc(r.details)}${fileLinks(r.files)}${r.party ? `<span class="flagtxt" style="color:var(--muted)">${esc(r.party)}</span>` : ""}${r.flags.map(x => `<span class="flagtxt ${x.lv}">${esc(x.m)}</span>`).join("")}</td><td class="r num">${fc(r.out)}</td></tr>`; }).join("")}</tbody></table></div></div>`;
 }
 function bindExpenses() {
@@ -887,11 +939,12 @@ function bindExpenses() {
 
 const REASONS = { courant: ["r_weekly"], exceptionnel: ["r_tonnage", "r_volume", "r_early", "r_urgent"] };
 function openRequestForm(caisse = "cacao") {
+  caisse = BOX || caisse;
   modal(`<form id="rf" novalidate>
     <header><div><h2>${esc(t("new_req"))}</h2><p>§7 · ${esc(t("req_sub"))}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
     <div class="body">
       <div class="fgrid">
-        <div class="f"><label for="rc">${esc(t("f_caisse"))}</label><select id="rc">${["cacao", "admin"].map(k => `<option value="${k}" ${k === caisse ? "selected" : ""}>${esc(cname(k))}</option>`).join("")}</select></div>
+        <div class="f"><label for="rc">${esc(t("f_caisse"))}</label><select id="rc" ${BOX ? "disabled" : ""}>${[caisse].map(k => `<option value="${k}" ${k === caisse ? "selected" : ""}>${esc(cname(k))}</option>`).join("")}</select></div>
         <div class="f"><label for="rt">${esc(t("f_type"))}</label><select id="rt"><option value="courant">${esc(t("ty_courant"))}</option><option value="exceptionnel">${esc(t("ty_exceptionnel"))}</option></select></div>
         <div class="f full" id="sugBox"></div>
         <div class="f"><label for="ra">${esc(t("f_amount"))}</label><input id="ra" type="number" min="0" step="1000" inputmode="numeric"><span class="hint" id="raHint"></span></div>
@@ -942,7 +995,10 @@ function actOn(id, action) {
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
   const defBox = b.dataset.caisse || (["cacao", "admin"].includes(route()) ? route() : S.ex.box || "cacao");
-  if (["newReq", "newEntry", "editEntry"].includes(b.dataset.act) && S.role !== "comptable") { toast(t("only_accountant")); return; }
+  if (["newReq", "newEntry", "editEntry"].includes(b.dataset.act) && !canWrite()) { toast(t("only_box")); return; }
+  if (b.dataset.act === "ask") { openAsk(b.dataset.caisse || "", b.dataset.id || ""); return; }
+  if (b.dataset.act === "reply") { openReply(Number(b.dataset.q)); return; }
+  if (b.dataset.act === "ceiling") { openCeiling(b.dataset.caisse); return; }
   if (b.dataset.act === "newReq") openRequestForm(defBox);
   else if (b.dataset.act === "newEntry") openEntryForm(defBox);
   else if (b.dataset.act === "editEntry") openEntryForm(null, b.dataset.id);
@@ -950,10 +1006,78 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
 
+/* ---------- questions from Accounting ---------- */
+const targetName = k => k === "daf" ? t("to_daf") : cname(k);
+function viewQuestions() {
+  const compta = S.role === "comptable", mineTarget = BOX || (S.role === "daf" ? "daf" : null);
+  const list = S.questions;
+  const item = q => { const tx = q.tx_id && S.txById && S.txById[q.tx_id];
+    return `<div class="card stack" style="gap:6px"><div class="topline" style="margin:0"><span class="small muted">${esc(t("q_from"))} → <b>${esc(targetName(q.target))}</b> · ${dfull(q.asked_at.slice(0, 10))}${tx ? ` · ${esc(t("q_about"))} : ${esc(tx.ref || "")} ${esc(tx.details)} (${fc(Number(tx.amount))})` : ""}</span>
+      <span class="pill ${q.answer ? "ok" : "warn"}">${esc(t(q.answer ? "q_answered" : "q_open"))}</span></div>
+      <div>${esc(q.question)}</div>
+      ${q.answer ? `<div class="suggest"><b>${esc(t("answer"))} :</b> ${esc(q.answer)} <span class="small muted">· ${esc(S.people[q.answered_by] || "")} · ${dfull(q.answered_at.slice(0, 10))}</span></div>`
+        : q.target === mineTarget ? `<div><button class="btn primary small" data-act="reply" data-q="${q.id}">${esc(t("reply"))}</button></div>` : ""}</div>`; };
+  return `<div class="topline"><div><h1>${esc(t("q_title"))}</h1><p>${esc(t(compta ? "q_sub_compta" : "q_sub_other"))}</p></div>${compta && S.qOk ? `<button class="btn primary" data-act="ask">${esc(t("ask"))}</button>` : ""}</div>
+  ${!S.qOk ? `<div class="notice">${esc(t("q_off"))}</div>` : list.length ? `<div class="stack">${list.map(item).join("")}</div>` : `<div class="card muted">${esc(t("q_none"))}</div>`}`;
+}
+function openAsk(caisse, txId) {
+  if (!S.qOk) { toast(t("q_off")); return; }
+  const tx = txId && S.txById && S.txById[txId];
+  modal(`<form id="qf"><header><div><h2>${esc(t("ask"))}</h2>${tx ? `<p class="mono">${esc(tx.ref || "")} ${esc(tx.details)} · ${fc(Number(tx.amount))}</p>` : ""}</div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body"><div class="fgrid">
+      <div class="f full"><label for="qt">${esc(t("q_to"))}</label><select id="qt">${(tx ? [tx.caisse, "daf"] : ["cacao", "admin", "daf"]).map(k => `<option value="${k}" ${k === (caisse || "cacao") ? "selected" : ""}>${esc(targetName(k))}</option>`).join("")}</select></div>
+      <div class="f full"><label for="qx">${esc(t("q_text"))}</label><textarea id="qx" required></textarea></div></div></div>
+    <footer><span class="err" id="qfErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("submit").split(" ")[0])}</button></div></footer></form>`);
+  $("#qx").focus();
+  $("#qf").onsubmit = async e => { e.preventDefault(); const q = $("#qx").value.trim(); if (!q) { $("#qfErr").textContent = t("q_text"); return; }
+    const { error } = await sb.from("treasury_questions").insert({ target: $("#qt").value, tx_id: tx ? tx.id : null, question: q });
+    if (error) { $("#qfErr").textContent = t("save_err", { m: error.message }); return; }
+    closeModal(); toast(t("q_sent")); await loadData(); };
+}
+function openReply(id) {
+  const q = S.questions.find(x => x.id === id); if (!q) return;
+  modal(`<form id="qr"><header><div><h2>${esc(t("reply"))}</h2><p>${esc(q.question)}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body"><div class="f"><label for="qa">${esc(t("answer"))}</label><textarea id="qa" required></textarea></div></div>
+    <footer><span class="err" id="qrErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("reply"))}</button></div></footer></form>`);
+  $("#qa").focus();
+  $("#qr").onsubmit = async e => { e.preventDefault(); const a = $("#qa").value.trim(); if (!a) { $("#qrErr").textContent = t("answer"); return; }
+    const { error } = await sb.from("treasury_questions").update({ answer: a }).eq("id", id);
+    if (error) { $("#qrErr").textContent = t("save_err", { m: error.message }); return; }
+    closeModal(); toast(t("answered_toast")); await loadData(); };
+}
+/* ---------- ceilings (DAF) ---------- */
+function openCeiling(k) {
+  if (S.role !== "daf") return;
+  modal(`<form id="cf"><header><div><h2>${esc(t("ceil_edit"))}</h2><p>${esc(cname(k))} · ${esc(t("ceiling"))} ${fc(CAISSES[k].ceiling)}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
+    <div class="body"><div class="fgrid"><div class="f"><label for="cv">${esc(t("ceil_new"))}</label><input id="cv" type="number" min="0" step="1000" value="${CAISSES[k].ceiling}"></div>
+      <div class="f full"><label for="cw">${esc(t("edit_reason"))}</label><input id="cw" type="text" required><span class="hint">${esc(t("edit_reason_hint"))}</span></div></div></div>
+    <footer><span class="err" id="cfErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("save"))}</button></div></footer></form>`);
+  $("#cf").onsubmit = async e => { e.preventDefault(); const v = Number($("#cv").value), why = $("#cw").value.trim();
+    if (!(v > 0)) { $("#cfErr").textContent = t("ceil_new"); return; } if (!why) { $("#cfErr").textContent = t("need_reason"); return; }
+    const { error } = await sb.from("cash_boxes").update({ ceiling: v, target: v, change_reason: why }).eq("id", k);
+    if (error) { $("#cfErr").textContent = t("save_err", { m: error.message }); return; }
+    closeModal(); toast(t("ceil_saved")); await loadData(); };
+}
+/* ---------- change history ---------- */
+const H_LABEL = { amount: "e_amount", ceiling: "ceiling", target: "ceiling", details: "e_details", date: "e_date", cat: "c_cat", party: "e_party", ref: "e_ref", proof: "e_proof", kind: "e_kind", market: "e_market", approvals: "e_approved", code: "e_nature", opening: "opening" };
+const H_SKIP = ["edit_reason", "change_reason", "updated_at", "updated_by", "files"];
+const hval = (k, v) => v === null || v === undefined || v === "" ? "—" : ["amount", "ceiling", "target", "opening"].includes(k) ? fc(Number(v)) : typeof v === "object" ? JSON.stringify(v) : String(v);
+function viewHistory() {
+  const rows = S.log.map(l => { const c = l.changes || {}, isBox = l.table_name === "cash_boxes", tx = !isBox && S.txById && S.txById[l.record_id];
+    const what = isBox ? cname(l.record_id) + " · " + t("ceiling") : tx ? `${cname(tx.caisse)} · ${tx.ref || ""} ${tx.details}` : l.record_id;
+    const reason = (c.edit_reason || c.change_reason || c.void_reason || [])[1] || "";
+    const change = c.voided ? t("h_void") : Object.entries(c).filter(([k]) => !H_SKIP.includes(k)).map(([k, v]) => `${H_LABEL[k] ? t(H_LABEL[k]) : k} : ${hval(k, v[0])} → ${hval(k, v[1])}`).join(" · ");
+    return { when: l.changed_at, who: S.people[l.changed_by] || "—", what, change, reason }; }).filter(r => r.change);
+  return `<div class="topline"><div><h1>${esc(t("h_title"))}</h1><p>${esc(t("h_sub"))}</p></div></div>
+  ${rows.length ? `<div class="card"><div class="table-wrap"><table><thead><tr><th>${esc(t("h_when"))}</th><th>${esc(t("h_who"))}</th><th>${esc(t("h_what"))}</th><th>${esc(t("h_change"))}</th><th>${esc(t("h_reason"))}</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td class="num">${dfull(r.when.slice(0, 10))}</td><td>${esc(r.who)}</td><td>${esc(r.what)}</td><td>${esc(r.change)}</td><td>${esc(r.reason)}</td></tr>`).join("")}</tbody></table></div></div>`
+    : `<div class="card muted">${esc(t("h_none"))}</div>`}`;
+}
+
 /* ---------- login ---------- */
 function viewLogin() {
   return `<div class="card stack" style="max-width:400px;margin:8vh auto 0;width:100%"><img src="${LOGO}" alt="SAIC" style="width:240px;max-width:100%;margin:0 auto 6px;display:block">
-    <div><h1>${esc(t("signin"))}</h1><p class="muted">${esc(t("signin_sub"))}</p></div>
+    <div><h1>${esc(APP ? APP.name[S.lang] : t("signin"))}</h1><p class="muted">${esc(t("signin"))} · ${esc(t("signin_sub"))}</p></div>
     <form id="lf" class="stack" novalidate>
       <div class="f"><label for="lem">${esc(t("email"))}</label><input id="lem" type="email" autocomplete="username" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
       <div class="f"><label for="lpw">${esc(t("password"))}</label><input id="lpw" type="password" autocomplete="current-password" style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px"></div>
@@ -975,13 +1099,14 @@ function viewTeam() {
   return `<div class="topline"><div><h1>${esc(t("nav_team"))}</h1><p>${esc(t("team_sub"))}</p></div></div>
   <div class="table-wrap"><table><thead><tr><th>${esc(t("team_name"))}</th><th>${esc(t("team_role"))}</th></tr></thead><tbody>
   ${Object.entries(S.people).sort((a, b) => a[1].localeCompare(b[1])).map(([id, name]) => `<tr><td>${esc(name)} ${id === S.me.id ? `<span class="muted">(${esc(t("you"))})</span>` : ""}</td>
-    <td>${isDaf && id !== S.me.id ? `<select data-member="${esc(id)}" aria-label="${esc(t("team_role"))}" style="width:auto"><option value="">${esc(t("team_none"))}</option>${["comptable", "daf", "dg", "tresorier", "viewer"].map(r => `<option value="${r}" ${roleOf(id) === r ? "selected" : ""}>${esc(t("role_" + r))}</option>`).join("")}</select>`
+    <td>${isDaf && id !== S.me.id ? `<select data-member="${esc(id)}" aria-label="${esc(t("team_role"))}" style="width:auto"><option value="">${esc(t("team_none"))}</option>${["caisse_cacao", "caisse_admin", "comptable", "daf", "dg", "tresorier", "viewer"].map(r => `<option value="${r}" ${roleOf(id) === r ? "selected" : ""}>${esc(t("role_" + r))}</option>`).join("")}</select>`
       : esc(roleOf(id) ? t("role_" + roleOf(id)) : t("team_none"))}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function bindTeam() {
   document.querySelectorAll("[data-member]").forEach(sel => sel.onchange = async () => {
-    const role = sel.value || "viewer";
-    const { error } = await sb.from("treasury_members").upsert({ user_id: sel.dataset.member, role, updated_at: new Date().toISOString() });
+    const role = sel.value;
+    const { error } = role ? await sb.from("treasury_members").upsert({ user_id: sel.dataset.member, role, updated_at: new Date().toISOString() })
+      : await sb.from("treasury_members").delete().eq("user_id", sel.dataset.member);
     if (error) toast(t("save_err", { m: error.message })); else { await loadData(); toast(t("saved")); }
   });
 }
@@ -1013,13 +1138,21 @@ async function loadData() {
     S.requests = reqs.map(r => ({ id: r.id, caisse: r.caisse, type: r.type, amount: Number(r.amount), reason: r.reason, details: r.details || "", need: r.need || "", files: r.files || [],
       flow: r.flow, status: r.status, bankRef: r.bank_ref || "", rejectReason: r.reject_reason || "", rejectedAt: r.rejected_at, history: r.history, createdBy: r.created_by,
       created: r.created_at, date: r.created_at.slice(0, 10) }));
+    // questions and change history: optional, so the page still works before the database update
+    const [qs, lg] = await Promise.all([
+      sb.from("treasury_questions").select("*").order("asked_at", { ascending: false }).limit(500),
+      sb.from("treasury_log").select("*").eq("action", "updated").in("table_name", ["cash_transactions", "cash_boxes"]).order("changed_at", { ascending: false }).limit(500)]);
+    S.qOk = !qs.error; S.questions = qs.error ? [] : qs.data;
+    S.log = lg.error ? [] : lg.data;
+    S.editedIds = new Set(S.log.filter(l => l.table_name === "cash_transactions" && !(l.changes && l.changes.voided)).map(l => l.record_id));
+    S.txById = Object.fromEntries(tx.map(r => [r.id, r]));
     S.loadError = "";
   } catch (e) { S.loadError = e.message; }
   recompute(); render();
 }
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
-  if (!session) { S.me = null; S.ready = true; render(); return; }
+  if (!session) { S.me = null; S.ready = true; if (!APP) { location.replace("/suite/"); return; } render(); return; }
   const user = session.user;
   const [{ data: prof }, { data: mem }] = await Promise.all([
     sb.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
@@ -1027,6 +1160,7 @@ async function boot() {
   S.me = { id: user.id, email: user.email, name: (prof && prof.full_name) || user.email };
   S.role = mem ? mem.role : null;
   S.ready = true;
+  if (!APP) { location.replace(S.role && ROLE_APP[S.role] ? "/" + ROLE_APP[S.role] + "/" : "/suite/"); return; }
   if (S.role) await loadData(); else render();
 }
 recompute(); render(); boot();
