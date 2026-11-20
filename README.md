@@ -68,7 +68,8 @@ Cash box management for the **Caisse Achat Cacao** (COC) and the **Caisse Admini
 - **One dashboard per role** (one page, `tresorerie/index.html`, served at four addresses by `vercel.json`; the old `/tresorerie` sends each person to their own dashboard):
   - `/caisse-cacao` (`caisse_cacao`) and `/caisse-admin` (`caisse_admin`): each cash box sees only its own entries, records expenses, edits them (a reason is required), requests funds from the DAF and answers Accounting's questions.
   - `/comptable` (`comptable`): reads both cash boxes, cannot record or request; asks questions to a cash box or the DAF (`treasury_questions`).
-  - `/daf` (`daf`, also `dg`, `tresorier`, `viewer`): both boxes, approves requests, changes ceilings (with a reason), answers questions, manages roles on **Team**.
+  - `/daf` (`daf` only): both boxes, approves requests, changes ceilings (with a reason), answers questions, manages roles on **Team**.
+- Each dashboard keeps its own sign-in (separate session), so dashboards never share a login.
 - Every edit of an expense or a ceiling is kept in `treasury_log` with old value, new value, who, when and the reason (shown on **Historique**).
 - **Rules enforced by the database:** imported Excel lines can't be changed; transactions are cancelled with a reason, never deleted; a request follows DAF (regular) or DAF then DG (exceptional), then the Treasurer; nobody acts on their own request; a funded request adds the top-up to the cash box; every change is written to `treasury_log`.
 - **Supporting documents** are stored in the private `treasury-files` bucket.
