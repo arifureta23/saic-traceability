@@ -137,7 +137,7 @@ async function boot() {
   if (reg) mods.push({ k: "m_reg", href: "../", ic: "F", role: t("r_" + reg) });
   if (reg || has("pdg") || has("dg_saic") || has("dg_whp")) mods.push({ k: "m_rec", href: "../reception/", ic: "R", role: t(["lead", "warehouse"].includes(reg) ? "r_" + reg : "r_viewer") });
   // the treasury is four separate dashboards; each person gets the one for their role
-  const TRE = { daf: ["m_daf", "/daf/", "DAF"], dg: ["m_daf", "/daf/", "DAF"], tresorier: ["m_daf", "/daf/", "DAF"], viewer: ["m_daf", "/daf/", "DAF"],
+  const TRE = { daf: ["m_daf", "/daf/", "DAF"],
     comptable: ["m_cpt", "/comptable/", "C"], caisse_cacao: ["m_cc", "/caisse-cacao/", "CC"], caisse_admin: ["m_ca", "/caisse-admin/", "CA"] };
   if (tre && TRE[tre.role]) mods.push({ k: TRE[tre.role][0], href: TRE[tre.role][1], ic: "T", role: t("r_" + tre.role) });
   S.mods = mods;
