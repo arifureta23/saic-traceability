@@ -62,7 +62,7 @@
           "value": "saic-traceability.vercel.app"
         }
       ],
-      "destination": "https://saic-suite.com/:path*",
+      "destination": "https://saicsuite.com/:path*",
       "permanent": true
     }
   ]
