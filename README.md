@@ -33,7 +33,7 @@ These two values are public by design. **Never** put the `service_role` / secret
 ### 3. Hosting (Vercel)
 1. Put this folder in a GitHub repository.
 2. At vercel.com: **Add New → Project → Import** the repository. Framework preset: **Other**. No build command. Deploy.
-3. Vercel gives an address like `saic-registry.vercel.app`. Use it as the Site URL in step 1.4.
+3. Vercel gives an address like `saic-registry.vercel.app`. Add your own domain (live app: `saicsuite.com`) under Settings > Domains and use it as the Site URL in step 1.4.
 
 ### 4. Install on devices
 Open the address in Chrome (Android, Windows) or Safari (iPhone, iPad) → **Add to home screen / Install app**.

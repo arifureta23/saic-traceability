@@ -1,7 +1,7 @@
 {
   "name": "saic-suite",
   "productName": "SAIC Suite",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "SAIC Suite: registre, trésorerie, réception cacao, Direction Générale et PDG",
   "author": "SAIC",
   "main": "main.js",

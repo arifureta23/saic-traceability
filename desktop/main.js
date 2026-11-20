@@ -3,9 +3,10 @@
 const { app, BrowserWindow, Menu, shell, dialog } = require("electron");
 const path = require("path");
 
-const SITE = "https://saic-traceability.vercel.app";
+const SITE = "https://saicsuite.com";
 const START = SITE + "/suite/";
-const ALLOWED = new Set([new URL(SITE).origin]);
+// The old address now redirects to saicsuite.com; it stays allowed so a redirect never opens an outside browser.
+const ALLOWED = new Set([SITE, "https://www.saicsuite.com", "https://saic-traceability.vercel.app"]);
 const isInternal = url => { try { return ALLOWED.has(new URL(url).origin); } catch (e) { return false; } };
 
 let win;

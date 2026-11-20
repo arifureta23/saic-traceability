@@ -52,5 +52,18 @@
       "source": "/terms/",
       "destination": "/conditions/index.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "saic-traceability.vercel.app"
+        }
+      ],
+      "destination": "https://saicsuite.com/:path*",
+      "permanent": true
+    }
   ]
 }
