@@ -768,10 +768,10 @@ document.addEventListener("click", async e => {
   if (error || !data) { if (w) w.close(); toast(t("save_err", { m: error ? error.message : "?" })); return; }
   if (w) w.location = data.signedUrl; else location.href = data.signedUrl;
 });
-function attachField(existing) {
+function attachField(existing, allow) {
   attKeep = (existing || []).slice(); attNew = [];
   return `<div class="f full"><span style="font-size:13px;font-weight:500">${esc(t("att"))}</span>
-    ${canWrite() ? `<label class="btn small" style="align-self:flex-start"><input type="file" id="attIn" class="vh" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf">${esc(t("att_add"))}</label><span class="hint">${esc(t("att_hint"))}</span>` : `<span class="hint">${esc(t("att_off"))}</span>`}
+    ${allow || canWrite() ? `<label class="btn small" style="align-self:flex-start"><input type="file" id="attIn" class="vh" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf">${esc(t("att_add"))}</label><span class="hint">${esc(t("att_hint"))}</span>` : `<span class="hint">${esc(t("att_off"))}</span>`}
     <ul class="att-list" id="attList"></ul></div>`;
 }
 function bindAttach() {
@@ -989,11 +989,15 @@ function actOn(id, action) {
   if (action === "approve") { finish({ status: S.role }); return; }
   const isFund = action === "fund";
   modal(`<form id="af"><header><div><h2>${esc(isFund ? t("act_fund") : t("act_reject"))}</h2><p class="mono">${esc(r.id)} · ${fc(r.amount)}</p></div><button type="button" class="btn" data-close>${esc(t("close"))}</button></header>
-    <div class="body"><div class="f"><label for="ax">${esc(isFund ? t("bank_ref") : t("reject_reason"))}</label><input id="ax" type="text" required></div></div>
+    <div class="body"><div class="fgrid"><div class="f full"><label for="ax">${esc(isFund ? t("bank_ref") : t("reject_reason"))}</label><input id="ax" type="text" required></div>${isFund ? attachField([], true) : ""}</div></div>
     <footer><span class="err" id="afErr"></span><div class="row"><button type="button" class="btn" data-close>${esc(t("cancel"))}</button><button class="btn primary" type="submit">${esc(t("confirm"))}</button></div></footer></form>`);
+  if (isFund) bindAttach();
   $("#ax").focus();
-  $("#af").onsubmit = e => { e.preventDefault(); const v = $("#ax").value.trim(); if (!v) { $("#afErr").textContent = "—"; return; }
-    finish(isFund ? { status: "funded", bank_ref: v } : { status: "rejected", reject_reason: v }); };
+  $("#af").onsubmit = async e => { e.preventDefault(); const v = $("#ax").value.trim(); if (!v) { $("#afErr").textContent = t(isFund ? "bank_ref" : "reject_reason"); return; }
+    if (!isFund) { finish({ status: "rejected", reject_reason: v }); return; }
+    const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+    let files; try { files = await uploadAttachments($("#afErr")); } catch (x) { $("#afErr").textContent = x.message; btn.disabled = false; return; }
+    finish({ status: "funded", bank_ref: v, transfer_files: files }); };
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if (!b) return;

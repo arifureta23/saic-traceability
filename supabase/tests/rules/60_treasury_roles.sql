@@ -84,7 +84,8 @@ select is(tests.changed($$update public.treasury_questions set answer = 'Oui.' w
 select is(tests.changed($$insert into public.cash_transactions (caisse, kind, date, cat, details, amount) values ('cacao','out','2026-11-20','Carburant','x',1)$$), 0::bigint, 'DAF: does not record transactions');
 select is(tests.changed($$update public.fund_requests set status = 'daf' where id = 'T-CACAO'$$), 1::bigint, 'DAF: approves the cocoa box request');
 select is(tests.changed($$update public.fund_requests set status = 'funded' where id = 'T-CACAO'$$), 0::bigint, 'DAF: marking funded needs the bank reference');
-select is(tests.changed($$update public.fund_requests set status = 'funded', bank_ref = 'AFB-123' where id = 'T-CACAO'$$), 1::bigint, 'DAF: records the bank transfer');
+select is(tests.changed($$insert into storage.objects (bucket_id, name) values ('treasury-files', '2026-11/virement.pdf')$$), 1::bigint, 'DAF: uploads the transfer slip');
+select is(tests.changed($$update public.fund_requests set status = 'funded', bank_ref = 'AFB-123', transfer_files = '[{"path":"2026-11/virement.pdf","name":"virement.pdf"}]' where id = 'T-CACAO'$$), 1::bigint, 'DAF: records the bank transfer with its slip');
 select is(tests.changed($$update public.cash_boxes set ceiling = 25000000 where id = 'cacao'$$), 0::bigint, 'DAF: a ceiling change without a reason is refused');
 select is(tests.changed($$update public.cash_boxes set ceiling = 25000000, change_reason = 'Pic de campagne' where id = 'cacao'$$), 1::bigint, 'DAF: changes a ceiling with a reason');
 select is(tests.changed($$update public.treasury_members set role = 'caisse_admin' where user_id = (select v::uuid from ids where k = 'nobody')$$), 0::bigint, 'DAF: (no row yet for a newcomer)');
@@ -92,6 +93,7 @@ select is(tests.changed($$insert into public.treasury_members (user_id, role) va
 select is(tests.changed($$delete from public.treasury_members where user_id = (select v::uuid from ids where k = 'nobody')$$), 1::bigint, 'DAF: removes treasury access');
 select is(tests.changed($$delete from public.treasury_members where user_id = auth.uid()$$), 0::bigint, 'DAF: cannot remove its own access');
 select tests.logout();
+select is((select files->0->>'name' from public.cash_transactions where request_id = 'T-CACAO'), 'virement.pdf', 'funding: the top-up line carries the transfer slip');
 select is((select (changes->'ceiling'->>1)::numeric from public.treasury_log where table_name = 'cash_boxes' and record_id = 'cacao' order by id desc limit 1), 25000000::numeric, 'history: the ceiling change is logged');
 select is((select changes->'edit_reason'->>1 from public.treasury_log where table_name = 'cash_transactions' and record_id = (select v from ids where k = 'cacao_tx') and action = 'updated' and changes ? 'amount'), 'Péage oublié', 'history: the edit keeps old amount, new amount and reason');
 

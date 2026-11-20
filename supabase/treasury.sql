@@ -131,6 +131,8 @@ create table if not exists public.fund_requests (
   created_at timestamptz not null default now(), created_by uuid default auth.uid(),
   updated_at timestamptz not null default now()
 );
+-- proof of the bank transfer (photo or PDF), added when the request is marked as funded
+alter table public.fund_requests add column if not exists transfer_files jsonb not null default '[]';
 
 create or replace function public.guard_fund_request() returns trigger
 language plpgsql security definer set search_path = public as $$
@@ -163,6 +165,7 @@ begin
   elsif new.status <> nxt then
     raise exception 'Invalid step';
   end if;
+  if new.status <> 'funded' and new.transfer_files is distinct from old.transfer_files then raise exception 'Transfer documents are added when the request is funded'; end if;
   new.history := old.history || jsonb_build_object('at', now(), 'by', auth.uid(), 'role', r, 'action', new.status);
   new.updated_at := now();
   return new;
@@ -175,10 +178,10 @@ create or replace function public.fund_request_topup() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
   if new.status = 'funded' and old.status <> 'funded' then
-    insert into public.cash_transactions (caisse, kind, date, ref, party, cat, details, amount, proof, approvals, source, request_id, created_by)
+    insert into public.cash_transactions (caisse, kind, date, ref, party, cat, details, amount, proof, approvals, source, request_id, created_by, files)
     values (new.caisse, 'in', current_date, new.id, 'DAF',
             case new.caisse when 'cacao' then 'Approvisionnement DAF' else 'Approvisionnement' end,
-            'Approvisionnement ' || new.id || ' (' || new.bank_ref || ')', new.amount, 'recu', new.flow, 'topup', new.id, auth.uid());
+            'Approvisionnement ' || new.id || ' (' || new.bank_ref || ')', new.amount, 'recu', new.flow, 'topup', new.id, auth.uid(), coalesce(new.transfer_files, '[]'));
   end if;
   return new;
 end $$;
@@ -307,7 +310,7 @@ insert into storage.buckets (id, name, public) values ('treasury-files','treasur
 drop policy if exists "tfiles read" on storage.objects;
 create policy "tfiles read" on storage.objects for select to authenticated using (bucket_id = 'treasury-files' and public.treasury_role() is not null);
 drop policy if exists "tfiles write" on storage.objects;
-create policy "tfiles write" on storage.objects for insert to authenticated with check (bucket_id = 'treasury-files' and public.treasury_box() is not null);
+create policy "tfiles write" on storage.objects for insert to authenticated with check (bucket_id = 'treasury-files' and (public.treasury_box() is not null or public.treasury_role() = 'daf'));
 
 -- ---------- Import of the two Excel cash books (runs only once) ----------
 do $$ begin
