@@ -188,3 +188,21 @@ The F01 checks and plot geometry live in `js/checks.js` (no screen code), so the
 node --test tests/*.test.mjs
 ```
 GitHub runs them on every push and pull request (`.github/workflows/tests.yml`). They don't touch the database or the live site.
+
+---
+
+# Database rule tests (`supabase/tests`)
+
+Automatic tests for the approval rules the database enforces. They run on GitHub on every push and pull request that touches `supabase/` (workflow **Database rule tests**), on a throwaway PostgreSQL built from the SQL files in this repository. They never connect to the real Supabase project and need no secrets.
+
+What they check: nobody approves their own request; treasury requests follow DAF (regular) or DAF then DG (exceptional), then the Treasurer; a funded request adds the top-up to the cash box; imported cash lines can't be changed or deleted; each DG only sees and decides on their own office's requests; the PDG decides on PDG requests; and every SQL file can be run twice.
+
+Tests marked **TODO** document known gaps: they are reported but do not fail the run.
+
+**Security tests** (`supabase/tests/rules/50_access_by_role.sql`): for each kind of account (no account, brand-new sign-up, lead, warehouse, accountant, DAF, DG, PDG) they check what can be seen, that nothing can be deleted, that nobody can give themselves a higher role, and that cash box ceilings are protected. Known open problems from the security test of 19 Nov 2026 (new accounts can read the registry; ceiling changes are not logged) are marked TODO until they are fixed.
+
+Run them on your own computer (needs PostgreSQL 16, `postgresql-16-pgtap` and `pg_prove`):
+```bash
+PGHOST=localhost PGUSER=postgres ./supabase/tests/run.sh
+```
+`supabase/tests/supabase_shim.sql` imitates the few Supabase pieces the SQL needs (`auth.users`, `auth.uid()`, storage tables, the `authenticated` role). Never run it on the real project.
